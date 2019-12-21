@@ -29,6 +29,8 @@ download.file(images_df[1,3], destfile = here("data_cleaning", "cch2_images", pa
 #Here I've set the filenames to be the `id` column, but maybe `specimen_number` would be better?
 #id likely to differ (?) between cch1 and cch2 datasets
 
+#Note: It may be more appropriate (and less risky) to download images to a folder outside the R project this script was saved in. This will avoid complications with commiting/pushing to Github.
+
 
 #Trying 10 before going big...
 for(i in 1:10){
