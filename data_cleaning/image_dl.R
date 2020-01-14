@@ -12,6 +12,7 @@ library(here)
 library(beepr)
 
 
+#Images dataframe with identifier and urls of high-res images (downloaded from cch2)
 images_df <- read_csv(here("data_cleaning", "CCH2_scripts_data", "images_cch2_Dec19.csv"))
 
 
@@ -19,19 +20,19 @@ images_df <- read_csv(here("data_cleaning", "CCH2_scripts_data", "images_cch2_De
 id_spec <- read_csv(here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_Dec2019.csv")) %>% 
   select(id, specimen_number)
 
+#Merge to images_df so both specimen identifiers are listed
 images_df <- merge(id_spec, images_df) #merges by `id`
 
 
 #Testing with one image:
-download.file(images_df[1,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[1,1], ".jpg", sep = "")), method = "auto", mode = "wb")
+download.file(images_df[1,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[1,2], ".jpg", sep = "")), method = "auto", mode = "wb")
 
-#Here I've set the filenames to be from the `id` column, but maybe `specimen_number` would be better?
-#id might differ (?) between cch1 and cch2 datasets
+#Here I've set the filenames to be from the `specimen_number` column
 
 
 #Trying 10 before going big...
 for(i in 1:10){
-  download.file(images_df[i,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[i,1], ".jpg", sep = "")), method = "auto", mode = "wb")
+  download.file(images_df[i,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[i,2], ".jpg", sep = "")), method = "auto", mode = "wb")
 }
 
 
@@ -48,7 +49,7 @@ for(i in 1:10){
 
 #Save all images:
 for(i in 1:length(images_df[,3])){
-  download.file(images_df[i,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[i,1], ".jpg", sep = "")), method = "auto", mode = "wb")
+  download.file(images_df[i,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[i,2], ".jpg", sep = "")), method = "auto", mode = "wb")
 }
 beep("mario")
 
