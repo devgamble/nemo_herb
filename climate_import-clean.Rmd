@@ -27,41 +27,17 @@ ID1* = specimen number
 ID2 = collection year  
 lat* = latitude  
 long* = longitude  
-el = elevation (ClimateNA corrects climate data for elevation - make sure elevation is accurate before querying data)  
+el = elevation (ClimateNA corrects climate data for elevation - make sure elevation is accurate before querying data) (in meters, NAs/empty cells allowed)  
 * = required  
 Use a '.' in the columns if ID2 or el are not available  
 *Make sure you save the file as a csv file, and that there are no entries (even spaces) outside of the main set of columns and rows.*  
 
-Creating a ClimateNA-compatible csv from a specimen dataframe input:
-```{r}
-nemo_df <- read_csv(here::here("data_cleaning", "CCH1_scripts_data", "nemo_standardized_err_dist.csv")) %>% 
-  mutate(year = format(verbatim_date, "%Y")) #For when 'year' is available from a collection date column
-
-
-#Create standardized df for Climate NA
-nemo_CNA_df <- tibble(nemo_df$specimen_number, nemo_df$year, nemo_df$latitude, nemo_df$longitude, nemo_df$elevation)
-colnames(nemo_CNA_df) <- c("ID1", "ID2", "lat", "long", "el")
-
-#Remove all non-numeric characters from `el` column
-nemo_CNA_df <- nemo_CNA_df %>% 
-  mutate(el = as.numeric(gsub("\\D+", "", el)))
-
-#Correct erroneous elevation at observation 724
-nemo_CNA_df$el[724] <- 1076
-
-#Export this compatible df to a csv for input into ClimateNA
-
-write_csv(nemo_CNA_df, here::here("ClimateNA", "nemo_cch1_std2.csv"))
-
-```
-
-
-
+Creating a ClimateNA-compatible csv from a specimen dataframe input: (see cch1/cch2 specific scripts)  
 <br>  
 
 **Step 2**: Obtaining Climate normals/decadal data  
 
-Open climateNA application. Under the 'Multi-Location' heading, specify which normals you would like to download in the box. Select the input file, using the csv the dat you just standardized. Specify the output file with the name and location of where you would like it. Once you hit `Start`, Climate NA will download the type of normals you specified and append them as columns to the standardized csv.  
+Open climateNA application. Under the 'Multi-Location' heading, specify which normals you would like to download in the box. Select the input file, using the csv the dat you just standardized. Specify the output file with the name and a desired pathway/folder. Once you hit `Start`, Climate NA will download the type of normals you specified and append them as columns to the standardized csv.  
 You should then have a new file with normals for all the locations in the original csv.  
 
 
@@ -73,6 +49,8 @@ Under the 'Multi-location' heading, select `Historical Time Series`. Below this 
 (This will probably take some time...)  
 
 You should eventually get a csv file with data for all the specified years, now with a new first column 'Year'. You will now have as many rows as the number of different years multiplied by the number of rows from the original dataset.  
+
+Note: ClimateNA uses `-9999` as NA values, be sure to account for these later!
 
 <br>  
 
@@ -102,6 +80,7 @@ rename_ftn1 <- function(x, apnd, rang){
 YoCA_data <- allA_data %>% 
     filter(ID2 == Year) 
 colnames(YoCA_data)[7:29] <- rename_ftn1(allA_data, apnd = "_a*", rang = 7:29) #add "_a*" to YoC variables
+
 ```
 
 Now, to create a dataframe with just the climate normals  

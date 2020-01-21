@@ -21,7 +21,7 @@ library(lubridate)
 nemo_cch2 <- read_csv(here::here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_Dec2019.csv")) %>% 
   filter(!day == 0) %>% #remove obs where day = 0 or is blank
   mutate(date_new = make_date(year = year, month = month, day = day)) %>%  #Combine YYYY MM DD
-  select(- c(coll_number, institutionCode, recordId, references)) %>% 
+  select(- c(institutionCode, recordId, references)) %>% 
   mutate(sub_sp = case_when(taxonID == 205100 | taxonID == 205103 ~ "menziesii",
                             taxonID == 205101 ~ "atomaria",
                             taxonID == 205102 | taxonID == 210481 |taxonID == 218999 | scientificName %in% c("Nemophila menziesii var. integrefolia", "Nemophila menziesii subsp. australis") ~ "integrifolia")) %>% 
@@ -49,21 +49,28 @@ nemo_2 <- nemo_2 %>%
   select(-verbatimElevation) %>% 
   filter(!DOY == 1) #Remove obs where MM and DD = 01 (none of these are accurate)
   
+#Check for missing specimen_number:
+which(is.na(nemo_2$specimen_number))
+
+#Assign secondary catalog number (`coll_number`) to specimen_number when it is missing
+nemo_2 <- nemo_2 %>% 
+  mutate(specimen_number = ifelse(is.na(specimen_number),paste("COLL*", coll_number, sep = ""), specimen_number)) #Specify change with "COLL*" at beginning of new specimen number (only two cases)
+
+
 
 #Check for duplicates
 
 #which(duplicated(nemo_2[,c(12,17)]))
 
-#Can't seem to find any. Below dplyr::distinct doesn't seem correct. Will wait til after combining CCH1 and CCH2
+#Can't seem to find any. dplyr::distinct doesn't seem correct. Will wait til after combining CCH1 and CCH2
 
-#nemo_2 <- nemo_2 %>% distinct(date_new, decimalLatitude, decimalLongitude, .keep_all = TRUE) # Removes ~ 100 observations
 
 
 #
 # Final cleaning, organizing, and export
 
 nemo_cch2_clean <- nemo_2 %>% 
-  select(-c(eventDate, startDayOfYear)) %>% 
+  select(-c(coll_number, eventDate, startDayOfYear)) %>% 
   rename(repro = reproductiveCondition, lat = decimalLatitude, long = decimalLongitude, error_dist_m = coordinateUncertaintyInMeters) %>% #Get col names to match CCH1
   select(specimen_number, id, date_new, year, month, day, DOY, lat, long, elev_m, error_dist_m, sub_sp, everything()) #Rearrange df with desired columns in order
 
