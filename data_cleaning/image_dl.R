@@ -4,12 +4,14 @@
 #
 ###########
 
-# Devin Gamble, Dec 20 2019
+# Devin Gamble, Jan 22 2020
 
 #Load Packages
 library(tidyverse)
 library(here)
 library(beepr)
+
+#Load in images csv from CCH2 and merge with *cleaned* occurrence data
 
 
 #Images dataframe with identifier and urls of high-res images (downloaded from cch2)
@@ -17,11 +19,11 @@ images_df <- read_csv(here("data_cleaning", "CCH2_scripts_data", "images_cch2_De
 
 
 #Add specimen_number from full dataset to images_df
-id_spec <- read_csv(here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_Dec2019.csv")) %>% 
+id_spec <- read_csv(here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_cleaned.csv")) %>% 
   select(id, specimen_number)
 
 #Merge to images_df so both specimen identifiers are listed
-images_df <- merge(id_spec, images_df) #merges by `id`
+images_df <- merge(id_spec, images_df) #merges by `id` # extra obs from images not included
 
 
 #If you have cloned/downloaded this project from Github (i.e. you are not me), you need to create your own local "cch2_images" folder and specify it's pathway in the following code. I suggest adding it to your  .gitignore file so that images you download are not shared to the main github project. You can do this by right-clicking the folder in the `Git` pane and clicking `ignore`. 
@@ -30,8 +32,8 @@ images_df <- merge(id_spec, images_df) #merges by `id`
 #Testing with one image:
 download.file(images_df[1,3], destfile = here("data_cleaning", "cch2_images", paste(images_df[1,2], ".jpg", sep = "")), method = "auto", mode = "wb")
 
-#Here I've set the filenames to be from the `specimen_number` column
-
+#Here I've set the filenames to be from the `specimen_number` column. Change column to [,1] for for `id`
+#Downloading images with this code will replace images with the same filename
 
 
 #Trying 10 before going big...
