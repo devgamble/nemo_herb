@@ -61,7 +61,7 @@ write_csv(nemo_2df_CNA, here::here("ClimateNA", "cch2_cna", "cch2_CNA_sd.csv"), 
 
 norms_1951_1980 <- read_csv(here::here("climateNA", "cch2_cna", "cch2_ann_Normal_1951_1980Y.csv"), na = c("-9999", "-9999.0")) %>% #Fix NAs
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) 
-#Fixing names - is this a good place to dd this?
+#Fixing names - is this a good place to do this?
 
 norms_1981_2010 <- read_csv(here::here("climateNA", "cch2_cna", "cch2_ann_Normal_1981_2010Y.csv"), na = c("-9999", "-9999.0")) %>% #Fix NAs
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) 

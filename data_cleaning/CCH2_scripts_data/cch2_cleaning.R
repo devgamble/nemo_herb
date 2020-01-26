@@ -54,7 +54,8 @@ which(is.na(nemo_2$specimen_number))
 
 #Assign secondary catalog number (`coll_number`) to specimen_number when it is missing
 nemo_2 <- nemo_2 %>% 
-  mutate(specimen_number = ifelse(is.na(specimen_number),paste("COLL*", coll_number, sep = ""), specimen_number)) #Specify change with "COLL*" at beginning of new specimen number (only two cases)
+  mutate(specimen_number = ifelse(is.na(specimen_number),paste("COLL-", coll_number, sep = ""), specimen_number)) #Specify change with "COLL-" at beginning of new specimen number (only two cases)
+#Updated: Cannot use `*` because of error in naming images
 
 
 
