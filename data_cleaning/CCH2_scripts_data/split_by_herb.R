@@ -12,7 +12,7 @@ library(here)
 
 # Load in the cleaned data - output from cch2_cleaning.R
 
-nemo_cch2_cleaned <- read_csv(here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_cleaned.csv"))
+nemo_cch2_cleaned <- read_csv(here::here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_cleaned.csv"))
 # Looks good
 
 

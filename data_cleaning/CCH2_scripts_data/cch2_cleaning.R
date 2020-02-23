@@ -24,7 +24,7 @@ nemo_cch2 <- read_csv(here::here("data_cleaning", "CCH2_scripts_data", "nemo_cch
   select(- c(institutionCode, recordId, references)) %>% 
   mutate(sub_sp = case_when(taxonID == 205100 | taxonID == 205103 ~ "menziesii",
                             taxonID == 205101 ~ "atomaria",
-                            taxonID == 205102 | taxonID == 210481 |taxonID == 218999 | scientificName %in% c("Nemophila menziesii var. integrefolia", "Nemophila menziesii subsp. australis") ~ "integrifolia")) %>% 
+                            taxonID == 205102 | taxonID == 210481 |taxonID == 218999 | scientificName %in% c("Nemophila menziesii var. integrefolia", "Nemophila menziesii var. incana", "Nemophila menziesii subsp. australis") ~ "integrifolia")) %>% 
   filter(!scientificName %in% c("Nemophila rotata", "Nemophila venosa")) #not menzies
 
 #1475 obs
@@ -63,7 +63,7 @@ nemo_2 <- nemo_2 %>%
 
 #which(duplicated(nemo_2[,c(12,17)]))
 
-#Can't seem to find any. dplyr::distinct doesn't seem correct. Will wait til after combining CCH1 and CCH2
+#SEE cch1_cleaning.R!!! Remove dupes after combining both 
 
 
 
