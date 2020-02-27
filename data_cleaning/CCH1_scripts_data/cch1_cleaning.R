@@ -30,7 +30,7 @@ library(lubridate)
 # Clean & Standardize Dates
 
 nemo_cch1 <- read_csv(here::here("data_cleaning", "CCH1_scripts_data", "Nemo_CCH1_02182020.csv")) %>% 
-  select(- c(X1, collector, coll_number_prefix, coll_number_suffix, collection_date, late_collection_date, datum, source, citation, error_distance, units)) %>%  #Removing these columns
+  select(- c(X1, collector, coll_number_prefix, coll_number_suffix, collection_date, late_collection_date, source, citation, error_distance, units)) %>%  #Removing these columns
   mutate(sub_sp = case_when(`taxon name` %in% c("Nemophila menziesii subsp. menziesii", "Nemophila menziesii var. menziesii") ~ "menziesii",
                             `taxon name` %in% c("Nemophila menziesii subsp. atomaria", "Nemophila menziesii var. atomaria") ~ "atomaria",
                             `taxon name` %in% c("Nemophila menziesii var. integrifolia", "Nemophila menziesii subsp. integrifolia", "Nemophila menziesii subsp. australis", "Nemophila menziesii var. annulata", "Nemophila menziesii var. intermedia", "Nemophila menziesii var. minima") ~ "integrifolia")) %>% 
@@ -74,7 +74,12 @@ nemo_cch1_2 <- nemo_cch1_1 %>%
 nemo_1 <- nemo_cch1_2 %>% #get rid of coll_number, only 279 entries
   select(-c(`taxon name`, verbatim_date, coll_number, elevation, el_units, elev_num)) %>%  
   mutate(source = "cch1") %>% 
-  rename(lat = latitude, long = longitude, DOY = doy, error_dist_m = new_error_distance_m)
+  rename(lat = latitude, long = longitude, DOY = doy, error_dist_m = new_error_distance_m) %>% 
+  mutate(datum = na_if(datum, "not recorded")) %>% 
+  mutate(datum = replace(datum, which(datum %in% c("Geolocate", "Geolocate (copied from A343463)", "Geolocate (copied from DS135657)", "WGS 1984")), "WGS84")) %>% 
+  mutate(datum = replace(datum, which(datum %in% c("NULL", "null")), NA))
+  
+                    
 
 
 #Parse out date into Y, M, D columns
@@ -84,7 +89,7 @@ nemo_1a <- nemo_1 %>%
   mutate(year = year(date_new),
          month = month(date_new),
          day = day(date_new)) %>% 
-  select(specimen_number, date_new, year, month, day, DOY, lat, long, elev_m, error_dist_m, sub_sp, county, locality, source) 
+  select(specimen_number, date_new, year, month, day, DOY, lat, long, elev_m, error_dist_m, sub_sp, county, locality, source, datum) 
   #mutate(DOY2 = yday(date_new))  #double checks original DOY # and it's good
 
 
