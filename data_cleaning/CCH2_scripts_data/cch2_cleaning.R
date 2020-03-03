@@ -16,7 +16,7 @@ library(lubridate)
 
 # NOTE: The csv I've read in here was trimmed a bit (irrelevant columns removed) but this workflow should work just as well with a csv downloaded straight from CCH2.
 
-# NOTE 2: I chosen to create an updated cleaned csv in this script so I don't have to pull from the original occurrence data again. Here I remove duplicates and add back two columns. the first csv `nemo_cch1_cleaned.csv` should functionally be the same
+# NOTE 2: I chose to create an updated cleaned csv in this script so I don't have to pull from the original occurrence data again. Here I remove duplicates and add back two columns. the first csv `nemo_cch1_cleaned.csv` should functionally be the same
 
 # Clean & Standardize Dates
 
@@ -100,7 +100,7 @@ library(janitor)
 length(which(duplicated(nemo_2.5[,c(3,8,9)]))) #roughly 129 duplicates
 
 nemo_drm <- nemo_2.5 %>% 
-  distinct(date_new, lat, long, sub_sp, locality, county, .keep_all = TRUE) #Retains unique rows for these variables
+  distinct(date_new, lat, long, sub_sp, locality, county, .keep_all = TRUE) #Retains unique rows for combination of these variables
 #specified sub_sp & locality to hand-pick out duplicates for missing lat/long
 #1409 oobs - Only 43 observations removed
 
