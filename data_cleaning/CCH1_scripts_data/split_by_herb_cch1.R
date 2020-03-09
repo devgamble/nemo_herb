@@ -16,7 +16,7 @@ library(janitor)
 
 
 nemo_cch1_cleaned <- read_csv(here::here("data_cleaning", "CCH1_scripts_data", "cch1_cleaned_unique.csv"))
-# Looks good #583 obs, 15 col
+# Looks good #883 obs, 15 col
 
 
 
