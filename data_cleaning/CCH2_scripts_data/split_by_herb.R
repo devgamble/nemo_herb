@@ -15,6 +15,7 @@ library(here)
 ## Added chunk at bottom to split up V2 of cleaned CCH2 data
 # USE V2 DATA (Cleaned & dupes remnoved)
 
+
 nemo_cch2_cleaned <- read_csv(here::here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_cleaned.csv"))
 # Looks good
 
@@ -143,3 +144,5 @@ cch2_UCSB_V2 <- nemo_cch2_cleaned2 %>%
   select(specimen_number:DOY, sub_sp, repro, county:habitat, elev_m, lat:long, error_dist_m, georef_by, georef_notes, datum, source, references) %>% 
   arrange(lat)
 write_csv(cch2_UCSB_V2, here("data_cleaning", "CCH2_scripts_data", "cleaned_splits_V2", "nemo_cch2_UCSB_V2.csv"), na = "")
+
+
