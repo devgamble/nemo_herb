@@ -11,112 +11,183 @@ library(janitor)
 
 
 
-#Objective: Combine cch1 and cch2 data
+#Objective: Combine cch1 and cch2 data V2 - georeferencing complete
 #MOST duplicates have been removed
 #All records are georeferenced (have lat/long)
 #CCH2 specimens will be scored for PI concurrently and scores will be added at a later time
 
-# Load in the cleaned data - output from cch1_cleaning.R
-nemo_cch1_cleaned <- read_csv(here::here("data_cleaning", "CCH1_scripts_data", "nemo_cch1_cleaned.csv"))
-# Looks good #1676 obs, 15 col
+
+## CCH1 Import and cleanup
+
+#C
+nemo_cch1_CP_g <- 
+  read_csv(here::here("data_cleaning", "CCH1_scripts_data", "georeferenced_cch1_splits", "nemo_cch1_C-P.csv"))
+
+cch1_g_C <- nemo_cch1_CP_g %>% 
+  filter(!(remove_obs %in% "y")) %>% 
+  select(specimen_number:DOY, sub_sp, county, locality, elev_m, lat:long, error_dist_m, georef_by, georef_notes, datum, source, everything()) %>% 
+  mutate(datum = case_when(georef_by != '' | datum == "WGS84" ~ "WGS84",
+                           datum == "NAD83" | datum == "NAD 83" | datum == "NAD 1983" ~ "NAD83",
+                           datum == "NAD27" | datum == "NAD 27" | datum == "NAD 1927" ~ "NAD27",
+                           datum == "NAD83/WGS84" | datum == "WGS84/NAD83" ~ "WGS84/NAD83")) %>%  
+  select(c(-remove_obs))
+#287 obs
 
 
-##
-### Filter out duplicates shared with CCH2!
-##
-#Combine to first identify duplicates, then remove duplicates *from cch1 only*
+#R
+nemo_cch1_R_g <- 
+  read_csv(here::here("data_cleaning", "CCH1_scripts_data", "georeferenced_cch1_splits", "nemo_cch1_R.csv"))
+
+cch1_g_R <- nemo_cch1_R_g %>% 
+  filter(!(remove_obs %in% "y")) %>% 
+  select(specimen_number:DOY, sub_sp, county, locality, elev_m, lat:long, error_dist_m, georef_by, georef_notes, datum, source, everything()) %>% 
+  mutate(datum = case_when(georef_by != '' | datum == "WGS84" ~ "WGS84",
+                           datum == "NAD83" | datum == "NAD 83" | datum == "NAD 1983" ~ "NAD83",
+                           datum == "NAD27" | datum == "NAD 27" | datum == "NAD 1927" ~ "NAD27",
+                           datum == "NAD83/WGS84" | datum == "WGS84/NAD83" ~ "WGS84/NAD83")) %>%  
+  select(c(-remove_obs))
+#335 obs
 
 
-#Load Cleaned CCH2 data #1349 obs, 19 col
-nemo_cch2 <- read_csv(here::here("data_cleaning", "CCH2_scripts_data", "nemo_cch2_cleaned_V2.csv"))
+#S
+nemo_cch1_SY_g <- 
+  read_csv(here::here("data_cleaning", "CCH1_scripts_data", "georeferenced_cch1_splits", "nemo_cch1_S-Y.csv"))
 
-#Combine cch1 and cch2
-nemo_comb <- bind_rows(nemo_cch1_cleaned, nemo_cch2) #3025 obs total
-
-
-#Pull out dupes from cch1 only
-length(which(duplicated(nemo_comb[,c(2,7,8,13)]))) #shows 332 dupes for date, lat/long, locality
-
-
-#First remove cch1 record dupes where locality is an exact match!!
-nemo_comb_dupes1 <- get_dupes(nemo_comb, date_new, lat, long, county, locality) %>% 
-  select(specimen_number, source, everything()) %>% 
-  filter(source == "cch1") #show duplicates shared by both df's present only in cch1 data
-#List of specimen_numbers to remove based on this criteria
-cch1_specrm_1 <- c(nemo_comb_dupes1$specimen_number) #311 dupes
-
-#Update combined df
-nemo_comb2 <- nemo_comb %>% 
-  filter(!(specimen_number %in% cch1_specrm_1 & source == "cch1")) 
-#removes numbers from this list that are sourced from cch1
+cch1_g_S <- nemo_cch1_SY_g %>% 
+  filter(!(remove_obs %in% "y")) %>% 
+  select(specimen_number:DOY, sub_sp, county, locality, elev_m, lat:long, error_dist_m, georef_by, georef_notes, datum, source, everything()) %>% 
+  mutate(datum = case_when(georef_by != '' | datum == "WGS84" ~ "WGS84",
+                           datum == "NAD83" | datum == "NAD 83" | datum == "NAD 1983" ~ "NAD83",
+                           datum == "NAD27" | datum == "NAD 27" | datum == "NAD 1927" ~ "NAD27",
+                           datum == "NAD83/WGS84" | datum == "WGS84/NAD83" ~ "WGS84/NAD83")) %>%  
+  select(c(-remove_obs))
+#189 obs
 
 
-#Check for matching specimen numbers after removing identical localities
-nemo_comb_dupes2 <- get_dupes(nemo_comb2, specimen_number, date_new, lat, long, county) %>% 
-  select(specimen_number, source, everything()) %>% 
-  filter(source == "cch1")
-cch1_specrm_2 <- c(nemo_comb_dupes2$specimen_number) #114 dupes
+#Merge all the cch1 data
 
-#Update combined df (2)
-nemo_comb3 <- nemo_comb2 %>% 
-  filter(!(specimen_number %in% cch1_specrm_2 & source == "cch1")) #remove identical numbers from cch1
-#Down to 2600 obs now
-
-
-#Now rm records where available lat/long & dates match
-nemo_comb_dupes3 <- get_dupes(nemo_comb3, date_new, lat, long, county) %>% 
-  select(specimen_number, source, everything()) %>% 
-  filter(!(is.na(lat))) %>% #For lat/long that are not NA - safely assume these are identical localities
-  filter(source == "cch1")
-cch1_specrm_3 <- c(nemo_comb_dupes3$specimen_number) #351 dupes
-
-#Update combined df (3) 
-nemo_comb4 <- nemo_comb3 %>% 
-  filter(!(specimen_number %in% cch1_specrm_3 & source == "cch1")) #rm cch1 dupes w lat/long
-#Down to 2249 obs now
-
-
-#108 potential matches missing lat/long - Scan through & check by hand
-nemo_comb_dupes4 <- get_dupes(nemo_comb4, date_new, lat, long, county) %>% 
-  select(specimen_number, source, everything()) #cannot rm cch1 before checking if they are distinct
-#Selected cch1 records to rm when localities were near identicial - assumed to be dupes
-cch1_specrm_4 <- c("POM65386", "POM3465", "SEINET5521032", "POM97169", "RSA75870", "SD38531", "RSA8325", "SD40793", "SD00010501", "RSA20888", "RSA75886", "RSA75887", "POM249048", "RSA75888", "UCD120082", "UCD35080", "SD44541", "SD44504", "UCSB030046", "SDSU6118", "SD52427", "RSA396242", "SD51051", "UCSB5325", "UCD126443", "HSC13600", "HSC13604", "RSA244978", "HSC87763", "SDSU6130", "POM347130", "HSC39198", "SDSU6106", "HSC26644", "RSA298351", "HSC36876", "RSA418543", "OBI20178", "UCSB42030", "HSC59333", "SD111947", "SEINET5521001", "SEINET10497055", "RSA659263", "HSC85866", "UCSB63597", "UCSB69908", "OBI58215", "UCSB72228") #49 more cch1 dupes to rm
-
-#SD00010501 dupe within-cch2 dupe (unique but same date & location as UC880918
-#UCSB030046 dupe w/in cch2 (unique but same date & location as UC1541101)
-#POM347130 dupe w/in cch1 removed (same data & location as POM318298)
-#OBI20178 dupe w/in cch1 removed (same as SBBG54841)
-
-#Update combined df (4)
-nemo_comb5 <- nemo_comb4 %>% 
-  filter(!(specimen_number %in% cch1_specrm_4))  #2200 obs!
-
-
-#All duplicates should be removed (for source = cch1)!
-#Last check for duplicates
-dupes_f <- get_dupes(nemo_comb5, date_new, lat, long, county) %>% 
-  select(specimen_number, source, everything()) #None of these appear to be dupes!! Let 'em be
-
-nemo_comb_f <- nemo_comb5 %>% 
-  select(specimen_number, date_new, year, month, day, DOY, lat, long, elev_m, error_dist_m, sub_sp, repro, county, locality, habitat, datum, id, everything()) #Organizing columns
+nemo_cch1_g <- bind_rows(cch1_g_C, cch1_g_R, cch1_g_S)
+#Beautiful!! 811 observations in CCH1 after georeferencing
 
 
 
-#Save combined csv
-write_csv(nemo_comb_f, here::here("data_cleaning", "cch1&2_combined.csv"))
+#Assembling the georeferenced CCH2 data - already cleaned up from `split_by_herb_PI.r`
+
+cch2_AC <- #31 obs
+  read_csv(here::here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_AC_p.csv"))
+cch2_DL <- #247 obs
+  read_csv(here::here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_DL_p.csv"))
+cch2_OS <- #344
+  read_csv(here::here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_OS_p.csv"))
+cch2_SU <- #396
+  read_csv(here::here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_SU_p.csv"))
+cch2_UCR <- #223
+  read_csv(here::here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_UCR_p.csv"))
+cch2_UCSB <- #81
+  read_csv(here::here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_UCSB_p.csv"))
+#should total 1322
+
+#Joining all
+nemo_cch2_g <- bind_rows(cch2_AC, cch2_DL, cch2_OS, cch2_SU, cch2_UCR, cch2_UCSB)
+#Looks good! 1322 obs
 
 
-#823 dupes w overlap in cch2 removed from cch1! (1676 - 853)
 
-#Save CCH1 cleaned & Unique (cch2-dupe-removed) csv 
-nemo_cch1_drm_cleaned <- nemo_comb_f %>% 
-  filter(source == "cch1") %>% 
-  select(-c(repro, habitat, id, references)) #remove cch2-only variables
-#853 unique records from cch1
-#Implies 1347 unique records from cch2 (2 dupes missed in first cleaning - SD00010501, UCSB030046)
+#Joining Both!
+
+nemo_all_1 <- bind_rows(nemo_cch1_g, nemo_cch2_g)
+#2133 obs!
 
 
-write_csv(nemo_cch1_drm_cleaned, here::here("data_cleaning", "CCH1_scripts_data", "cch1_cleaned_unique.csv"))
+#########
+#Objective: Remove further duplicates (and clean) this combined dataset, retaining all information. This will produce the first iteration of the final CCH dataset (before phenological scores are added)
+#########
+#Many of these 'duplicates' are distinct specimens, but were collected at the same location on the same exact date!
+#Limit removal bias: Delete duplicates in cch1 (lack pictures). If both duplicates are cch2, delete whichever record has less information (habitat, sub_sp, repro, locality...). Otherwise, delete second dupe.
+#Potential duplicates are considered distinct when the difference in lat/long estimate is > 0.5 and/or the listed localities are dissimilar enough to imply different collection locations.
+
+length(which(duplicated(nemo_all_1$date_new, nemo_all_1$lat, nemo_all_1$long)))
+#No dupes found when including date_new, lat, long, and county; but
+
+nemo_all_dupes1 <- get_dupes(nemo_all_1, date_new, lat, long) %>% 
+  select(specimen_number, source, everything())
+
+specrm_1 <- c("CAS-DS-135673", "RSA0003798", "POM3489", "JEPS1793", "UCD120224", "RSA0036099", "UCD120077", "SBBG6133", "UCD35998", "UCD120229", "UCD162873", "UCD120223", "UCD120075", "UCD120245", "UCD120079", "UCD120233", "SFV11583", "RSA201828", "UCD120237", "BSCA0946", "UCD82053", "UCD160137", "UCD120248", "UCD159735", "UCD158879", "UCD160061", "UCD159790", "UCD158890", "UCD120217", "UCD160445", "UCD120246", "UCD120247", "UCD120214", "UCD120255", "UCD120254", "RSA0036743", "UCD19423", "UCD102389", "BSCA0941", "BSCA0942", "BSCA4977", "UCD120251", "UCD89680", "UCD149685", "UCD56723", "UCD120252", "UCR0076997", "UCR0076994", "RSA0073978", "RSA0043193", "RSA0022321", "RSA0068234", "UCD118354", "RSA0043164", "RSA0011369", "UCD140571", "UCD131927", "RSA0042499", "RSA0067586", "RSA0073853", "RSA0065634", "RSA0073849")
+
+#CCH2 records removed: CAS-DS-135673, RSA0003798, RSA0036099, BSCA0946, BSCA0941, BSCA0942, BSCA4977, UCR0076997, UCR0076994, RSA0068234, RSA0042499
+
+#Many records have the same specimen ID!!! Remove matches w/ specimen number & source = cch1
+
+nemo_all_2 <- nemo_all_1 %>% 
+  filter(!(specimen_number %in% specrm_1 & source == "cch1"))
+
+specrm_2 <- c("CAS-DS-135673", "RSA0003798", "RSA0036099", "BSCA0946", "BSCA0941", "BSCA0942", "BSCA4977", "UCR0076997", "UCR0076994", "RSA0068234", "RSA0042499")
+
+nemo_all_3 <- nemo_all_2 %>% 
+  filter(!(specimen_number %in% specrm_2 & source == "cch2"))
+#Should remove a total of 62 dupes from original 2133, and it does! 2071 obs
+
+#######
+#Now,
+#Check for dupes with manually georeferenced records
+#######
+#Retain all cch2 records, followed by all manually referenced cch2 records with more precise error distances
+nemo_all_dupes2 <- get_dupes(nemo_all_3, date_new, specimen_number) %>% 
+  select(specimen_number, source, lat, long, everything()) #identical specimen numbers, almost the same lat/long ('human error')
+
+
+specrm_3 <- c("RSA0003800", "UC303377", "UC24222", "UC67144", "UC146183", "RSA0059611", "JEPS1804", "JEPS1794", "UC249525", "UC249523", "UC1103811", "UC562583", "JEPS1497", "JEPS1518", "RSA0043192", "RSA0051320", "JEPS1883", "UC571711", "RSA0028725", "JEPS1477", "RSA0043165", "JEPS1791", "RSA0036056", "JEPS1481", "JEPS104716", "UC606903", "UC606908", "UC1239737", "JEPS1478", "UC660076", "RSA0059738", "JEPS45200", "JEPS76985", "JEPS60186", "JEPS85033", "RSA0070947", "JEPS83176", "RSA0035444", "RSA0060576", "UC1871057", "UC1871236", "RSA0070948", "RSA0046820", "RSA0043194", "UC1922890", "RSA0094763")
+#Only cch1 dupe records
+
+nemo_all_4 <- nemo_all_3 %>% 
+  filter(!(specimen_number %in% specrm_3 & source == "cch1")) #specify source = cch1
+#46 dupes rm --- 2025 obs
+
+
+
+#checking county dupes (though county may differ: 'San Bernardino' vs 'San Bernardino County')
+#Remove all within-source duplicates (e.g. same date & location within cch1)
+nemo_all_dupes3 <- get_dupes(nemo_all_4, date_new, county, source) %>% 
+  select(specimen_number, source, lat, long, georef_by, everything())
+
+specrm_4 <- c("UCR0077197", "UC24243", "SD00010671", "POM88484", "HSC13579", "HSC13597", "RSA10775", "PASA2116", "UC404764", "UC494164", "UC691704", "JEPS1883", "UC797643", "JEPS1886", "UC606910", "UC1057474", "SBBG164528", "UCSB030069", "UC774697", "SEINET7063430", "OBI106052", "UC1541101", "RSA60205", "SBBG164503", "UC1285314", "SBBG82156", "UC1057251", "UCSB030032", "SBBG164504", "UCR0077202", "POM320434", "SBBG164518", "SDSU06106", "SBBG164514", "UCR0077193", "HSC34570", "HSC37202", "HSC35256", "RSA307343", "UCR0077184", "UCR0077174", "UCR0077206",  "SBBG164501", "UC1608275", "SBBG123782", "UCR0077181", "UCR0077120", "UCR0077179", "UC1787762", "UCR0077020", "RSA708611", "UC1922890", "UCR0077018", "UCR0077027", "SFV112654", "UC1789991", "CHSC97984", "UCR0077129", "SD00010596", "UCR0077185", "UCR0077170", "UCR0077172", "UCR0077052","UCR0077014")
+#Many of these simply share collection dates and were collected from different locations
+
+#CCH2 records removed [2]: UCR0077197, UC24243, SD00010671, UC404764, UC494164, UC691704, JEPS1883, UC797643, JEPS1886, UC606910, UC1057474, UC774697, OBI106052, UC1541101, SBBG164503, UC1285314, UC1057251, UCSB030032, SBBG164504, UCR0077202, SBBG164518, SDSU06106, SBBG164514, UCR0077193, UCR0077184, UCR0077174, UCR0077206, SBBG164501, UC1608275, UCR0077181, UCR0077120, UCR0077179, UC1787762, UCR0077020, UC1922890, UCR0077018, UCR0077027, SFV112654, UC1789991, UCR0077129,  SD00010596, UCR0077185, UCR0077170, UCR0077172, UCR0077052, UCR0077014
+
+
+#All specimen numbers should now be unique, should not need to specify source
+nemo_all_5 <- nemo_all_4 %>% 
+  filter(!(specimen_number %in% specrm_4))
+#1961 obs now
+
+
+
+#There seems to be no easy, automated way to remove further duplicates (very minor differences in multiple fields) --- Will have to manually check remaining potential duplicates (oh boy...)
+#Mainly checking for near IDENTICAL LOCALITY STRINGS
+
+#Same day collections in close vicinity considered separate when AT LEAST 1 MILE APART (change later?)
+nemo_all_dupes4 <- get_dupes(nemo_all_5, date_new) %>% 
+  select(specimen_number, source, lat, long, dupe_count, locality, georef_by,everything())
+
+
+
+specrm_5 <- c("NY337175", "CAS-BOT-BC7218", "POM65303", "POM65254", "CAS-DS-135678", "POM65288", "UC131446", "POM179734", "RSA0003801", "POM65313", "SEINET5521029", "POM65358", "POM73114", "CAS-DS-24652", "POM73962", "POM126468", "POM14755", "POM3472", "JEPS1880", "RSA75866", "POM97049", "POM97043", "POM96520", "RSA421364", "DAV300339", "RSA421338", "HSC13595", "POM184247", "POM182246", "POM231318", "OBI43248", "SBBG6143", "RSA421354", "RSA523374", "SD38532", "RSA604728", "SD42585", "POM248968", "RSA75885", "POM249032", "POM249022", "POM248998", "RSA75892", "RSA75891", "POM248973", "RSA75890", "RSA796428", "SBBG6137", "UCD120231", "SBBG117353", "POM248105", "RSA24986", "SDSU6124", "SEINET3091664", "UCSB030406", "RSA42344", "UCD120239", "RSA49705", "HSC13590", "DAV300347", "UCR0077004", "UCD32468", "OBI13914", "UCR0077209", "UCD120244", "SBBG82621", "RSA127738", "DAV300365", "HSC13581", "UCD120212", "SFV112661", "SFV112676", "HSC13602", "OBI13917", "HSC13591", "HSC13594", "RSA201829", "OBI40889", "OBI56258", "SFV112655", "CSUSB120", "CSUSB122", "CSUSB119", "OBI13915", "CSUSB117", "OBI19531", "SD215562", "RSA615510", "OBI6323", "RSA609597", "OBI3000", "HSC23559", "UCD40102", "RSA226948", "HSC65237", "HSC27545", "HSC32847", "UCR16823", "HSC32387", "CSUSB123", "HSC35261", "HSC34960", "HSC37991", "UCD120083", "HSC71063", "OBI77727", "OBI39146", "DAV300329", "HSC48300", "SBBG54841", "CSUSB2020", "HSC51156", "DAV300348", "HSC87901", "HSC87900", "HSC73815", "CHSC52497", "HSC77392", "RSA648209", "RSA656034", "HSC89473", "OBI46188", "UCD120241", "RSA0037196", "RSA562471", "SFV112657", "RSA666506", "UCR0077156", "UCD120243", "UCD120253", "UCD120238", "RSA575133", "RSA574968", "RSA628204", "HSC97903", "RSA718849", "SFV16101", "RSA721602", "RSA586935", "RSA596954", "RSA605075", "RSA620357", "RSA613472", "RSA598872", "OBI54498", "RSA613194", "UCD166683", "RSA633299", "RSA729931", "RSA729927", "RSA655478", "RSA729397", "RSA729936", "RSA715310", "RSA701641", "RSA733445", "SEINET7048075", "SBBG121241", "UCR122527", "RSA674245", "RSA682600", "RSA0105076", "IRVC26484", "RSA701528", "RSA717582", "RSA703103", "BSCA0944", "HSC96266", "RSA733241", "IRVC29323", "DAV300402", "UCR0077210", "RSA733465", "DAV300403", "HSC97503", "RSA747361", "UCD78281", "DAV300375", "RSA748852", "RSA0093734", "RSA0073978", "RSA769524", "CAS-BOT-BC224919", "RSA794025", "RSA798328", "RSA802257", "SD244363", "CHSC116618", "JEPS111831", "SD261570", "RSA0128925", "POM347131", "UCSB030079") 
+
+#CCH2 Records Removed [3]: CAS-DS-135678, RSA0003801, DAV300339, UCSB030406, DAV300347, UCR0077004, UCR0077209, DAV300365, SFV112661, SFV112676, SFV112655, DAV300329, DAV300348, SFV112657, UCR0077156, BSCA0944, DAV300402, UCR0077210, DAV300375, 	RSA0093734, RSA0073978, JEPS111831, UCSB030079
+
+
+nemo_all_6 <- nemo_all_5 %>% 
+  filter(!(specimen_number %in% specrm_5))
+#193 dupes removed for total of 1768 obs!
+
+#nemo_dupes_ttt <- get_dupes(nemo_all_6, lat, long) %>% #Hunting for more dupes
+#  select(specimen_number, source, lat, long, dupe_count, locality, georef_by,everything())
+
+
+
+
+write_csv(nemo_all_6, here::here("data_cleaning", "nemo_all_1.csv"))
 
 
 

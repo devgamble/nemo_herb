@@ -115,6 +115,7 @@ nemo_cch1_drm_cleaned <- nemo_comb_f %>%
 
 write_csv(nemo_cch1_drm_cleaned, here::here("data_cleaning", "CCH1_scripts_data", "cch1_cleaned_unique.csv"))
 
+####NOTE: Not all duplicates removed in this script or in these CSVs. See `combine_cch1_cch2_V2.R` for full duplicate cleaning
 
 
 

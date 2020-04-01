@@ -1,0 +1,212 @@
+specimen_number,date_new,year,month,day,DOY,sub_sp,county,locality,elev_m,lat,long,error_dist_m,georef_by,georef_notes,remove_obs,datum,source
+SDSU6124,1941-05-16,1941,5,16,136,integrifolia,San Diego,Campo to Boulevvard Highway.,,32.6513,-116.383,,,,,,cch1
+SD261570,1917-05-12,1917,5,12,132,integrifolia,San Diego,Cleveland National Forest: Barber Mountain area: west of Barrett Lake and southeast of the junction of Honey Springs Road and Lyons Valley Road; along Forest Rte. 17S10/Barber Mountain Road; along stream in rocky canyon,700,32.68267,-116.69306,,,,,,cch1
+UC303377,1882-03-17,1882,3,17,76,,San Diego,San Diego,,32.734,-117.129,9500,,,,WGS84,cch1
+SBBG6145,1937-03-11,1937,3,11,70,integrifolia,San Diego,Cuyamaca Rd above Julian,,33.0124,-116.5613,6435,,,,WGS84,cch1
+SD38532,1935-04-19,1935,4,19,109,,San Diego,"""In shade of shrubs, 1 mile east of Banner""",,33.0768,-116.53406,402.335,,,,WGS84,cch1
+SEINET7072858,1963-05-20,1963,5,20,140,,San Diego,"""North of Julian on Volcan Road. Coordinate datum: WGS84/NAD83. (33? deg. 6' 42"""" North Latitude, -116? deg. 36' 5"""" West Longitude, Coordinate datum: NAD27.).""",,33.1117,-116.602,,,,,,cch1
+SD176710,2006-05-10,2006,5,10,130,integrifolia,San Diego,"""Warner Springs area, Vista Irrigation District land, in wash south of S-2 (San Felipe Rd) ca. 1 mile SE of S-2's intersection with SR-79.""",900,33.2395,-116.6631,,,,,,cch1
+UCSC009129,2015-03-24,2015,3,24,83,,San Diego,"""East Grade Road, Palomar Mountain""",1428,33.2923,-116.8283,,,,,,cch1
+SD244363,2015-02-24,2015,2,24,55,integrifolia,San Diego,Camp Pendleton: central portion of Base; India Training Area; north of Basilone Rd. & east of Roblar Rd.; along a trail in a canyon bottom,139,33.3572,-117.3504,,,,,,cch1
+SD262013,1917-03-14,1917,3,14,73,integrifolia,San Diego,"""Fallbrook Naval Weapons Station: west of Fallbrook; North Magazine, north of Ammunition Road; northwestern part of station; on the northwestern slope of the highest peak on the station""",245,33.38229,-117.28723,,,,,,cch1
+SEINET7067555,1947-06-13,1947,6,13,164,,Riverside,About 5.2 miles northeast of De Luz in Sandia Canyon. Coordinate datum: NAD27.,,33.4886,-117.2544,,,,,,cch1
+SEINET7063430,1947-03-30,1947,3,30,89,menziesii,Riverside,"""About 4.2 miles west of Sage on East Benton Road. UTM Zone 11, 499198mE, 3715007mN. (WGS84/NAD83).""",549,33.5748,-117.0086,,,,,,cch1
+SEINET7063438,1947-03-30,1947,3,30,89,menziesii,Riverside,"""About 4.2 miles west of Sage in Tucalota Valley on East Benton Road. UTM Zone 11, 501405mE, 3715115mN. (WGS84/NAD83).""",561,33.5757,-116.9849,,,,,,cch1
+SEINET7073387,1963-04-23,1963,4,23,113,,Riverside,About 0.6 mile up Railroad Canyon Road southeast of Lake Elsinore. Coordinate datum: NAD27.,,33.6637,-117.2864,,,,,,cch1
+SEINET7073396,1963-04-23,1963,4,23,113,,Riverside,About 1.6 mile up the Railroad Canyon Road southeast of Lake Elsinore. Coordinate datum: NAD27.,,33.6641,-117.2692,,,,,,cch1
+SEINET7063415,1947-03-29,1947,3,29,88,menziesii,Riverside,"""About 6.2 miles east of Lake Elsinore on Newport Road. UTM Zone 11, 481169mE, 3727240mN. (WGS84/NAD83).""",434,33.6849,-117.2032,,,,,,cch1
+UCR122527,2001-05-20,2001,5,20,140,,Riverside,"""San Jacinto Mtns., 0.3 mi NW of Keen Camp Summit along CA-74""",1494,33.68833,-116.70333,,,,,,cch1
+UCD120217,1975-04-26,1975,4,26,116,,Riverside,Mayhew Canyon 1.5 mi. southeast of Glen Ivy on Highway 71.,335,33.7627,-117.4655,,,,,WGS84,cch1
+UCD120224,1933-04-02,1933,4,2,92,,Riverside,Box Springs Hills.,,33.98152,-117.29485,,,,,WGS84,cch1
+UCR16823,1974-05-02,1974,5,2,122,integrifolia,Riverside,"""San Bernardino Mtns., Banning Canyon""",1524,34.025,-116.86667,,,,,,cch1
+UCD120079,1964-03-26,1964,3,26,86,,San Bernardino,Dry Morongo Valley.,,34.0457,-116.6202,,,,,WGS84,cch1
+SEINET3091664,1945-05-05,1945,5,5,125,,Riverside,San Gorgonio Mountains above Banning.,914,34.087216,-116.835735,10000,,,,,cch1
+UC24222,1897-02-10,1897,2,10,41,,Los Angeles,Claremont,365,34.09667,-117.71889,1000,,,,WGS84,cch1
+VVC259,1995-03-19,1995,3,19,78,,San Bernardino,"""San Bernardino Mtns., ridge on the south side of Morton Canyon, east side of mouth of the Santa Ana River Canyon""",732,34.0975,-117.09722,,,,,,cch1
+SD113486,2015-04-01,2015,4,1,91,,Los Angeles,Claremont,,34.122,-117.7176,6000,,,,WGS84,cch1
+SEINET5791646,1882-02-27,1882,2,27,58,,Los Angeles,"""Pasadena, California""",,34.147785,-118.144516,9980,,,,,cch1
+UCD120248,1974-04-27,1974,4,27,117,integrifolia,Los Angeles,"""Evey Canyon, a side canyon of San Antonio Canyon. San Gabriel Mts. Mt. Range.""",731,34.167795,-117.68615,,,,,WGS84,cch1
+UCD120247,1993-03-28,1993,3,28,87,integrifolia,San Bernardino,"""San Bernardino Mtns.: Waterman Canyon, 1 km W of Arrowhead Hot Spr. Hotel, at and below the 1st stream Xing of Old Waterman C. Rd. Along E cyn wall.""",600,34.188765,-117.273261,,,,,WGS84,cch1
+UCD120223,1961-03-24,1961,3,24,83,,San Bernardino,Barett Canyon one mile north of Ranger Station in San Antonio Canyon on Old Road. San Bernardino Mt. Range.,762,34.193742,-117.676792,,,,,WGS84,cch1
+SBBG121241,2001-05-16,2001,5,16,136,integrifolia,Los Angeles,Liz's Loop (Edison Rd) to Cherry Cyn Fire Rd; northern San Rafael Hills,457,34.193889,-118.205833,1000,,,,WGS84,cch1
+UC1922890,2001-05-16,2001,5,16,136,integrifolia,Los Angeles,Transverse Ranges; Verdugo Mountains region; Northern San Rafael Hills: Liz's Loop (Edison Road) to Cherry Canyon Fire Road.,457,34.19528,-118.206665,,,,,,cch1
+SEINET3091596,1974-05-28,1974,5,28,148,,San Bernardino,Rd. between Running Springs & Lake Arrowhead.,,34.203,-117.09074,50000,,,,,cch1
+SBBG27701,1967-06-10,1967,6,10,161,integrifolia,San Bernardino,above S end of Lake Arrowhead,1615,34.251,-117.183,1000,,,,,cch1
+UCD120245,1962-06-03,1962,6,3,154,integrifolia,San Bernardino,"""Near Lake Arrowhead Hospital, N shore.""",1584,34.27027,-117.18365,,,,,WGS84,cch1
+SBBG127047,2011-07-05,2011,7,5,186,integrifolia,Los Angeles,"""rd to Barley Flats, 3.9 km W of Shortcut Station, 1.1 km N of St Hwy 2; San Gabriel Mtns""",1665,34.2785,-118.072,200,,,,,cch1
+SBBG125441,2010-06-16,2010,6,16,167,integrifolia,Los Angeles,"""upper Big Tujunga Cyn, 0.3 km ENE of Shortcut Station, 0.7 km N of St Hwy 2, San Gabriel Mtns""",1295,34.2795,-118.027,200,,,,,cch1
+SFV16101,1995-04-09,1995,4,9,99,,Los Angeles,"""San Gabriel Mountains Angeles Forest Highway, 3.5 miles north of junction with Angeles Crest Highway. 100 m off highway.""",915,34.2952,-118.166,800,,,,WGS84,cch1
+SEINET3156484,1950-03-28,1950,3,28,87,integrifolia,Los Angeles,"""12 miles S of Castaic, Hwy. 99""",335,34.3442,-118.5313,800,,,,WGS84,cch1
+SD215562,1967-05-15,1967,5,15,135,integrifolia,Los Angeles,"""San Gabriel Mountains, east side Elsmere Canyon near mouth.""",456,34.3631,-118.5054,500,,,,WGS84,cch1
+SBBG82159,1955-03-24,1955,3,24,83,menziesii,Ventura,Casitas Pass; Ventura River watershed,338,34.386,-119.3804,1000,,,,,cch1
+SBBG82156,1955-03-24,1955,3,24,83,menziesii,Ventura,"""Casitas Pass Rd, Ventura River watershed""",,34.3884,-119.3605,2250,,,,,cch1
+SBBG122441,2000-04-01,2000,4,1,92,integrifolia,Ventura,"""Rancho de Cielo, NW side of Sulphur Mtn, between Clark Ranch Rd and Sulphur Mtn Rd""",304,34.4106,-119.2432,1000,,,,,cch1
+SBBG133171,2009-03-25,2009,3,25,84,atomaria,Santa Barbara,N-central mesa between W slope of eastern drainage feature just E (10 m) and downslope of NS trending trail; More Mesa,30,34.422,-119.794,500,,,,,cch1
+SBBG64772,1929-04-26,1929,4,26,116,integrifolia,Los Angeles,Soledad Cyn,,34.4227,-118.5409,4000,,,,,cch1
+SBBG6143,1934-04-04,1934,4,4,94,integrifolia,San Bernardino,near Hesperia,,34.426,-117.3,5000,,,,,cch1
+SBBG6144,1939-04-04,1939,4,4,94,integrifolia,San Bernardino,Hesperia,,34.426,-117.3,,,,,,cch1
+SBBG48273,1973-03-14,1973,3,14,73,menziesii,Santa Barbara,El Mirasol block between Sola and Micheltorena streets; Santa Barbara,,34.4293,-119.706,500,,,,,cch1
+SBBG64803,1928-03-02,1928,3,2,62,integrifolia,Santa Barbara,Mission Ridge; Santa Barbara,,34.442,-119.701,2300,,,,,cch1
+SBBG122480,1995-05-19,1995,5,19,139,integrifolia,Ventura,"""trail to Tom's Cabin; Hopper Mtn Nat Wildlife Refuge, Sespe Condor Sanctuary""",670,34.4535,-118.849,1000,,,,,cch1
+UC1871057,1991-04-29,1991,4,29,119,integrifolia,Los Angeles,"""Transverse Ranges; Liebre Mountains region; Parker mountain and ridge to SW: SW of Acton and NNE of Ravenna. T4N R13W; W edge section 2, E and SE edge section 3, NNE edge section 10. Collected between 3670-4131 (summit) feet elevation.""",1119,34.45639,-118.219444,,,,,,cch1
+SBBG6133,1945-04-07,1945,4,7,97,integrifolia,Santa Barbara,Rattlesnake Cyn,304,34.4575,-119.6915,1500,,,,,cch1
+UC1871236,1991-04-30,1991,4,30,120,integrifolia,Los Angeles,"""Transverse Ranges; Liebre Mountains region; Soledad Canyon Wash: about half mile E of Acton; T5N R13W, W1/2 SE1/4 SE1/4 section 36; elevation 2720 feet.""",829,34.46889,-118.18833,,,,,,cch1
+SBBG64777,1945-03-25,1945,3,25,84,integrifolia,Ventura,Foothill Trail,,34.469,-119.231,2000,,,,,cch1
+SBBG39007,1966-04-07,1966,4,7,97,integrifolia,Santa Barbara,"""Escondido Crk and spring, off Juncal Rd""",,34.48,-119.564,2300,,,,,cch1
+SBBG17321,1963-05-31,1963,5,31,151,integrifolia,Santa Barbara,Escondido Cyn Camp on Pendola Flat Rd ca. 3.3 mi N from Romero Cyn saddle,609,34.486,-119.5638,750,,,,,cch1
+SBBG82621,1957-04-09,1957,4,9,99,menziesii,Santa Barbara,"""El Camino Cielo, ca. 0.75 mi E of San Marcos Pass""",,34.511,-119.809,1000,,,,,cch1
+UCD120246,1978-04-01,1978,4,1,91,integrifolia,Los Angeles,West side of Sierra Hwy. and 1 mile north of State Hwy. 14.,987,34.512875,-118.236764,,,,,WGS84,cch1
+SBBG122442,2000-05-13,2000,5,13,134,integrifolia,Ventura,trail from Pothole Spring to Log Cabin Cmpgrd (USFS 18W04),502,34.5192,-118.7639,1000,,,,,cch1
+SBBG82630,1956-05-16,1956,5,16,137,menziesii,Santa Barbara,El Camino Cielo ca. 9 mi W of San Marcos Pass,914,34.521,-119.915,2500,,,,,cch1
+SBBG64807,1925-05-02,1925,5,2,122,integrifolia,Santa Barbara,Knapp's Lodge,,34.5235,-119.7933,1000,,,,,cch1
+SBBG82201,1947-04-17,1947,4,17,107,menziesii,Santa Barbara,"""Happy Cyn, upper Santa Ynez Valley""",,34.601,-120.028,,,,,,cch1
+SBBG82469,1955-03-25,1955,3,25,84,menziesii,Santa Barbara,Campbell Rd ca. 8 mi W of Buellton,,34.6515,-120.3135,500,,,,,cch1
+SBBG114359,2001-05-18,2001,5,18,138,integrifolia,Ventura,"""Piru flood plain, 1 mi N of Hardluck Cmpgrd at first major bend in crk""",1021,34.694,-118.857,1000,,,,,cch1
+SBBG82202,1956-04-05,1956,4,5,96,menziesii,Santa Barbara,"""rd near Big Cone Spruce grove on Ranger Pk, E of Figueroa Mtn""",,34.7216,-119.9494,1000,,,,,cch1
+SBBG124298,2003-04-25,2003,4,25,115,menziesii,Ventura,"""Hungry Valley State Vehicular Recreation Area, Gold Hill Rd W of jct with Hungry Valley Rd""",1188,34.733,-118.88,1500,,,,,cch1
+SBBG64792,1929-05-31,1929,5,31,151,integrifolia,Santa Barbara,Figueroa Mtn,,34.7438,-119.985,1900,,,,,cch1
+SBBG23031,1965-05-08,1965,5,8,128,integrifolia,Santa Barbara,N side of Figueroa Mtn near Zaca Ridge rd to Catway,1127,34.7558,-119.9827,1000,,,,,cch1
+SEINET7072453,1963-04-21,1963,4,21,111,,Santa Barbara,Weedy area just south of Vandenburg Air Force Base. San Antonio Valley. Coordinate datum: NAD27.,,34.7688,-120.5109,,,,,,cch1
+SBBG82204,1957-05-23,1957,5,23,143,menziesii,Santa Barbara,Santa Barbara Potrero,,34.774,-119.642,1000,,,,,cch1
+SBBG82157,1955-04-10,1955,4,10,100,menziesii,Santa Barbara,old rd near Zaca Lake towards the Manzana River,,34.7832,-120.0169,2000,,,,,cch1
+SBBG82606,1953-04-28,1953,4,28,118,menziesii,Santa Barbara,"""Graciosa Cyn, S of Orcutt""",,34.844,-120.45,5000,,,,,cch1
+SBBG114372,1998-04-25,1998,4,25,115,menziesii,Ventura,"""N of Ballinger Cyn Cmpgrd, adj to main rd""",1219,34.895,-119.413,2000,,,,,cch1
+SBBG82629,1963-04-30,1963,4,30,120,menziesii,Santa Barbara,lower Colson Cyn,,34.941,-120.2073,2500,,,,,cch1
+SBBG24491,1966-05-24,1966,5,24,144,integrifolia,Santa Barbara,Colson Cyn,457,34.942,-120.1995,5400,,,,,cch1
+UCD120229,1950-03-18,1950,3,18,77,,Kern,"""Along Soda Lake Road to Carrizo Plain, about 0.8 mile off Highway 399. Near San Luis Obispo County line.""",,34.9712,-119.4556,,,,,WGS84,cch1
+SBBG82149,1967-05-24,1967,5,24,144,integrifolia,Santa Barbara,Buckhorn Cyn off Hwy 166,,35.0026,-120.2041,3600,,,,,cch1
+SEINET7063686,1947-04-16,1947,4,16,106,,San Luis Obispo,"""An open weedy grassland. About 15.6 miles east of Arroyo Grande on the Huasna Road. UTM Zone 10, 741103mE, 3892235mN. (WGS84/NAD83).""",241,35.1441,-120.3535,,,,,,cch1
+UCD78281,2008-03-25,2008,3,25,85,,San Luis Obispo,San Luis Obispo Co.: North of Carrizo Plain National Monument. Along Soda Lake Road between College and Belmont Streets.,591,35.307282,-119.986231,1000,,,,NAD83,cch1
+UCR97948,1997-03-08,1997,3,8,67,integrifolia,San Luis Obispo,"""South Coast Range, along CA Hwy 58 west of Navajo Creek, west of Carrizo Plain""",564,35.405,-120.26,,,,,,cch1
+SBBG82088,1950-04-30,1950,4,30,120,menziesii,San Luis Obispo,"""near Carneros Cyn, Temblor Range""",1066,35.422,-119.931,2000,,,,,cch1
+UC606908,1938-04-10,1938,4,10,100,,San Luis Obispo,"""in ravine at n edge Paso Robles , n edge Paso Robles (Salinas River Valley)""",198,35.6416,-120.7016,33,,,,WGS84,cch1
+SBBG110918,1995-04-01,1995,4,1,91,menziesii,Monterey,"""near Sam Jones Rd, ca. 2 km W of San Antonio River, ca. 3.5 km NE of Piojo Valley Reservoir; Ft Hunter Liggett""",300,35.903,-121.132,1200,,,,,cch1
+SBBG113301,1995-04-01,1995,4,1,91,menziesii,Monterey,"""above Mission Crk, W of jct of Mission Crk and upper Milpitas Rds, ca. 0.5 km E of Coleman Reservoir; Ft Hunter Liggett""",340,36.0802,-121.2721,1200,,,,,cch1
+SBBG123782,1995-04-06,1995,4,6,96,menziesii,Monterey,"""above Mission Crk, W of jct of Mission Crk and Upper Milpitas Rds, ca. 0.6 km E of Coleman Reservoir, ca. 3.2 km W of Cosio Knob; Ft Hunter Liggett""",360,36.0802,-121.2721,1200,,,,,cch1
+SD44664,1951-04-28,1951,4,28,118,atomaria,Monterey,Santa Lucia Mtns.,762,36.1291,-121.5213,40795,,,,WGS84,cch1
+SEINET10697901,2000-04-14,2000,4,14,105,,Monterey,"""Ford Ord. Off Jack's Road near Mudhen Lake. East end of Eucalytpus Road. Woodlands, moist slopes.""",60,36.62777,-121.72972,,,,,,cch1
+SJSU15867,2016-02-28,2016,2,28,59,atomaria,Santa Clara,Mt Umunhum; west-facing slope below Summit Trail,757,37.15769,-121.88555,,,,,,cch1
+SBBG117353,1941-04-11,1941,4,11,101,integrifolia,Mariposa,"""near Agua Fria Crk along St Hwy 140, ca. 6 mi W of Mariposa""",609,37.482,-120.021,1000,,,,,cch1
+UC571711,1933-03-30,1933,3,30,89,,Santa Clara,"""Arroyo Mocho near headwaters (Mount Hamilton Range); , Arroyo Mocho""",,37.497536,-121.53551,1718.77512,,,,NAD27,cch1
+YM-YOSE117409,1967-06-10,1967,6,10,161,,Mariposa,EAST SIDE WAWONA MEADOW LOOP ROAD,1219,37.5277643,-119.6413028,,,,,,cch1
+UC131446,1903-04-06,1903,4,6,96,,San Francisco,"""San Bruno hills; San Francisco, San Bruno hills""",,37.6874,-122.4355,500,,,,WGS84,cch1
+UCD102389,2002-04-24,2002,4,24,114,menziesii,Contra Costa,Mount Diablo State Park. North Peak Road to North Peak.,890,37.866667,-121.883333,,,,,,cch1
+SEINET7096613,1947-04-26,1947,4,26,116,,Tuolumne,"""South Base of Table Mountain. NAD27, 37? deg. 58' 59ao, -120? deg. 26' 0ao (converted to WGS84 decimal degrees). UTM Zone 10, 725425mE, 4206841mN""",,37.98297,-120.43433,,,,,,cch1
+UCD35998,1949-04-24,1949,4,24,114,,Tuolumne,"""Tuolumne County, Columbia, sloping towards Vallecito, at Stanislaus River.""",304,38.038573,-120.456538,,,,,WGS84,cch1
+UCD40102,1970-05-23,1970,5,23,143,menziesii,Calaveras,"""Stanislaus River Canyon. Along Hunter's Road, between Hathaway Pines and NF Stanislaus River.""",731,38.1995,-120.3288,525,,,,WGS84,cch1
+SEINET7067240,1947-05-13,1947,5,13,133,,Sonoma,Bodega Head. Coordinate datum: NAD27.,,38.3111,-123.065,,,,,,cch1
+SBBG6137,1939-05-14,1939,5,14,134,atomaria,Sonoma,Bodega State Park [Bodega Dunes State Beach],,38.336,-123.063,3000,,,,,cch1
+UC606903,1938-03-27,1938,3,27,86,,Napa,"""5 mi e Napa (n slope in Howell Mountains, North Coast Ranges); North Coast Ranges, Howell Mountains, e of Napa""",457,38.3425,-122.1996,22,,,,WGS84,cch1
+UCD159790,1975-04-13,1975,4,13,103,atomaria,Napa,"""Soda Canyon Road, near outlet of canyon.""",60,38.374167,-122.281111,,,,,WGS84,cch1
+UCD120254,1995-05-21,1995,5,21,141,menziesii,Napa,South side of Highway 128 about 3 mi. west of Wragg Canyon Rd.,250,38.433333,-122.166667,,,,,,cch1
+UC67144,1898-04-23,1898,4,23,113,,Sonoma,Santa Rosa Creek Canyon,,38.48098,-122.57153,4694.44478,,,,NAD27,cch1
+UCD19423,2000-02-07,2000,2,7,38,menziesii,Yolo,"""Grasslands Regional Park. East of Davis, from intersection of I-80 and Mace Blvd., 3.5 mi. south on Mace Blvd.(County Road 104), thence east 1/4 mi along unpaved entrance road, then south about 200 yd.""",12,38.492222,-121.686667,,,,,,cch1
+UCD120077,1945-02-15,1945,2,15,46,,Yolo,"""Putah Creek Canyon, west of Winters.""",,38.5017,-122.02626,,,,,WGS84,cch1
+UCD120237,1967-03-23,1967,3,23,82,,Napa,c. 1 mi S of Spanish Flat.,167,38.52235,-122.21685,,,,,WGS84,cch1
+UCD120252,2007-04-23,2007,4,23,113,menziesii,Amador,Northern Sierra Nevada Mountains: along Bell Road beside Plymouth Creek just east of CA-49 in the vicinity of Enterprise.,302,38.540278,-120.840833,,,,,,cch1
+UCD118354,2012-05-05,2012,5,5,126,menziesii,Napa,"""Las Posadas State Experimental Forest. Northeastern part of property, on Recreation flat.""",387,38.561667,-122.403333,,,,,NAD83,cch1
+UCD149685,2006-04-25,2006,4,25,115,,Napa,"""Howell Mountain Plateau, about 1 km west of Angwin. McCrane property. Vineyard conversion.""",526,38.578333,-122.460556,,,,,WGS84,cch1
+UCD56723,2007-03-23,2007,3,23,82,,Yolo,"""Tuleyome Ireland Ranch. In inner coast range northwest of the City of Winters between Salt Creek and Enos Creek, just north of Wild Cow Mountain. SW portion of ranch.""",703,38.588833,-122.124167,,,,,NAD83,cch1
+UC660076,1940-04-04,1940,4,4,95,,Sacramento,ne Sacramento; ne of Sacramento,,38.6024,-121.4161,4320,,,,WGS84,cch1
+UCD82053,1972-04-22,1972,4,22,113,,Napa,Pope Valley.,,38.6151,-122.4282,,,,,WGS84,cch1
+UCD120214,1995-04-10,1995,4,10,100,,Napa,Along Chiles Valley/Pope Valley Rd. approx. 2 m. S of Pope Canyon Rd. intersection. North Coast Biodiversity Arena.,175,38.616667,-122.383333,,,,,,cch1
+UCD120251,2006-04-20,2006,4,20,110,menziesii,El Dorado,"""Northern Sierra Nevada: Between N and Middle forks of Cosumnes River; junction of Sand Ridge Road and Cutaway Lane, 2.1 mi SW of Somerset.""",665,38.631944,-120.722222,,,,,,cch1
+UC880916,2015-05-01,2015,5,1,121,,Sonoma,Mt. St. Helena,,38.6649,-122.6265,3250,,,,WGS84,cch1
+UCD120212,1962-03-24,1962,3,24,83,,Placer,6 miles west of Roseville.,,38.729444,-121.397222,,,,,NAD27,cch1
+UCD160137,1974-03-27,1974,3,27,86,,Sonoma,Mayacmas Mountains. The Geysers. Site A-8. (Elevation estimated using Google Earth by label maker.),426,38.799444,-122.830833,,,,,WGS84,cch1
+UCD158879,1975-03-27,1975,3,27,86,atomaria,Sonoma,Mayacmas Mountains. The Geysers. Site A-8. (Elevation estimated using Google Earth by label maker.),426,38.799444,-122.830833,,,,,WGS84,cch1
+UCD158890,1975-04-15,1975,4,15,105,,Lake,"""Mayacmas Mountains, Francisco Property. High Valley Creek. (Elevation estimated using Google Earth by label maker.)""",853,38.830833,-122.768889,,,,,WGS84,cch1
+UCD160445,1975-05-22,1975,5,22,142,,Lake,"""Mayacmas Mountains, Francisco Property. High Valley Creek. (Coordinates, location, and elevation estimated by label maker.)""",792,38.838333,-122.769722,,,,,WGS84,cch1
+UCD159735,1975-03-26,1975,3,26,85,,Lake,"""Mayacmas Mountains, Childers Peak area. Barceloux Ranch, east of Big Canyon Road. (Elevation estimated using Google Earth by label maker.)""",579,38.840278,-122.627222,,,,,WGS84,cch1
+UCD160061,1975-04-09,1975,4,9,99,atomaria,Sonoma,"""Mayacmas Mountains, Hilary Farms. (Exact location unknown. Elevation and coordinates estimated by label maker.)""",609,38.845556,-122.938889,,,,,WGS84,cch1
+UCD89680,2006-04-24,2006,4,24,114,,Yolo,"""McLaughlin Reserve; Davis Creek Reservoir, Hobbit Hill.""",466,38.8625,-122.358639,,,,,,cch1
+UCD83901,2010-04-24,2010,4,24,114,,Lake,"""BLM Cache Creek Wilderness. NE part of Wilderness just west of confluence of Cache and Rocky Creeks, top ridge of peninsula that juts out into Cache Creek.""",330,38.984444,-122.480833,,,,,NAD 83,cch1
+UCD131927,2013-04-14,2013,4,14,104,menziesii,Lake,"""Clear Lake State Park. NE of Kelseyville. Lower northern slope of Mount Konocti. South side of park, south of Soda Bay Road. South of undeveloped road that goes southeast from Glebe Road past the gate.""",562,38.999722,-122.803333,,,,,NAD83,cch1
+UCD162873,1954-04-07,1954,4,7,97,,Mendocino,"""Hopland, Hopland Field Station, in pasture northwest of station headquarters. (Exact location unknown. Coordinates estimated by label maker).""",240,39.003333,-123.0875,,,,,WGS84,cch1
+UCD120255,1995-05-19,1995,5,19,139,menziesii,Placer,"""Near a road cut about 1 km from the trailhead of the Steven's Trail that descends the north fork of the American River Canyon outside of Colfax, south of I-80.""",400,39.083333,-120.883333,,,,,,cch1
+UCD120233,1965-04-11,1965,4,11,101,,Placer,1 mile N. of Marysville on Hwy. 99 E.,,39.156849,-121.635633,,,,,WGS84,cch1
+SFV11583,1965-04-11,1965,4,11,101,,Placer,1 mile north of Marysville on Highway 99E. Roadside.,20,39.18,-121.63,,,,,NAD27,cch1
+UCD140571,2013-04-06,2013,4,6,96,,Sutter,Sutter County; Sutter Buttes. Dean Ranch. South of North Butte. Western slope of Sunrise Ridge.,271,39.228333,-121.776667,,,,,NAD83,cch1
+UCD120083,1977-05-02,1977,5,2,122,,Mendocino,"""3/4 mile n.w. Cleone, north of Fort Bragg.""",,39.5007,-123.7893,500,,,,WGS84,cch1
+UCD120075,1962-04-08,1962,4,8,98,,Butte,"""On Table Mountain, north of Oroville.""",,39.598253,-121.557489,,,,,WGS84,cch1
+UC24254,1898-01-01,1898,1,1,1,atomaria,Mendocino,Round Valley,,39.78802,-123.238846,6646.5742,,,,,cch1
+SBBG6129,1939-04-24,1939,4,24,114,atomaria,Humboldt,near Dyerville,,40.356,-123.923,5000,,,,,cch1
+UC562583,1926-05-09,1926,5,9,129,atomaria,Humboldt,Valley of South Yager Creek,762,40.5529,-123.8408,1875,,,,WGS84,cch1
+UC1103811,1922-05-29,1922,5,29,149,atomaria,Humboldt,"""South Yager Creek Valley Northern Coast Ranges, South Yager Creek Valley""",762,40.553,-123.8412,1725,,,,WGS84,cch1
+UC146183,1908-06-09,1908,6,9,161,atomaria,Humboldt,"""Kneeland Prairie Northern Coast Ranges, Kneeland Prairie""",762,40.761459,-123.993019,1622.21472,,,,NAD27,cch1
+UC1239737,1938-06-13,1938,6,13,164,,Humboldt,"""at Cold Springs , at Cold Springs (Grouse Mountain)""",1432,40.8343,-123.7133,252,,,,WGS84,cch1
+UC249525,1922-04-30,1922,4,30,120,atomaria,Humboldt,"""near Willow Creek (Trinity River Valley); Northern Coast Ranges, , nr Willow Creek""",152,40.944,-123.6319,1328,,,,WGS84,cch1
+UC249523,1922-05-28,1922,5,28,148,atomaria,Humboldt,Little River Beach Northern Coast Ranges,6,41.01909,-124.10333,1622.21472,,,,NAD27,cch1
+SEINET10780803,1935-03-16,1935,3,16,75,,Alameda,Berkeley Hills.,,37.88673,-122.236807,3717,CPA,,,,cch1
+SEINET5521015,1967-03-25,1967,3,25,84,,Tuolumne,South fork Stanislaus river,509,38.21912,-119.88124,8192,CPA,Very broad; river is almost 10 miles long,,,cch1
+SEINET5521017,1962-04-11,1962,4,11,101,,El Dorado,15 miles northeast of Auburn,335,39.050159,-120.879326,6077,CPA,,,,cch1
+SEINET5521018,1959-04-18,1959,4,18,108,,Placer,1/2 mile east of Bazter on US highway 40. Walk a bit into the woods north of the highway.,1829,39.223269,-120.771519,715,CPA,"Assumed typo: Baxter instead of ""Batzer""",,,cch1
+SEINET5521019,1959-04-11,1959,4,11,101,,El Dorado,"""Near Placerville, roadside near highway 49""",549,38.728917,-120.806083,2628,CPA,,,,cch1
+SEINET5521020,1942-04-03,1942,4,3,93,,Sacramento,2 miles north of Fair Oaks,70,38.673621,-121.272172,554,DG,"UPDATE: Mall (and likely surrounding development) established in 1972. Specimen collected 30 years very likely on hill or roadside, plus ngmdb.usgs.gov historical map shows v little development. Placed marker 2 mi N and set error to Greenback Ln (DG).  Urban area",,,cch1
+SEINET5521021,1930-03-15,1930,3,15,74,,Placer,5 miles east of Lincoln,,38.883263,-121.190184,4912,CPA,,,,cch1
+SEINET5521022,1959-03-29,1959,3,29,88,,Placer,2 miles north of Roseville. In open field 1 miles east of highway 99,49,38.825277,-121.33996,3090,CPA,"Assumed typo: Open field 10 mi E instead of ""Open field 1 mi E"". It is impossible to be 2 miles North of Roseville and 1 mile east of the 99, but there is a field 2 mi N of Roseville and 10 mi E of 99",,,cch1
+SEINET5730453,1973-04-08,1973,4,8,98,,Napa,"""11.6 miles south of Pope Valley, Napa County.; Pope Valley""",,38.444514,-122.399423,5307,CPA,,,,cch1
+SEINET5730455,1967-07-07,1967,7,7,188,,Mendocino,"""Near camp at Spruce Grove, 4 miles (airline) north of Hull Mountain Lookout.; Hull Mountain""",1829,39.582802,-122.936036,729,CPA,,,,cch1
+SEINET6971729,1955-03-24,1955,3,24,83,,Orange,"""Trabuco Canyon, about 5 miles east of El Toro.""",,33.667842,-117.587278,1132,CPA,,,,cch1
+SEINET6971731,1955-03-19,1955,3,19,78,,San Diego,"""Border Mesa east of San Ysidro, 1.3 mile west of foot of National. Ave.""",,32.555033,-117.019095,1233,DG,"UPDATE: placed marker east of San Ysidro on in center of a mesa, with error extending to highway 905 and border (DG). Unclear; National Ave does not start east of San Ysidro",,,cch1
+SEINET6971732,1955-03-28,1955,3,28,87,,Tulare,"""0.25 mile above turnoff to Milo, east of Springfield. Below road in bottom of North Fork, Tule River.""",,36.142745,-118.804013,363,CPA,,,,cch1
+SEINET7040096,1963-05-25,1963,5,25,145,,San Luis Obispo,"""12.8 miles north of San Miguel and 0.2 mile south of Junction with Hare Canyon Road, Indian Valley. Valleton Quad. UTM Zone 10, 707908mE, 3975466mN.""",,35.903059,-120.689727,578,CPA,,,,cch1
+SEINET7048075,2001-04-30,2001,4,30,120,,San Bernardino,"""Redlands, Sand Canyon Road, east side. Near Crafton Hills College. Elevation about 2075 feet.""",,34.036606,-117.099034,1097,WW,,,,cch1
+SJSU1031,1950-03-31,1950,3,31,90,,Santa Clara,"""Halls Valley, W slope Mt Hamilton, Mt Hamilton Range""",,37.334191,-121.70999,3344,WW,,,,cch1
+SJSU8553,1975-03-15,1975,3,15,74,,Marin,"""c. 300 yds from shoreline c. 1.5 mi S of Abbotts Lagoon, Point Reyes Peninsula""",,38.096823,-122.963802,921,WW,,,,cch1
+SJSU960,1948-04-28,1948,4,28,119,,Santa Clara,Skyline Blvd 5 mi W of Saratoga,,37.25707,-122.1186,1562,WW,,,,cch1
+UC619287,1898-03-11,1898,3,11,70,,Napa,e Yountville (foothills Napa Range); foothills Napa Range e of Yountville,,38.381127,-122.426041,4381,WW,,,,cch1
+UCD120084,1962-04-02,1962,4,2,92,,Solano,"""East side of Pleasants Valley Road, 0.6 mile south of State Highway 128.""",213,38.485704,-122.030684,395,WW,DUPLICATE w cch2,y,,cch1
+UCD120085,1951-04-08,1951,4,8,98,,Napa,"""6.1 miles southwest of Monticello, on Napa Road.""",,38.497113,-122.256126,5489,WW,DUPLICATE w cch2,y,,cch1
+UCD120213,1942-02-21,1942,2,21,52,,Lake,"""At the west bank of Clear Lake, 3 mi. south of Lucerne along Calif. #20.""",,39.055646,-122.78267,3620,WW,DUPLICATE w cch2,y,,cch1
+UCD120216,1978-04-19,1978,4,19,109,,Los Angeles,Verdugo Mountains on fireroad from Stough Canyon to La Crescenta.,548,34.225818,-118.281545,894,WW,DUPLICATE w cch2,y,,cch1
+UCD120218,1973-05-08,1973,5,8,128,,Fresno,1.1 mi. past Trimmer Ranger Station on Trimmer Springs Rd. coming from Trimmer.,,36.918098,-119.31963,629,WW,"DUPLICATE with cch2 record! Trimmer Springs Road does not continue to Ranger Station; Maxon Road and Trimmer Springs Road junction is very subtle, possible that the collector thought Maxon Road was Trimmer Springs Road; measured 1.1 mi from Ranger Station",y,,cch1
+UCD120219,1974-04-22,1974,4,22,112,,San Luis Obispo,"""San Luis Obispo County: In Commatti Canyon, 1.1 miles N of CA 58.""",,35.446923,-120.287763,4981,DG,"DUPLICATE. locality renamed to 'Camatta Canyon'. Two parts of canyon run North of Hwy 58. Placed marker on western fork along Camatta Creek road, set error to include both points (DG). Could not find Commatti Canyon; CA 58 called Calf Canyon Hwy; measured 1.1 mi N and uncertainty includes entire highway",y,,cch1
+UCD120220,1959-03-29,1959,3,29,88,,El Dorado,"""State Highway 49, 2 1/2 miles southeast of Pilot Hill.""",,38.828427,-120.970589,1330,WW,DUPLICATE w cch2,y,,cch1
+UCD120221,1963-05-07,1963,5,7,127,,Amador,"""Near Cook's Station, State Highway 88.""",914,38.526509,-120.433485,777,WW,DUPLICATE w cch2,y,,cch1
+UCD120225,1965-04-12,1965,4,12,102,,Tulare,1 mile northeast of gravel pit on Nigger Creek Road.,160,36.580345,-119.22089,428,WW,DUPLICATE with cch2 - rm (DG). used coordinates and uncertainty from CCH2,y,,cch1
+UCD120226,1993-03-19,1993,3,19,78,,San Luis Obispo,"""San Luis Obispo County: Carrizo Plain Natural Area, grassland along Soda Lake Rd., 2.3 miles NW of intersection with dirt road leading to Painted Rock and Education Center.""",,35.186806,-119.865743,1034,WW,DUPLICATE w cch2. measured 2.3 mi from Painted Rock Trailhead (assumed trail was the dirt road that lead to Painted Rock) but distance not enough to go west only north; coordinates placed a few feet west of Soda Lake Rd. ,y,,cch1
+UCD120231,1940-04-01,1940,4,1,92,,Yolo,Putah.,,38.533232,-121.751361,5141,WW,"coordinates found on https://california.hometownlocator.com/maps/feature-map,ftc,2,fid,252093,n,putah%20township.cfm but nothing else could be found about Putah town? Uncertainty encompasses all of Putah Creek",,,cch1
+UCD120235,1928-04-05,1928,4,5,96,,Napa,Monticello.,,38.577778,-122.20705,3668,WW,DUPLICATE,y,,cch1
+UCD120236,1961-03-29,1961,3,29,88,,Colusa,South of Bear Valley; 3 miles north of junction of State Highways 16 and 20.,,39.046151,-122.376161,76,WW,DUPLICATE w cch2,y,,cch1
+UCD15305,1985-04-06,1985,4,6,96,,Sutter,"""Sutter Buttes, Dean Place;""",213,39.205724,-121.82025,570,WW,DUPLICATE. Sutter Buttes=mountain peak; unsure of how to define uncertainty,y,,cch1
+UCD15536,1989-05-06,1989,5,6,126,,Amador,Town of Volcano.,106,38.442966,-120.630763,1845,WW,DUPLICATE,y,,cch1
+UCD23396,1977-04-16,1977,4,16,106,,Napa,"""Small herbaceous plant, flowers blue and white. 300 meters south of Highway 128, 6.4 miles SW of Monticello Dam. Low on NE facing slope of canyon in riparian and oak woodland ecocline.""",,38.434793,-122.173595,300,"WW, DG",UPDATE: Measured in air miles from dam since the highway runs S when distance is measured along it. Placed marker 300 m S of 128 with error to highway (DG). measured 6.4 miles along highway 128 because it goes SW of monticello dam; measured 300 meters south of freeway,,,cch1
+UCD23404,1977-04-24,1977,4,24,114,,Napa,"""Proximal part of petals white, distal part sky blue, with longitudinal rows of small purple spots. In full sun in meadow. Berryessa Knoxville Rd. 2.3 miles SE of Knoxville Mine.""",304,38.824016,-122.352255,963,WW,knoxville mine=mclaughlin mine?,,,cch1
+UCD32468,1952-02-24,1952,2,24,55,,Fresno,"""Fresno County, 0.5 mile southwest of Navalencia.""",121,36.679927,-119.390166,3444,WW,uncertainty determined by halway to wahtoke,,,cch1
+UCSB49773,1917-03-17,1917,3,17,76,,Unknown,Upland,,34.115703,-117.663151,4573,WW,DUPLICATE,y,,cch1
+UCSB54144,1979-04-15,1979,4,15,105,,Fresno,Ellwood Road; Wonder Valley,213,36.792629,-119.312289,3346,WW,DUPLICATE,y,,cch1
+UCSC000577,1989-04-01,1989,4,1,91,,San Luis Obispo,3 mi. E. and 12 mi. S. of Shandon Shandon - Shell Creek,,35.467026,-120.327669,2688,WW,,,,cch1
+UCSC002111,1995-04-07,1995,4,7,97,,Monterey,"""Fort Ord, UC Reserve Site: 01 -""",,36.682896,-121.775596,1471,WW,found boundaries on https://fortordreserve.ucsc.edu/maps-habitats-organisms/fort-ord-north-reserve-8x11.pdf but could not find reserve site 1,,,cch1
+UCSC004272,2004-02-07,2004,2,7,38,,Santa Cruz,"""Swanton Road, inland-facing slope on coastward side of road""",,37.065622,-122.232447,2905,WW,,,,cch1
+UCSC005030,2007-03-15,2007,3,15,74,,Santa Cruz,"""Scotts Valley, Santa's Village meadow, Scotts Valley""",,37.065467,-121.997358,329,WW,!!!! Santa's Village was an amusement park; http://www.santasvillage.net/santas.village.scotts.valley.html coordinates from wikipedia,,,cch1
+UCSC000578,1979-04-13,1979,4,13,103,atomaria,Sonoma,"""in wet, rocky soil at roadside near an orchard 4.7 miles east of the junction of Trinity Road with highway 12 Trinity Road, highway 12""",671,38.407778,-122.471441,2412,WW,measured 4.7 miles along Trinity Road,,,cch1
+UCSC003914,1948-06-19,1948,6,19,171,menziesii,Monterey,"""Carmel Valley, 3 mi. E. of Carmel Village on Tularcitos Rd. N. side of road, 200 yds. Carmel Valley, Tularcitos Rd.""",610,36.454369,-121.694721,181,DG,"UPDATE: Found Carmel valley; road synonymous with Carmel Valley Road/G16. Placed marker 200 yd N of road after measuring, set error to road (DG). can't identify Carmel Village/Tularcitos Rd; there is a Tularcitos Elementary School--maybe road renamed?",,,cch1
+SEINET4462407,1906-04-29,1906,4,29,119,integrifolia,Unknown,,,,,,WW,NO LOCALITY,y,,cch1
+SBBG6138,1940-03-21,1940,3,21,81,atomaria,Marin,rd to Tamalpais from Fairfax,,37.951149,-122.595564,4037,DG,"Broad, placed marker halfway b/w Fairfax and Mt Tamalpais, error includes both",,,cch1
+SD42585,1937-06-19,1937,6,19,170,atomaria,Humboldt,"""North Coast Range, 3 mi. w. of Little Van Duzen River at summit of grade -- Dinsmores to Bridgeville.""",762,40.457534,-123.697486,772,WW,measured along Highway 36 starting from river,,,cch1
+SEINET5521026,1955-04-23,1955,4,23,113,atomaria,Placer,"""Along iron mine road, 1/4 mile off U.S. 40. Iron mine turnoff 4 miles east of Auburn""",549,38.989438,-121.068311,533,WW,UPDATE: 'Old Highway 40 parallels Interstate 80 for much of its route'. I believe this is correct after measuring 4 mi along old 40 (DG). can not find CA-40 (doesn't exist anymore) or Iron Mine Road East of Auburn; but coordinates are Iron Mine Road North of Auburn,,,cch1
+SEINET9351968,1933-04-02,1933,4,2,92,atomaria,Napa,"""Napa Co., CA""",,,,,WW,too broad,y,,cch1
+UCD120238,1993-05-08,1993,5,8,128,atomaria,Sonoma,About 40 air miles N of San Francisco; about 11 air miles E of Santa Rosa and 2.5 air miles NE of Kenwood. In Adobe Canyon N of Sugarloaf Ridge and S of Red Mtn 1 mile.,,38.438597,-122.510232,1672,WW,used mapnik feature to find Red Mountain,,,cch1
+UCD120239,1947-02-18,1947,2,18,49,atomaria,Napa,14 miles north of Napa.,,38.516768,-122.288962,5168,DG,"Measured due N 14 mi, set error distance halfway to Atlas.",,,cch1
+UCD120241,1988-02-21,1988,2,21,52,atomaria,Sonoma,South of Mt. St. Helena. Near Kenwood.,,38.4138,-122.546094,3435,WW,,,,cch1
+UCD120243,1993-04-17,1993,4,17,107,atomaria,Sonoma,"""About 40 air miles N of San Francisco, 11 air miles E of Santa Rosa, and 2.5 air miles NE of Kenwood. In Adobe Canyon N of Sugarloaf Ridge and S of Red Mtn. 1 mile. Near visitor center.""",365,38.437866,-122.515776,955,WW,,,,cch1
+UCD120244,1957-03-22,1957,3,22,81,atomaria,Solano,"""North side of road to Green Valley Falls, 1 mile west of Rockville.""",,38.253114,-122.135237,301,DG,,,,cch1
+UCD166683,1998-03-21,1998,3,21,80,atomaria,Napa,"""west of Pope Canyon Road, north side of Burton Creek.""",187,38.617444,-122.383989,1439,WW,,,,cch1
+UCSC005047,1989-04-20,1989,4,20,110,atomaria,Santa Cruz,"""Scotts Valley, """"Glamud Estates"""" site, Scotts Valley""",,37.054348,-122.009877,3795,WW,can not find Glamud Estates,,,cch1
+UCSC007570,1989-04-01,1989,4,1,91,atomaria,Santa Cruz,North-facing slope above Swanton Road,,37.071684,-122.231723,3369,WW,"unsure of which slope, but road is short enough to have a not too big uncertainty",,,cch1
+UCSC007610,2004-03-24,2004,3,24,84,atomaria,Santa Cruz,Shady slope above (W of) Swanton Rd,,37.066616,-122.244083,2610,WW,,,,cch1
+SBBG15862,1935-02-02,1935,2,2,33,integrifolia,Los Angeles,"""Acacia Hills, near Glendale""",,34.12862,-118.23563,1807,WW,renamed Adams Hill,,,cch1
+SBBG15951,1935-03-24,1935,3,24,83,integrifolia,Los Angeles,Glendale,,34.193639,-118.252672,8302,WW,,,,cch1
+SBBG46905,1942-03-18,1942,3,18,77,integrifolia,Santa Barbara,Foothill Rd,,34.448988,-119.731709,2753,WW,,,,cch1
+SBBG64800,1927-06-14,1927,6,14,165,integrifolia,Los Angeles,"""Pine Cyn, Cottonwood Springs""",,,,,WW,uncertain; multiple Pine Canyons and can not find Cottonwood Springs,y,,cch1
+SDSU6131,1927-05-08,1927,5,8,128,integrifolia,Unknown,,1219,,,,WW,too broad,y,,cch1
+SEINET5521028,1907-05-25,1907,5,25,145,integrifolia,San Bernardino,Southern slope of the San Bernardino mountains,792,,,,WW,too broad,y,,cch1
+SEINET5521029,1906-04-10,1906,4,10,100,integrifolia,San Diego,"""Near San Diego, Point Loma""",,32.699618,-117.245501,3830,WW,,,,cch1
+SEINET5521031,1906-04-20,1906,4,20,110,integrifolia,San Bernardino,San Bernardino valley,300,,,,WW,too broad,y,,cch1
+UCSC000895,1968-03-24,1968,3,24,84,integrifolia,Orange,"""damp rocky base of slide in canyon bottom Santa Ana Mts., Holy Jim Canyon""",,33.676265,-117.518112,3742,WW,,,,cch1
+SEINET5521034,1976-03-28,1976,3,28,88,integrifolia,Contra Costa,"""Morgan territory road, 1 mile north of Curry Creek Park""",122,37.88926,-121.869688,580,WW,,,,cch1
+SBBG54841,1979-04-08,1979,4,8,98,menziesii,San Luis Obispo,2 mi S of California Valley along Soda Lake Rd,579,35.303897,-119.982035,4879,WW,,,,cch1
+SEINET10814721,1897-05-15,1897,5,15,135,menziesii,Butte,Clear Creek.,213,39.655906,-121.634899,12578,WW,,,,cch1
+UCD120253,1993-04-24,1993,4,24,114,menziesii,Sonoma,"""Sugarloaf Ridge State Park. About 50 air miles N of San Francisco, 10 air miles E of Santa Rosa, 2.5 air miles NE of Kenwood and 18 air miles NW of Napa. Along Hillside Trail.""",381,38.436225,-122.501674,610,WW,,,,cch1
+UCSC009417,2015-02-16,2015,2,16,47,menziesii,Monterey,"""Ft. Ord National Monument (Region L7, Jacks Road in ditch)""",,36.616616,-121.720933,1436,WW,,,,cch1
