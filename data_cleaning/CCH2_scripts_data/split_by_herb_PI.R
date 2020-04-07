@@ -180,7 +180,7 @@ write_csv(nemo_cch2_UCSB_p, here("data_cleaning", "CCH2_scripts_data", "splits_f
 
 
 
-nemo_all_1_cch2 <- read_csv(here::here("data_cleaning", "nemo_all_1.csv")) %>% 
+nemo_all_1_cch2 <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
   filter(source == "cch2")
 #1238 cch2 obs, 530 cch1 obs
 

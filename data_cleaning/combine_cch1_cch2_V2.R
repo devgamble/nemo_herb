@@ -178,17 +178,46 @@ specrm_5 <- c("NY337175", "CAS-BOT-BC7218", "POM65303", "POM65254", "CAS-DS-1356
 
 
 nemo_all_6 <- nemo_all_5 %>% 
-  filter(!(specimen_number %in% specrm_5))
-#193 dupes removed for total of 1768 obs!
+  filter(!(specimen_number %in% specrm_5)) %>% 
+  filter(!(specimen_number %in% c("JEPS127095", "UC880916") & source == "cch1")) #Found two cch1 records with exact duplicate (cch2) specimen numbers but different years!
 
-#nemo_dupes_ttt <- get_dupes(nemo_all_6, lat, long) %>% #Hunting for more dupes
+#193 dupes removed for total of 1766 obs!
+
+#nemo_dupes_ttt <- get_dupes(nemo_all_6, specimen_number) %>% #Hunting for more dupes
 #  select(specimen_number, source, lat, long, dupe_count, locality, georef_by,everything())
-
 
 
 
 write_csv(nemo_all_6, here::here("data_cleaning", "nemo_all_1.csv"))
 
+##Trying to add elevations where they are missing
 
+library(elevatr) #Should allow us to fetch elevation from the USGS Elevation Point Service Query (see elevatr package intro)
 
+nemo_noel <- nemo_all_6 %>% 
+  filter(is.na(elev_m) == T) %>% 
+  select(long, lat, specimen_number) %>%  #coordinates:long (x) must go first, then lat (y)
+  rename(x = long, y = lat)
+nemo_noel <- as.data.frame(nemo_noel) #693 obs w/out elevation
 
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+nemo_all_adel <- get_elev_point(nemo_noel, prj = prj_dd, src = "epqs") #following example in guide
+
+nemo_adel <- data.frame(nemo_all_adel) 
+
+nemo_adel1 <- as_tibble(nemo_adel) %>% 
+  rename(long = x, lat = y, elev_m_new = elevation) %>%
+  select(specimen_number, lat, long, elev_m_new)
+
+nemo_all_7 <- left_join(nemo_all_6, nemo_adel1, by = "specimen_number") %>%  #Do not join by lat/long 
+  mutate(elev_m = case_when(is.na(elev_m) ~ elev_m_new,
+                            !is.na(elev_m) ~ elev_m)) %>%  
+  rename(lat = lat.x, long = long.x) %>% 
+  select(specimen_number:locality, elev_m, lat, long, everything(), -c(lat.y, long.y, elev_m_new))
+
+#Success! All observations have elevation (m)!!!
+
+#Save and overwrite combined csv
+
+write_csv(nemo_all_7, here::here("data_cleaning", "nemo_all_2.csv"))
+  

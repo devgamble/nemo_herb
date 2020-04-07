@@ -1,0 +1,238 @@
+---
+title: "EDA1"
+author: "Devin Gamble"
+date: "4/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(kableExtra)
+
+
+```
+
+
+# Explorator Data Analysis 1
+### Exploring the structure and variables of our combined cch1 & cch2 data - duplicates removed, elevation added for all observations. (Prior to PI scoring).  
+
+
+## Checking out the data
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+nemo_all1 <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
+                               error_dist_m > 2000 & error_dist_m <= 5000 ~ "2-5 km",
+                               error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
+                               error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
+                               error_dist_m > 15000 ~ ">15 km")) %>% 
+  select(specimen_number:error_dist_m, error_bin, everything()) %>% mutate(error_bin = factor(error_bin, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km"))) #specify factor & levels for error bin
+
+#1240 obs with error distance - added column with error distance categories
+
+kable(summary(nemo_all1)) %>% 
+  kable_styling(bootstrap_options = c("striped",  "condensed"))
+
+head(nemo_all1)
+
+
+```
+
+
+
+
+1. Visualizing distributions of variables of interest [variation within variables]
+
+### Numerical variables
+
+```{r warning = FALSE, message = FALSE}
+#Year
+ggplot(data = nemo_all1, aes(x = year)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,160)) +
+  scale_x_continuous(breaks = seq(1850, 2020, 10)) +
+  ylab("Count") + 
+  xlab("Year of Collection")
+
+#Explore subgroups/multimodal peaks in year of collection
+
+#Addresss outliers in the followering variables
+#Try out box/jitter plots?
+
+
+#Month
+ggplot(data = nemo_all1, aes(x = month)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(month)), col = "red", size = 1.5) + #mean
+  geom_text(aes(x = mean(month), y = 0, label = round(mean(month), 4)),  size = 4, vjust = -30, hjust = -1) + #mean
+  geom_vline(aes(xintercept = median(month)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  scale_x_continuous(breaks = seq(1, 8, 1)) +
+  ylab("Count") + 
+  xlab("Month of Collection")
+
+
+#Check out kernal density on the following
+
+
+#DOY
+ggplot(data = nemo_all1, aes(x = DOY)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(DOY)), col = "red", size = 1.5) + #mean
+  geom_text(aes(x = mean(DOY), y = 0, label = round(mean(DOY), 3)),  size = 4, vjust = -25, hjust = -0.2) + #mean
+  geom_vline(aes(xintercept = median(DOY)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,300)) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0, 250, 20)) +
+  ylab("Count") + 
+  xlab("DoY of Collection")
+
+
+#Elevation
+ggplot(data = nemo_all1, aes(x = elev_m)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(elev_m)), col = "red", size = 1.5) + #mean
+  geom_vline(aes(xintercept = median(elev_m)), col = "orange", size = 1) #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,80)) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0, 1800, 100)) +
+  ylab("Count") + 
+  xlab("Elevation (m)")
+
+
+```
+
+
+#### Latitude and Longitude
+
+```{r warning = FALSE, message = FALSE}
+
+#Lat
+ggplot(data = nemo_all1, aes(x = lat)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(lat)), col = "red", size = 1.5) + #mean
+  geom_vline(aes(xintercept = median(long)), col = "orange", size = 1) #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,80)) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0, 1800, 100)) +
+  ylab("Count") + 
+  xlab("Latitude (deg)")
+  
+#Long
+ggplot(data = nemo_all1, aes(x = lat)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(lat)), col = "red", size = 1.5) + #mean
+  geom_vline(aes(xintercept = median(long)), col = "orange", size = 1) #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,80)) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0, 1800, 100)) +
+  ylab("Count") + 
+  xlab("Latitude (deg)")
+
+
+#Both
+
+ggplot(data = nemo_all1, aes(x = long, y = lat)) +
+  geom_point(color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  ylab("Latitude (deg)") + 
+  xlab("Longitude (deg)")
+
+
+#Error distance & bin
+  
+
+
+```
+
+
+
+### Categorical variables
+
+```{r}
+#Source
+
+
+#Herbarium
+#Create new column for herbarium code?
+
+
+#County
+counties <- nemo_all1 %>% 
+  select(specimen_number, year, DOY, county) %>% 
+  group_by(county) %>% 
+  summarize(count = n(), meanDOY = mean(DOY)) %>% 
+  arrange(-count)
+
+counties
+
+#Subspecies
+
+
+
+
+```
+
+
+### Other visualizations
+
+
+
+
+2. Investigating covariation among variables
+
+### Numeric variables
+
+
+Is there any covariation among non-date/time variables?
+
+```{r}
+
+
+
+```
+
+
+
+
+
+
+### Numeric x categorical variables
+
+
+
+
+
+
+
+
+
+### Create Map (Raster) of all collection locations, including effect of year
+
+
+
+
+
+
+
+
+# Investigating Climate Data (ClimateNA)
+
+
+
+
+
+
+
+
