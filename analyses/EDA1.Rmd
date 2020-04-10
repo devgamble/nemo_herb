@@ -37,11 +37,8 @@ nemo_all1 <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>%
 
 #1240 obs with error distance - added column with error distance categories
 
-kable(summary(nemo_all1)) %>% 
-  kable_styling(bootstrap_options = c("striped",  "condensed"))
 
-head(nemo_all1)
-
+summary(nemo_all1)
 
 ```
 
@@ -101,10 +98,10 @@ ggplot(data = nemo_all1, aes(x = DOY)) +
 ggplot(data = nemo_all1, aes(x = elev_m)) +
   geom_histogram(fill = "blue", color = "black") +
   geom_vline(aes(xintercept = mean(elev_m)), col = "red", size = 1.5) + #mean
-  geom_vline(aes(xintercept = median(elev_m)), col = "orange", size = 1) #median
+  geom_vline(aes(xintercept = median(elev_m)), col = "orange", size = 1) + #median
   theme_classic() +
-  scale_y_continuous(expand = c(0,0), limits = c(0,80)) +
-  scale_x_continuous(expand = c(0,0), breaks = seq(0, 1800, 100)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  scale_x_continuous(breaks = seq(0, 2600, 500)) +
   ylab("Count") + 
   xlab("Elevation (m)")
 
@@ -120,23 +117,24 @@ ggplot(data = nemo_all1, aes(x = elev_m)) +
 ggplot(data = nemo_all1, aes(x = lat)) +
   geom_histogram(fill = "blue", color = "black") +
   geom_vline(aes(xintercept = mean(lat)), col = "red", size = 1.5) + #mean
-  geom_vline(aes(xintercept = median(long)), col = "orange", size = 1) #median
+  geom_vline(aes(xintercept = median(lat)), col = "orange", size = 1) + #median
   theme_classic() +
-  scale_y_continuous(expand = c(0,0), limits = c(0,80)) +
-  scale_x_continuous(expand = c(0,0), breaks = seq(0, 1800, 100)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,300)) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(30, 45, 1)) +
   ylab("Count") + 
-  xlab("Latitude (deg)")
+  xlab("Latitude (deg)") +
+  coord_flip()
   
 #Long
-ggplot(data = nemo_all1, aes(x = lat)) +
+ggplot(data = nemo_all1, aes(x = long)) +
   geom_histogram(fill = "blue", color = "black") +
-  geom_vline(aes(xintercept = mean(lat)), col = "red", size = 1.5) + #mean
-  geom_vline(aes(xintercept = median(long)), col = "orange", size = 1) #median
+  geom_vline(aes(xintercept = mean(long)), col = "red", size = 1.5) + #mean
+  geom_vline(aes(xintercept = median(long)), col = "orange", size = 1) + #median
   theme_classic() +
-  scale_y_continuous(expand = c(0,0), limits = c(0,80)) +
-  scale_x_continuous(expand = c(0,0), breaks = seq(0, 1800, 100)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(-125, -115, 1)) +
   ylab("Count") + 
-  xlab("Latitude (deg)")
+  xlab("Longitude (deg)")
 
 
 #Both

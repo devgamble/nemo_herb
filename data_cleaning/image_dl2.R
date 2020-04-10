@@ -24,7 +24,7 @@ images_df <- read_csv(here("data_cleaning", "CCH2_scripts_data", "images_cch2_De
 
 
 #Add specimen_number from full dataset to images_df
-id_spec_AC <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_AC_p.csv")) %>% 
+id_spec_AC <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_AC_pi.csv")) %>% 
   select(id, specimen_number) %>% 
   arrange(id)
 
@@ -51,7 +51,7 @@ for(i in 1:length(images_df_AC[,3])){
 # D-L Block
 ###
 
-id_spec_DL <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_DL_p.csv")) %>% 
+id_spec_DL <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_DL_pi.csv")) %>% 
   select(id, specimen_number) %>% 
   arrange(id)
 
@@ -68,7 +68,7 @@ for(i in 1:length(images_df_DL[,3])){
 ###
 # O-S Block
 ###
-id_spec_OS <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_OS_p.csv")) %>% 
+id_spec_OS <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_OS_pi.csv")) %>% 
   select(id, specimen_number) %>% 
   arrange(id)
 
@@ -87,7 +87,7 @@ for(i in 1:length(images_df_OS[,3])){
 # S-U Block
 ###
 
-id_spec_SU <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_SU_p.csv")) %>% 
+id_spec_SU <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_SU_pi.csv")) %>% 
   select(id, specimen_number) %>% 
   arrange(id)
 
@@ -106,7 +106,7 @@ for(i in 1:length(images_df_SU[,3])){
 # UCR Block
 ###
 
-id_spec_UCR <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_UCR_p.csv")) %>% 
+id_spec_UCR <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_UCR_pi.csv")) %>% 
   select(id, specimen_number) %>% 
   arrange(id)
 
@@ -124,7 +124,7 @@ for(i in 1:length(images_df_UCR[,3])){
 # UCSB Block
 ###
 
-id_spec_UCSB <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_UCSB_p.csv")) %>% 
+id_spec_UCSB <- read_csv(here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_UCSB_pi.csv")) %>% 
   select(id, specimen_number) %>% 
   arrange(id)
 
