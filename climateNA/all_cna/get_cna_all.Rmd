@@ -1,0 +1,319 @@
+---
+title: "ClimateNA Data for cch1 & 2"
+author: "Devin Gamble"
+date: "4/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(stringr)
+library(janitor)
+```
+
+
+## Obtaining Climate data for all specimen records  
+
+###### This document and the code within is based off earlier attempts at obtaining climateNA data ('cch2_getCNA.R', 'climate_import-clean_cch1.Rmd')
+
+### Step 1.  
+
+**Creating a ClimateNA compatible file to download climate data**
+
+
+
+- Read in the cleaned, updated datset for cch1 and cch2
+- Standardize columns to have two identifiers (specimen number and year), lat/long, and elevation
+- Export ClimateNA compatible csv file  
+
+```{r warning = FALSE, message = FALSE}
+nemo_all1 <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  rename(YoC = year) #to avoid later confusion
+
+
+nemo_1_CNA <- nemo_all1 %>% 
+  select(specimen_number, YoC, lat, long, elev_m) %>% 
+  rename(ID1 = specimen_number, ID2 = YoC, el = elev_m)  #specimen_number and year used as identifiers
+
+
+write_csv(nemo_1_CNA, here::here("climateNA", "all_cna", "all_CNA_s.csv"), na = "")
+
+```
+**IMPORTANT**  
+
+There is a bug in saving csv files after using `dplyr` functions like `select()` to remove columns. After savine the file with `write_csv()`, you need to open up the csv, select all of the white space to the right of the five standardized columns - *where there used to be columns* , right-click, and hit **Clear Contents** to erase the ghosts of leftover data. This is the only way I've found the standradized csv to work with ClimateNA. You will have to repeat this process everytime you run the above code and wish to get any output from ClimateNA.    
+<br>  
+
+### Step 2.  
+
+**Specify variables and time series to download, using this standardized csv in the ClimateNA application**
+
+#### Normals & Decadal data 
+Open the climateNA application. Under the 'Multi-Location' heading, specify which normals you would like to download in the box. Select the input file (the csv we just standardized). Specify the output file with the name and a desired pathway/folder. Once you hit `Start`, Climate NA will download the type of normals you specified and append them as columns to the standardized csv.  
+
+You should then have a new file with normals for all the locations in the original csv.  
+For Normals, I selected 'All Variables' to download annual, seasonal, and monthly 30-year averages for 1951-1980 and 1981 - 2010.  
+<br>  
+
+
+#### Annual, Monthly, and Seasonal data for all years  
+Under the 'Multi-location' heading, select `Historical Time Series`. Below this box, select the desired variables (I selected 'All Variables' again). Up to the right, select the years for which you would like to download climate data (e.g. 1901 - 2018). Select the same standardized input csv and the name and location for the output file. Hit `Start TS`.    
+(This will probably take some time.....)  
+
+You should eventually get a csv file with data for all the specified years, now with a new first column 'Year'. You will now have **as many rows** as the *number of different years* multiplied by *the number of observations in the original dataset*.  
+
+Note: ClimateNA uses `-9999` as NA values, be sure to account for these later.  
+
+<br>  
+
+### Step 3.
+**Organizing our ClimateNA data**  
+
+
+#### Read in Normals  
+These csv's have monthly, seasonal, and annual climate variables averaged over each of the 30-year periods
+
+```{r warning = FALSE, message = FALSE}
+norms_1951_1980 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all_CNA_Normal_1951_1980MSY.csv"), na = c("-9999", "-9999.0")) %>% #Fix NAs
+  rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% #Fixing names
+  filter(!(specimen_number %in% c("DAV300381", "UC880904"))) #obs in water - remove
+#1764 obs - same as input df
+
+norms_1981_2010 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all_CNA_Normal_1981_2010MSY.csv"), na = c("-9999", "-9999.0")) %>% #Fix NAs
+  rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% 
+  filter(!(specimen_number %in% c("DAV300381", "UC880904")))
+
+#252 total columns in these
+
+
+```
+
+<br>  
+
+#### Read in Time Series
+These data has monthly, seasonal, and annual variables for ALL YEARS (1901 - 2018)
+
+```{r warning = FALSE, message = FALSE}
+TS_1901_2018 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all_CNA_1901-2018MSY.csv"), na = c("-9999", "-9999.0")) %>%
+  rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% 
+  filter(!(specimen_number %in% c("DAV300381", "UC880904")))
+
+#Columns that appear as `col_logical()` in the run message are largely NA
+
+```
+<br>  
+
+
+##### Checking things out
+
+
+For some reason, two records come back with all NAs:  
+
+- DAV300381 - 1997   - Appears to be in the middle of the pacific ocean [cch2] - removed from data.
+- UC880904 - 1938   - Appears to be very close, but not in water [cch2] - removed
+
+<br>  
+
+
+#### Match TS data to specimens for the Yoc and the Yoc - 1 (previous year)  
+
+```{r}
+TS_YoC <- TS_1901_2018 %>% 
+  filter(YoC == Year) %>% 
+  select(-Year)
+#1675 obs - some lost outside of 1901-2018
+
+
+TS_YoC_less1 <- TS_1901_2018 %>% 
+  filter(YoC == Year - 1) %>% 
+  select(-Year)
+#1677 obs - similar issue [2 more obs]
+
+
+```
+
+<br>  
+
+#### Combining Climate Datasets (Prospective)  
+
+Both the Climate Normals and the Time Series should now have the same number of columns. The two timeseries subsets (YoC and YoC - 1) will have slightly fewer rows when combined with the normals, which will show up as NAs.  
+
+We need to append column names of these variables with their particular sources (e.g. _YoC, _N51). Below I employ a simple function to do so, but there may be a more straightforward way.  
+
+
+```{r}
+#Function: append character strings to column names
+
+rename_ftn <- function(x, apnd, rang){         
+  names_x <- colnames(x)[rang]
+  print(paste(names_x, apnd, sep = ""))
+} 
+
+#Where `x` is the df, `apnd` is the string to be added as a suffix, and `rang` is the range of columns, by position, to add the character string to.
+
+```
+
+<br>  
+
+
+##### First, the Normals. This should be a relatively clean merge.  
+
+
+```{r message = FALSE, results = 'hide'}
+norms51 <- norms_1951_1980
+colnames(norms51)[6:252] <- rename_ftn(norms51, apnd = "_N51", rang = 6:252)
+
+norms81 <- norms_1981_2010
+colnames(norms81)[6:252] <- rename_ftn(norms81, apnd = "_N81", rang = 6:252)
+
+
+Norms_df <- merge(norms51, norms81) 
+#Ensure columns 1-5 [specimen_number, YoC, lat, long, elev_m] are intace and merged correctly
+#There should be 499 columns and 1766 obs (in this case)
+write_csv(Norms_df, here::here("climateNA", "all_CNA", "norms_raw_51_and_81.csv"))
+
+```
+
+<br>  
+
+
+##### Now, the Time Series YoC and YoC - 1.
+
+```{r message = FALSE, results = 'hide'}
+
+YoC_1 <- TS_YoC
+colnames(YoC_1)[6:252] <- rename_ftn(YoC_1, apnd = "_Y1", rang = 6:252)
+#2 less obs than YoC_less1 [1675]
+
+
+YoC_less1 <- TS_YoC_less1
+colnames(YoC_less1)[6:252] <- rename_ftn(YoC_less1, apnd = "_L1", rang = 6:252) #L1 for last year
+# obs [1677]
+
+#Would it be better to keep these two datasets separate?
+
+
+YoC_df <- merge(YoC_less1, YoC_1, all.x = TRUE)
+#1677 obs and 499 rows - looks good! No rows should have been eliminated.
+#2 obs should be NAs for "_Y1" parameters
+
+write_csv(YoC_df, here::here("climateNA", "all_cna", "YoC_Y_and_L1_raw.csv"))
+
+```
+
+<br>  
+
+#### Any additional formatting of Normals or Time Series data...:
+```{r}
+## Option: Get Longer-term averages than 30-year normals (e.g. 90 or 100-year averages)??
+## Or get more historical normals
+
+
+```
+
+<br>  
+
+### Step 4.  
+**Climate Parameter Selection, Tidying Up**  
+
+Now to remove parameters that we weill definitely not use in analyses; specifically, those that are uninformative of local conditions or have a large number of NA values. I will retain parameters that relate to the following climatic conditions for each dataset:  
+<br>  
+
+#### Temperature  
+- *Annual*: MAT, MWMT, MCMT, TD
+- *Seasonal*: Tave, Tmax, Tmin
+- *Monthly*: Tave, Tmax, Tmin
+
+
+#### Precipitation  
+- *Annual*: MAP, MSP, PAS
+- *Seasonal*: PPT, PAS(wt & sp only)
+- *Monthly*: PPT, PAS
+
+#### Combined/Derived variables
+- *Annual*: AHM, SHM, DD<0, DD>5, NFFD, Eref, CMD, RH, EMT & EXT
+- *Seasonal*: DD_0, DD5, NFFD(wt & sp only), Eref, CMD, RH
+- *Monthly*: DD_0, DD5, Eref, CMD, RH, NFFD
+
+
+##### REMOVING
+- *Annual*: DD<18, DD>18, FFP, bFFP, eFFP, MAR
+- *Seasonal*: RAD, DD_18, DD18, NFFD(sm & at), PAS(sm & at)
+- *Monthly* RAD, DD_18, DD18 
+
+<br>  
+
+##### Definitions (from ClimateNA [6.20] 'help' document)  
+
+'_wt' = Dec, Jan, Feb; '_sp' = Mar, Apr, May; 'sm' = Jun, Jul, Aug; '_at' = Sep, Oct, Nov  
+'_0 to _12' indicate months  
+
+
+*Directly calculated annual variables*:  
+<font size = "1.5">
+MAT	=  	mean annual temperature (°C),  
+MWMT = 	mean warmest month temperature (°C),  
+MCMT   =	mean coldest month temperature (°C),  
+TD 	 =	temperature difference between MWMT and MCMT, or continentality (°C),  
+MAP  =		mean annual precipitation (mm),  
+MSP  =		May to September precipitation (mm),  
+AHM   =	annual heat-moisture index (MAT+10)/(MAP/1000))  
+SHM  =	 	summer heat-moisture index ((MWMT)/(MSP/1000))  
+	</font>  
+	
+*Derived annual variables*:  
+<font size = "1.5">
+DD<0	=	degree-days below 0°C, chilling degree-days  
+DD>5	 = 	degree-days above 5°C, growing degree-days  
+DD<18	= degree-days below 18°C, heating degree-days  
+DD>18	= degree-days above 18°C, cooling degree-days  
+NFFD	= 	the number of frost-free days  
+FFP		= frost-free period  
+bFFP	= 	the day of the year on which FFP begins  
+eFFP	= 	the day of the year on which FFP ends  
+PAS	= precipitation as snow (mm). For individual years, it covers the period between August in the previous year and July in the current year.  
+EMT		= extreme minimum temperature over 30 years  
+EXT		= extreme maximum temperature over 30 years  
+Eref	= 	Hargreaves reference evaporation (mm)  
+CMD	= 	Hargreaves climatic moisture deficit (mm)  
+MAR	= 	mean annual solar radiation (MJ m‐2 d‐1)  
+RH	= 	mean annual relative humidity (%)  
+  </font>  
+
+<br>  
+
+**Removing variables**  
+```{r}
+
+YoC_dfc <- YoC_df %>% 
+  select(-c(Rad01_L1:Rad12_L1, DD_18_01_L1:DD18_12_L1, Rad_wt_L1:Rad_at_L1, DD_18_wt_L1:DD18_at_L1, PAS_sm_L1, PAS_at_L1,  DD_18_L1, DD18_L1, bFFP_L1:FFP_L1, MAR_L1, #Last year
+            Rad01_Y1:Rad12_Y1, DD_18_01_Y1:DD18_12_Y1, Rad_wt_Y1:Rad_at_Y1, DD_18_wt_Y1:DD18_at_Y1, PAS_sm_Y1, PAS_at_Y1,  DD_18_Y1, DD18_Y1, bFFP_Y1:FFP_Y1, MAR_Y1)) #YoC
+
+
+
+Norms_dfc <- Norms_df %>% 
+  select(-c(Rad01_N51:Rad12_N51, DD_18_01_N51:DD18_12_N51, Rad_wt_N51:Rad_at_N51, DD_18_wt_N51:DD18_at_N51, PAS_sm_N51, PAS_at_N51, DD_18_N51, DD18_N51, bFFP_N51:FFP_N51, MAR_N51, #51-80
+            Rad01_N81:Rad12_N81, DD_18_01_N81:DD18_12_N81, Rad_wt_N81:Rad_at_N81, DD_18_wt_N81:DD18_at_N81, PAS_sm_N81, PAS_at_N81, DD_18_N81, DD18_N81, bFFP_N81:FFP_N81, MAR_N81)) #81-10
+
+
+```
+
+<br>  
+
+
+**Calculate Anomalies**   
+Anomalies = deviations from the average climate. These could be computed as `abs(x_ann - x_norm)` where 'x' is a climate variable. Just need to decide on which normals to use.  
+
+- 1901 - 1930 
+- 1931 - 1960
+- 1951 - 1981*
+- 1981 - 2010*
+- 1901 - 1990 (90 yr average)
+
+Note: Natalie appears to use two anomalies: One for the 1901-1930 normals, and one for some other avg (mabe 90yr)

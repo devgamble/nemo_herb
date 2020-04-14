@@ -16,6 +16,8 @@ library(janitor)
 #All records are georeferenced (have lat/long)
 #CCH2 specimens will be scored for PI concurrently and scores will be added at a later time
 
+# V3 csv file `nemo_all_2.csv` is the latest version of the combined cch1 and cch2 datasets
+
 
 ## CCH1 Import and cleanup
 
@@ -220,4 +222,15 @@ nemo_all_7 <- left_join(nemo_all_6, nemo_adel1, by = "specimen_number") %>%  #Do
 #Save and overwrite combined csv
 
 write_csv(nemo_all_7, here::here("data_cleaning", "nemo_all_2.csv"))
+
+
+
+
+#Filtering out additional problem specimens identified in ClimateNA import
+
+nemo_all_8 <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  filter(!(specimen_number %in% c("DAV300381", "UC880904"))) #Two obs in (or too close to) water
+#Down to 1764 obs
+
+write_csv(nemo_all_8, here::here("data_cleaning", "nemo_all_2.csv"))
   

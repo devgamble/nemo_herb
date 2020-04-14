@@ -197,6 +197,7 @@ cch2_DL_pi <- nemo_all_1_cch2 %>%
   filter(str_detect(specimen_number, "DAV|HSC|IRVC|JEPS|LOB"))
 write_csv(cch2_DL_pi, here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_DL_pi.csv"), na = "")
 #236 obs
+#UPDATE 235 after rm based on bad ClimateNA data
 
 
 #OS
@@ -211,7 +212,7 @@ cch2_SU_pi <- nemo_all_1_cch2 %>%
   filter(str_detect(specimen_number, "SFV|^UC1|^UC2|^UC3|^UC4|^UC5|^UC6|^UC7|^UC8|^UC9"))
 write_csv(cch2_SU_pi, here("data_cleaning", "CCH2_scripts_data", "splits_for_PI", "nemo_cch2_SU_pi.csv"), na = "")
 #376 obs
-
+#UPDATE 375 after rm based on bad ClimateNA data
 
 #UCR
 cch2_UCR_pi <- nemo_all_1_cch2 %>% 
