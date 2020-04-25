@@ -1,0 +1,199 @@
+---
+title: "Climate EDA"
+author: "Devin Gamble"
+date: "4/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(corrplot)
+
+```
+
+
+
+#Exploratory Data Analysis - ClimateNA Data  
+###  See 'EDA1.Rmd' for EDA on herbarium data alone (and CA Maps of some climate variables)
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+nemo_all1 <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
+                               error_dist_m > 2000 & error_dist_m <= 5000 ~ "2-5 km",
+                               error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
+                               error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
+                               error_dist_m > 15000 ~ ">15 km")) %>% 
+  select(specimen_number:error_dist_m, error_bin, everything()) %>% mutate(error_bin = factor(error_bin, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km"))) #specify factor & levels for error bin
+
+#1240 obs with error distance - added column with error distance categories
+
+
+```
+
+
+
+Import ClimateNA data:  
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
+  rename(year = YoC)
+
+```
+
+
+
+### Climate Normals  
+
+#### 1951 - 1980  
+
+```{r}
+
+#MAT
+ggplot(data = climNA_all, aes(x = MAT_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(MAT_N51)), col = "red", size = 1.5) + #mean
+  geom_text(aes(x = mean(MAT_N51), y = 0, label = round(mean(MAT_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  geom_vline(aes(xintercept = median(MAT_N51)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,250)) +
+  ylab("Count") + 
+  xlab("MAT 1951 - 1980")
+
+ggplot(data = climNA_all, aes(x = MAP_N51)) +
+  geom_histogram(fill = "blue", color = "black", binwidth = 100) +
+  geom_vline(aes(xintercept = mean(MAP_N51)), col = "red", size = 1.5) + #mean
+    geom_text(aes(x = mean(MAP_N51), y = 0, label = round(mean(MAP_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  geom_vline(aes(xintercept = median(MAP_N51)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,350)) +
+  ylab("Count") + 
+  xlab("MAP 1951 - 1980")
+
+  
+#Tave by seasons
+#Long_pivot here for subset of data?
+
+ggplot(data = climNA_all, aes(x = MAT_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(MAT_N51)), col = "red", size = 1.5) + #mean
+  geom_text(aes(x = mean(MAT_N51), y = 0, label = round(mean(MAT_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  geom_vline(aes(xintercept = median(MAT_N51)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,250)) +
+  ylab("Count") + 
+  xlab("MAT 1951 - 1980")
+
+
+  
+```
+
+
+#### 1981 - 2010
+
+
+
+
+
+
+
+
+
+#### Annual Climate over time
+
+## Looking at climates of collection across California  
+
+
+```{r}
+nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat"))
+clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "") +
+  geom_sf(data = clim_dfsf, aes(color = MAT_N51), alpha = 0.5, size = 2, show.legend = TRUE) +
+  scale_color_gradientn(colors = c("#fff71c", "#e60000"), values = c(0, 1)) +
+  theme_void()
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "") +
+  geom_sf(data = clim_dfsf, aes(color = MAP_N51), alpha = 0.8, size = 2, show.legend = TRUE) +
+  scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
+  theme_void()
+
+
+```
+
+
+
+
+
+
+```{r}
+newdf <- merge(nemo_all1, climNA_all)
+
+
+
+
+ggplot(data = newdf, aes(x = year, y = DOY)) + 
+  geom_point(aes(color = MAT_N51)) +
+  geom_smooth(method = "lm") +
+  scale_color_gradientn(colors = c("#fff71c", "#e60000"), values = c(0, 1)) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  ylab("DOY") + 
+  xlab("Year")
+
+
+
+ggplot(data = newdf, aes(x = MAT_N51, y = DOY)) + 
+  geom_point()+
+  geom_smooth(method = "lm") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  ylab("DOY") + 
+  xlab("MAT (1951 - 1981)")
+
+
+ggplot(data = newdf, aes(x = MAP_N51, y = DOY)) + 
+  geom_point()+
+  geom_smooth(method = "lm") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  ylab("DOY") + 
+  xlab("MAP (1951 - 1981)")
+
+
+```
+
+
+
+
+
+
+
+### Examine Correlations among climate variables for Normals and YoC data  
+```{r}
+#Norms correlations
+Norms_cor <- Norms_df %>% #Annual variables
+  select(c("MAT_N51", "MWMT_N51", "MCMT_N51", "TD_N51", "MAP_N51", "MSP_N51", "PAS_N51", "AHM_N51", "SHM_N51", "DD_0_N51", "DD5_N51", "NFFD_N51", "CMD_N51", "RH_N51")) %>% 
+  cor()
+
+
+corrplot(Norms_cor, method = "circle")
+
+#Come back to these when we have a better idea of which variables to use
+
+
+```
+

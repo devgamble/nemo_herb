@@ -16,7 +16,6 @@ library(here)
 library(ggplot2)
 library(kableExtra)
 
-
 ```
 
 
@@ -112,7 +111,6 @@ ggplot(data = nemo_all1, aes(x = elev_m)) +
 #### Latitude and Longitude
 
 ```{r warning = FALSE, message = FALSE}
-
 #Lat
 ggplot(data = nemo_all1, aes(x = lat)) +
   geom_histogram(fill = "blue", color = "black") +
@@ -147,9 +145,46 @@ ggplot(data = nemo_all1, aes(x = long, y = lat)) +
   ylab("Latitude (deg)") + 
   xlab("Longitude (deg)")
 
+```
 
+
+```{r warning = FALSE, message = FALSE}
 #Error distance & bin
+ggplot(data = nemo_all1, aes(x = error_dist_m)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  ylab("Count") + 
+  xlab("Error distance (binned)")
   
+
+ggplot(data = nemo_all1, aes(x = error_bin)) +
+  geom_bar(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  ylab("Count") + 
+  xlab("Error distance (binned)")
+  
+#BREAK DOWN to compare source
+
+ggplot(data = nemo_all1, aes(x = error_bin, by = source)) +
+  geom_bar(color = "black", aes(fill = source)) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  ylab("Count") + 
+  xlab("Error distance (binned)")
+
+
+sum(!(is.na(nemo_all1$georef_by))) #458 manually georeferenced specimens
+
+
+ggplot(data = nemo_all1, aes(x = error_bin, by = georef_by)) +
+  geom_bar(color = "black", aes(fill = georef_by), show.legend = FALSE) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  ylab("Count") + 
+  xlab("Error distance (binned)") +
+  labs(title = "Error distance bins (georeferenced)")
 
 
 ```
@@ -160,11 +195,19 @@ ggplot(data = nemo_all1, aes(x = long, y = lat)) +
 
 ```{r}
 #Source
-
+ggplot(data = nemo_all1, aes(x = source, by = georef_by)) +
+  geom_bar(aes(fill = georef_by), color = "black", show.legend = FALSE) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,1300)) +
+  ylab("Count") + 
+  xlab("Source") +
+  labs(title = "Specimen count by source (georeferenced)")
 
 #Herbarium
 #Create new column for herbarium code?
 
+ggplot(nemo_all1, aes(x = source, y = year)) + 
+  geom_boxplot()
 
 #County
 counties <- nemo_all1 %>% 
@@ -173,19 +216,17 @@ counties <- nemo_all1 %>%
   summarize(count = n(), meanDOY = mean(DOY)) %>% 
   arrange(-count)
 
-counties
 
 #Subspecies
 
-
-
+ggplot(data = nemo_all1, aes(x = sub_sp)) +
+  geom_bar(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,1300)) +
+  ylab("Count") + 
+  xlab("Source")
 
 ```
-
-
-### Other visualizations
-
-
 
 
 2. Investigating covariation among variables
@@ -193,41 +234,127 @@ counties
 ### Numeric variables
 
 
-Is there any covariation among non-date/time variables?
+Is there any covariation among non-date/time variables?  
 
-```{r}
+Does not look like it - not much to check.  
+<br>  
 
+
+```{r echo = FALSE}
+#ggplot(data = nemo_all1, aes(x = elev_m, y = lat))+
+  #geom_point()
+
+
+ggplot(data = nemo_all1, aes(x = elev_m, y = DOY)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  theme_classic()
+
+#Looks like DOY is earlier for specimens collected from lower elevations - makes sense
+
+ggplot(data = nemo_all1, aes(x = year, y = DOY)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  theme_classic()
+
+ggplot(data = nemo_all1, aes(x = long, y = DOY)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  theme_classic() #Earlier DOYs closer to the coast?
+
+ggplot(data = nemo_all1, aes(x = lat, y = DOY)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  theme_classic() #very slight negative trend - earlier DOY with higher lat
 
 
 ```
 
 
 
-
-
-
-### Numeric x categorical variables
-
-
-
-
-
-
-
+<br>  
 
 
 ### Create Map (Raster) of all collection locations, including effect of year
 
 
+ + Layer in elevation
+ +year
+ 
+```{r warning = FALSE, message = FALSE}
+library(sf)
+#convert coords to spatial data
+nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat")) #specifies CRS (WGS84), coords
+
+ca_border <- read_sf(here::here("analyses", "ca_state_border"), layer = "CA_State_TIGER2016") # imports all files with prefix
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "#d9fae8") +
+  geom_sf(data = nemo_sf, aes(color = year), alpha = 0.5, size = 1.5, show.legend = TRUE) + #Add 'pch' for borders
+  scale_color_gradientn(colors = c("#ffffff", "#004063"), values = c(0, 1)) +
+  theme_void()
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "#d9fae8") +
+  geom_sf(data = nemo_sf, aes(color = elev_m), alpha = 0.8, size = 1.5, show.legend = TRUE) +
+  scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
+  theme_void()
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "#d9fae8") +
+  geom_sf(data = nemo_sf, aes(color = DOY), alpha = 0.8, size = 1.5, show.legend = TRUE) +
+  scale_color_gradientn(colors = c("#ffffff", "#000003"), values = c(0, 1)) +
+  theme_void()
+
+
+```
+ 
+ 
 
 
 
 
 
 
-# Investigating Climate Data (ClimateNA)
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+YoC_df <- read_csv(here::here("climateNA", "all_cna", "YoC_Y_and_L1_raw.csv")) %>% 
+  rename(year = YoC)
+
+Norms_df <- read_csv(here::here("climateNA", "all_CNA", "norms_raw_51_and_81.csv")) %>% 
+  rename(year = YoC)
+
+climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
+  rename(year = YoC)
+
+```
 
 
+## Looking at climates of collection across California  
+
+
+```{r}
+nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat"))
+clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "") +
+  geom_sf(data = clim_dfsf, aes(color = MAT_N51), alpha = 0.5, size = 2, show.legend = TRUE) +
+  scale_color_gradientn(colors = c("#fff71c", "#e60000"), values = c(0, 1)) +
+  theme_void()
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "") +
+  geom_sf(data = clim_dfsf, aes(color = MAP_N51), alpha = 0.8, size = 2, show.legend = TRUE) +
+  scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
+  theme_void()
+
+
+```
 
 
 

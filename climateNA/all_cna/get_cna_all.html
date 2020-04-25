@@ -374,6 +374,10 @@ summary {
 <div id="this-document-and-the-code-within-is-based-off-earlier-attempts-at-obtaining-climatena-data-cch2_getcna.r-climate_import-clean_cch1.rmd" class="section level6">
 <h6>This document and the code within is based off earlier attempts at obtaining climateNA data (‘cch2_getCNA.R’, ‘climate_import-clean_cch1.Rmd’)</h6>
 </div>
+<div id="jump-to-step-4.-to-see-how-climate-data-are-organized-and-which-parameters-are-available." class="section level6">
+<h6>Jump to Step 4. to see how climate data are organized and which parameters are available.</h6>
+<p><br></p>
+</div>
 <div id="step-1." class="section level3">
 <h3>Step 1.</h3>
 <p><strong>Creating a ClimateNA compatible file to download climate data</strong></p>
@@ -421,12 +425,12 @@ For Normals, I selected ‘All Variables’ to download annual, seasonal, and mo
 <div id="read-in-normals" class="section level4">
 <h4>Read in Normals</h4>
 <p>These csv’s have monthly, seasonal, and annual climate variables averaged over each of the 30-year periods</p>
-<pre class="r"><code>norms_1951_1980 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;all_CNA_Normal_1951_1980MSY.csv&quot;), na = c(&quot;-9999&quot;, &quot;-9999.0&quot;)) %&gt;% #Fix NAs
+<pre class="r"><code>norms_1951_1980 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;cna_rawfiles&quot;, &quot;all_CNA_Normal_1951_1980MSY.csv&quot;), na = c(&quot;-9999&quot;, &quot;-9999.0&quot;)) %&gt;% #Fix NAs
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %&gt;% #Fixing names
   filter(!(specimen_number %in% c(&quot;DAV300381&quot;, &quot;UC880904&quot;))) #obs in water - remove
 #1764 obs - same as input df
 
-norms_1981_2010 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;all_CNA_Normal_1981_2010MSY.csv&quot;), na = c(&quot;-9999&quot;, &quot;-9999.0&quot;)) %&gt;% #Fix NAs
+norms_1981_2010 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;cna_rawfiles&quot;, &quot;all_CNA_Normal_1981_2010MSY.csv&quot;), na = c(&quot;-9999&quot;, &quot;-9999.0&quot;)) %&gt;% #Fix NAs
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %&gt;% 
   filter(!(specimen_number %in% c(&quot;DAV300381&quot;, &quot;UC880904&quot;)))
 
@@ -436,7 +440,7 @@ norms_1981_2010 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&q
 <div id="read-in-time-series" class="section level4">
 <h4>Read in Time Series</h4>
 <p>These data has monthly, seasonal, and annual variables for ALL YEARS (1901 - 2018)</p>
-<pre class="r"><code>TS_1901_2018 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;all_CNA_1901-2018MSY.csv&quot;), na = c(&quot;-9999&quot;, &quot;-9999.0&quot;)) %&gt;%
+<pre class="r"><code>TS_1901_2018 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;cna_rawfiles&quot;, &quot;all_CNA_1901-2018MSY.csv&quot;), na = c(&quot;-9999&quot;, &quot;-9999.0&quot;)) %&gt;%
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %&gt;% 
   filter(!(specimen_number %in% c(&quot;DAV300381&quot;, &quot;UC880904&quot;)))
 
@@ -446,7 +450,7 @@ norms_1981_2010 &lt;- read_csv(here::here(&quot;climateNA&quot;, &quot;all_cna&q
 <h5>Checking things out</h5>
 <p>For some reason, two records come back with all NAs:</p>
 <ul>
-<li>DAV300381 - 1997 - Appears to be in the middle of the pacific ocean [cch2] - removed from data.</li>
+<li>DAV300381 - 1997 - Appears to be in the middle of the pacific ocean [cch2] - removed.</li>
 <li>UC880904 - 1938 - Appears to be very close, but not in water [cch2] - removed</li>
 </ul>
 <p><br></p>
@@ -497,7 +501,7 @@ write_csv(Norms_df, here::here(&quot;climateNA&quot;, &quot;all_CNA&quot;, &quot
 <div id="now-the-time-series-yoc-and-yoc---1." class="section level5">
 <h5>Now, the Time Series YoC and YoC - 1.</h5>
 <pre class="r"><code>YoC_1 &lt;- TS_YoC
-colnames(YoC_1)[6:252] &lt;- rename_ftn(YoC_1, apnd = &quot;_Y1&quot;, rang = 6:252)
+colnames(YoC_1)[6:252] &lt;- rename_ftn(YoC_1, apnd = &quot;_Y&quot;, rang = 6:252)
 #2 less obs than YoC_less1 [1675]
 
 
@@ -505,31 +509,48 @@ YoC_less1 &lt;- TS_YoC_less1
 colnames(YoC_less1)[6:252] &lt;- rename_ftn(YoC_less1, apnd = &quot;_L1&quot;, rang = 6:252) #L1 for last year
 # obs [1677]
 
-#Would it be better to keep these two datasets separate?
-
 
 YoC_df &lt;- merge(YoC_less1, YoC_1, all.x = TRUE)
 #1677 obs and 499 rows - looks good! No rows should have been eliminated.
 #2 obs should be NAs for &quot;_Y1&quot; parameters
 
 write_csv(YoC_df, here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;YoC_Y_and_L1_raw.csv&quot;))</code></pre>
+<div id="keeping-the-yoc-and-norms-datasets-separate-for-now-theres-no-reason-to-combine-them-yet" class="section level6">
+<h6>Keeping the YoC and Norms datasets separate for now, there’s no reason to combine them (yet)</h6>
 <p><br></p>
+</div>
 </div>
 </div>
 <div id="any-additional-formatting-of-normals-or-time-series-data" class="section level4">
 <h4>Any additional formatting of Normals or Time Series data…:</h4>
+<pre class="r"><code>## Calculate Long-Term Average Climate:
+# - Option 1: Natalie has averaged three sets of normals from 1901 - 1990 to get a 90-year average
+# - Option 2: Tadeo &amp; Isaac have averaged ~ 100 years (from the TS output) to get a 100-year-normal
+## Or get more historical normals
+
+
+
+#See Susan&#39;s recent seed mass paper where they compare two sets of normals - they are very correlated and patterns are pretty much the same</code></pre>
 <p><br></p>
 </div>
 </div>
 <div id="step-4." class="section level3">
 <h3>Step 4.</h3>
 <p><strong>Climate Parameter Selection, Tidying Up</strong></p>
-<p>Now to remove parameters that we weill definitely not use in analyses; specifically, those that are uninformative of local conditions or have a large number of NA values. I will retain parameters that relate to the following climatic conditions for each dataset:<br />
-<br></p>
+<p>Now to select the parameters that we weill definitely be using in analyses. Parameters that are uninformative of local conditions or have a large number of NA values will be ignored, with the option of being removed.</p>
+<p>Here are the suffixes appended to columns to indicate the period for which parameters are given (from code above):</p>
+<p>In ‘Norms_df’:<br />
+<code>_N51</code> indicates a parameter averaged from 1951 - 1980<br />
+<code>_N81</code> indicates an average from 1981 - 2010</p>
+<p>In ‘YoC_df’:<br />
+<code>_Y</code> indicates the climate variables for the year in which a specimen was collected<br />
+<code>_L1</code> indicates variables for the year prior to which a specimen was collected, as in less (or last) 1</p>
+<p><br></p>
+<p>The following climate parameters for Temperature and Precipitation (and other derived variables) will be retained:</p>
 <div id="temperature" class="section level4">
 <h4>Temperature</h4>
 <ul>
-<li><em>Annual</em>: MAT, MWMT, MCMT</li>
+<li><em>Annual</em>: MAT, MWMT, MCMT, TD</li>
 <li><em>Seasonal</em>: Tave, Tmax, Tmin</li>
 <li><em>Monthly</em>: Tave, Tmax, Tmin</li>
 </ul>
@@ -545,25 +566,28 @@ write_csv(YoC_df, here::here(&quot;climateNA&quot;, &quot;all_cna&quot;, &quot;Y
 <div id="combinedderived-variables" class="section level4">
 <h4>Combined/Derived variables</h4>
 <ul>
-<li><em>Annual</em>: AHM, SHM, DD&lt;0, DD&gt;5, NFFD, Eref, CMD, RH</li>
+<li><em>Annual</em>: AHM, SHM, DD&lt;0, DD&gt;5, NFFD, Eref, CMD, RH, EMT &amp; EXT</li>
 <li><em>Seasonal</em>: DD_0, DD5, NFFD(wt &amp; sp only), Eref, CMD, RH</li>
-<li><em>Monthly</em>: DD_0, DD5, Eref, CMD, RH</li>
+<li><em>Monthly</em>: DD_0, DD5, Eref, CMD, RH, NFFD</li>
 </ul>
-<div id="removing" class="section level5">
-<h5>REMOVING</h5>
+<div id="ignore-remove" class="section level5">
+<h5>IGNORE (Remove)</h5>
 <ul>
-<li><em>Annual</em>: TD, DD&lt;18, DD&gt;18, FFP, bFFP, eFFP, EMT, EXT, MAR</li>
+<li><em>Annual</em>: DD&lt;18, DD&gt;18, FFP, bFFP, eFFP, MAR</li>
 <li><em>Seasonal</em>: RAD, DD_18, DD18, NFFD(sm &amp; at), PAS(sm &amp; at)</li>
-<li><em>Monthly</em> RAD, DD_18, DD18, NFFD</li>
+<li><em>Monthly</em> RAD, DD_18, DD18</li>
 </ul>
+<div id="is-there-any-point-to-removing-these-variables-other-than-not-having-them-in-the-datasheet-the-climate-csvs-are-already-huge-and-apart-from-the-ts-one-removing-these-columns-has-no-other-discernable-effect." class="section level6">
+<h6>Is there any point to removing these variables, other than not having them in the datasheet? The climate csvs are already huge, and apart from the TS one, removing these columns has no other discernable effect.</h6>
 <p><br></p>
+</div>
 </div>
 <div id="definitions-from-climatena-6.20-help-document" class="section level5">
 <h5>Definitions (from ClimateNA [6.20] ‘help’ document)</h5>
-<p>’_wt’ = Dec, Jan, Feb; ’_sp’ = Mar, Apr, May; ‘sm’ = Jun, Jul, Aug; ’_at’ = Sep, Oct, Nov<br />
-’_0 to _12’ indicate months</p>
+<p><code>_wt</code> = Dec, Jan, Feb; <code>_sp</code> = Mar, Apr, May; <code>sm</code> = Jun, Jul, Aug; <code>_at</code> = Sep, Oct, Nov<br />
+<code>_0</code> to <code>_12</code> indicate months</p>
 <p><em>Directly calculated annual variables</em>:<br />
-<font size="1.5"> MAT = mean annual temperature (°C),<br />
+<font size="2"> MAT = mean annual temperature (°C),<br />
 MWMT = mean warmest month temperature (°C),<br />
 MCMT = mean coldest month temperature (°C),<br />
 TD = temperature difference between MWMT and MCMT, or continentality (°C),<br />
@@ -573,7 +597,7 @@ AHM = annual heat-moisture index (MAT+10)/(MAP/1000))<br />
 SHM = summer heat-moisture index ((MWMT)/(MSP/1000))<br />
 </font></p>
 <p><em>Derived annual variables</em>:<br />
-<font size="1.5"> DD&lt;0 = degree-days below 0°C, chilling degree-days<br />
+<font size="2"> DD&lt;0 = degree-days below 0°C, chilling degree-days<br />
 DD&gt;5 = degree-days above 5°C, growing degree-days<br />
 DD&lt;18 = degree-days below 18°C, heating degree-days<br />
 DD&gt;18 = degree-days above 18°C, cooling degree-days<br />
@@ -590,16 +614,22 @@ MAR = mean annual solar radiation (MJ m‐2 d‐1)<br />
 RH = mean annual relative humidity (%)<br />
 </font></p>
 <p><br></p>
-<p><strong>Removing the variables</strong></p>
-<pre class="r"><code>YoC_dfc &lt;- YoC_df %&gt;% 
-  select(-c(Rad01_L1:Rad12_L1, DD_18_01_L1:NFFD12_L1, Rad_wt_L1:Rad_at_L1, DD_18_wt_L1:DD18_at_L1, PAS_sm_L1, PAS_at_L1,  TD_L1, DD_18_L1, DD18_L1, bFFP_L1:FFP_L1, EMT_L1:MAR_L1, #Last year
-            Rad01_Y1:Rad12_Y1, DD_18_01_Y1:NFFD12_Y1, Rad_wt_Y1:Rad_at_Y1, DD_18_wt_Y1:DD18_at_Y1, PAS_sm_Y1, PAS_at_Y1,  TD_Y1, DD_18_Y1, DD18_Y1, bFFP_Y1:FFP_Y1, EMT_Y1:MAR_Y1)) #YoC
-
-
-
-Norms_dfc &lt;- Norms_df %&gt;% 
-  select(-c(Rad01_N51:Rad12_N51, DD_18_01_N51:NFFD12_N51, Rad_wt_N51:Rad_at_N51, DD_18_wt_N51:DD18_at_N51, PAS_sm_N51, PAS_at_N51,  TD_N51, DD_18_N51, DD18_N51, bFFP_N51:FFP_N51, EMT_N51:MAR_N51, #51-80
-            Rad01_N81:Rad12_N81, DD_18_01_N81:NFFD12_N81, Rad_wt_N81:Rad_at_N81, DD_18_wt_N81:DD18_at_N81, PAS_sm_N81, PAS_at_N81, TD_N81, DD_18_N81, DD18_N81, bFFP_N81:FFP_N81, EMT_N81:MAR_N81)) #81-10</code></pre>
+</div>
+<div id="calculate-anomalies" class="section level5">
+<h5>Calculate Anomalies</h5>
+<p>Anomalies = deviations from the average climate. These could be computed as <code>abs(x_ann - x_norm)</code> where ‘x’ is a climate variable. Just need to decide on which normals to use.</p>
+<ul>
+<li>1901 - 1930</li>
+<li>1931 - 1960</li>
+<li>1951 - 1981*</li>
+<li>1981 - 2010*</li>
+<li>1901 - 1990 (90 yr average) - USE LONG TERM AVERAGE TO CALCULATE NORMALS <strong>BUT</strong> Know that more recent normals (after 1961 accordint to Natalie) begin showing the trend of global warming. Using Normals during/after this period may make anomalies less apparent!</li>
+</ul>
+<p>Compare “Pre-warming” normals (1951-1980) to post-warming (1981-2010), as well as to long term average.</p>
+<p>Note: Natalie appears to use two anomalies: One for the 1901-1930 normals, and one for combined 90 years (3 sets norms averaged from 1901-1990)</p>
+<p>Update after calculating anomalies here. Since each observation must have annual data to calculate the anomalies, save (overwrite) new csv over YoC_df.</p>
+<p><strong>NEXT STEPS</strong> - Add other climate Normals or long-term averages (e.g. 60, 90, 100 year avg?) (?) See Natalies scripts/send a message - Find out the best way to calculate Climate anomalies - Research which climate parameters other studies have found to be important - help in finding most influential ones<br />
+- Move on to Climate EDA</p>
 </div>
 </div>
 </div>

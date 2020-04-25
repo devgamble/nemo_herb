@@ -20,7 +20,11 @@ library(janitor)
 
 ## Obtaining Climate data for all specimen records  
 
-###### This document and the code within is based off earlier attempts at obtaining climateNA data ('cch2_getCNA.R', 'climate_import-clean_cch1.Rmd')
+###### This document and the code within is based off earlier attempts at obtaining climateNA data ('cch2_getCNA.R', 'climate_import-clean_cch1.Rmd')  
+
+
+###### Jump to Step 4. to see how climate data are organized and which parameters are available.  
+<br>  
 
 ### Step 1.  
 
@@ -115,7 +119,7 @@ TS_1901_2018 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all
 
 For some reason, two records come back with all NAs:  
 
-- DAV300381 - 1997   - Appears to be in the middle of the pacific ocean [cch2] - removed from data.
+- DAV300381 - 1997   - Appears to be in the middle of the pacific ocean [cch2] - removed.
 - UC880904 - 1938   - Appears to be very close, but not in water [cch2] - removed
 
 <br>  
@@ -173,9 +177,10 @@ norms81 <- norms_1981_2010
 colnames(norms81)[6:252] <- rename_ftn(norms81, apnd = "_N81", rang = 6:252)
 
 
-Norms_df <- merge(norms51, norms81) 
+Norms_df <- merge(norms51, norms81) %>% 
+  select(-c(Rad01_N51:Rad12_N51, Rad_wt_N51:Rad_at_N51, MAR_N51, Rad01_N81:Rad12_N81, Rad_wt_N81:Rad_at_N81, MAR_N81)) #Mostly NAs
 #Ensure columns 1-5 [specimen_number, YoC, lat, long, elev_m] are intace and merged correctly
-#There should be 499 columns and 1766 obs (in this case)
+#There should be 465 columns and 1764 obs (in this case)
 write_csv(Norms_df, here::here("climateNA", "all_CNA", "norms_raw_51_and_81.csv"))
 
 ```
@@ -188,7 +193,7 @@ write_csv(Norms_df, here::here("climateNA", "all_CNA", "norms_raw_51_and_81.csv"
 ```{r message = FALSE, results = 'hide'}
 
 YoC_1 <- TS_YoC
-colnames(YoC_1)[6:252] <- rename_ftn(YoC_1, apnd = "_Y1", rang = 6:252)
+colnames(YoC_1)[6:252] <- rename_ftn(YoC_1, apnd = "_Y", rang = 6:252)
 #2 less obs than YoC_less1 [1675]
 
 
@@ -196,23 +201,45 @@ YoC_less1 <- TS_YoC_less1
 colnames(YoC_less1)[6:252] <- rename_ftn(YoC_less1, apnd = "_L1", rang = 6:252) #L1 for last year
 # obs [1677]
 
-#Would it be better to keep these two datasets separate?
 
+YoC_df <- merge(YoC_less1, YoC_1, all.x = TRUE) %>% 
+  select(-c(Rad01_L1:Rad12_L1, Rad_wt_L1:Rad_at_L1, MAR_L1, Rad01_Y:Rad12_Y, Rad_wt_Y:Rad_at_Y, MAR_Y)) #Remove NAs
+#1677 obs and 465 rows - looks good! No rows should have been eliminated.
+#2 obs should be NAs for "_Y1" parameters BUT sum(is.na(YoC_df$MAT_Y)) is showing 3. strange. NA introduced in merge??
+#Removing the all.x = TRUE leads to a df with 1674 obs - there is a non-overlapping difference! YoC_less1 has a record included that YoC_1 does not, and vice versa, hence the 3NA values when merged - all good.
 
-YoC_df <- merge(YoC_less1, YoC_1, all.x = TRUE)
-#1677 obs and 499 rows - looks good! No rows should have been eliminated.
-#2 obs should be NAs for "_Y1" parameters
-
-write_csv(YoC_df, here::here("climateNA", "all_cna", "YoC_Y_and_L1_raw.csv"))
+write_csv(YoC_df, here::here("climateNA", "all_cna", "YoC_Y_and_L1.csv"))
 
 ```
+###### Keeping the YoC and Norms datasets separate for now, there's no reason to combine them (yet)  
+
 
 <br>  
 
-#### Any additional formatting of Normals or Time Series data...:
+#### Additional formatting of Climate averages:
 ```{r}
-## Option: Get Longer-term averages than 30-year normals (e.g. 90 or 100-year averages)??
-## Or get more historical normals
+## Calculate Long-Term Average Climate:
+
+
+#Average across years 1901 - 2000 for each specimen
+
+TS_100_avg <- TS_1901_2018 %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(Tmax01:RH), mean) %>%  #It works!
+  select(-c(Rad01:Rad12, Rad_wt:Rad_at, MAR)) #Remove NAs
+#NA values returned if any single value is NA - looks like it mostly affects Rad and MAR
+
+colnames(TS_100_avg)[2:231] <- rename_ftn(TS_100_avg, apnd = "_100Y", rang = 2:231) #100Y for 100-yr avg
+
+write_csv(TS_100_avg, here::here("climateNA", "all_cna", "100y_avg.csv"))
+
+
+#Get older set of normals? (e.g. 1901 - 1930)
+
+
+
+#See Susan's recent seed mass paper where they compare two sets of normals - they are very correlated and patterns are pretty much the same
 
 
 ```
@@ -222,8 +249,26 @@ write_csv(YoC_df, here::here("climateNA", "all_cna", "YoC_Y_and_L1_raw.csv"))
 ### Step 4.  
 **Climate Parameter Selection, Tidying Up**  
 
-Now to remove parameters that we weill definitely not use in analyses; specifically, those that are uninformative of local conditions or have a large number of NA values. I will retain parameters that relate to the following climatic conditions for each dataset:  
+
+Now to select the parameters that we weill definitely be using in analyses. Parameters that are uninformative of local conditions or have a large number of NA values will be ignored, with the option of being removed.  
+
+Here are the suffixes appended to columns to indicate the period for which parameters are given (from code above):  
+
+
+In 'Norms_df':  
+`_N51` indicates a parameter averaged from 1951 - 1980  
+`_N81` indicates an average from 1981 - 2010  
+
+
+In 'YoC_df':  
+`_Y` indicates the climate variables for the year in which a specimen was collected  
+`_L1` indicates variables for the year prior to which a specimen was collected, as in less (or last) 1  
+
+
 <br>  
+
+The following climate parameters for Temperature and Precipitation (and other derived variables) will be retained:  
+
 
 #### Temperature  
 - *Annual*: MAT, MWMT, MCMT, TD
@@ -242,21 +287,23 @@ Now to remove parameters that we weill definitely not use in analyses; specifica
 - *Monthly*: DD_0, DD5, Eref, CMD, RH, NFFD
 
 
-##### REMOVING
+##### IGNORE (Remove)  
 - *Annual*: DD<18, DD>18, FFP, bFFP, eFFP, MAR
 - *Seasonal*: RAD, DD_18, DD18, NFFD(sm & at), PAS(sm & at)
 - *Monthly* RAD, DD_18, DD18 
+
+###### Is there any point to removing these variables, other than not having them in the datasheet? The climate csvs are already huge, and apart from the TS one, removing these columns has no other discernable effect.  
 
 <br>  
 
 ##### Definitions (from ClimateNA [6.20] 'help' document)  
 
-'_wt' = Dec, Jan, Feb; '_sp' = Mar, Apr, May; 'sm' = Jun, Jul, Aug; '_at' = Sep, Oct, Nov  
-'_0 to _12' indicate months  
+`_wt` = Dec, Jan, Feb; `_sp` = Mar, Apr, May; `sm` = Jun, Jul, Aug; `_at` = Sep, Oct, Nov  
+`_0` to `_12` indicate months  
 
 
 *Directly calculated annual variables*:  
-<font size = "1.5">
+<font size = "2">
 MAT	=  	mean annual temperature (°C),  
 MWMT = 	mean warmest month temperature (°C),  
 MCMT   =	mean coldest month temperature (°C),  
@@ -268,7 +315,7 @@ SHM  =	 	summer heat-moisture index ((MWMT)/(MSP/1000))
 	</font>  
 	
 *Derived annual variables*:  
-<font size = "1.5">
+<font size = "2">
 DD<0	=	degree-days below 0°C, chilling degree-days  
 DD>5	 = 	degree-days above 5°C, growing degree-days  
 DD<18	= degree-days below 18°C, heating degree-days  
@@ -287,10 +334,9 @@ RH	= 	mean annual relative humidity (%)
   </font>  
 
 <br>  
-
-**Removing variables**  
-```{r}
-
+ 
+```{r echo = FALSE, eval = FALSE}
+#Removing Variables #Optional!
 YoC_dfc <- YoC_df %>% 
   select(-c(Rad01_L1:Rad12_L1, DD_18_01_L1:DD18_12_L1, Rad_wt_L1:Rad_at_L1, DD_18_wt_L1:DD18_at_L1, PAS_sm_L1, PAS_at_L1,  DD_18_L1, DD18_L1, bFFP_L1:FFP_L1, MAR_L1, #Last year
             Rad01_Y1:Rad12_Y1, DD_18_01_Y1:DD18_12_Y1, Rad_wt_Y1:Rad_at_Y1, DD_18_wt_Y1:DD18_at_Y1, PAS_sm_Y1, PAS_at_Y1,  DD_18_Y1, DD18_Y1, bFFP_Y1:FFP_Y1, MAR_Y1)) #YoC
@@ -304,16 +350,55 @@ Norms_dfc <- Norms_df %>%
 
 ```
 
-<br>  
 
 
-**Calculate Anomalies**   
-Anomalies = deviations from the average climate. These could be computed as `abs(x_ann - x_norm)` where 'x' is a climate variable. Just need to decide on which normals to use.  
+##### Calculate Anomalies   
+Anomalies = deviations from the average climate. These could be computed as `abs(x_ann - x_norm)` where 'x' is a climate variable.  
 
-- 1901 - 1930 
-- 1931 - 1960
-- 1951 - 1981*
-- 1981 - 2010*
-- 1901 - 1990 (90 yr average)
 
-Note: Natalie appears to use two anomalies: One for the 1901-1930 normals, and one for some other avg (mabe 90yr)
+Calculate anomalies for long-term average climate *and* climate normals - compare later.  
+
+
+```{r}
+
+#Calculate anomalies for YoC and YoC-1
+#Save each in YoC dataset, one csv for each average/normal period used (2 or 3 total?)
+
+
+#Combine all into one df to calculate anomalies
+#First, Norms and 100y avg. Both have 1764 obs (the total)
+
+
+Norms_100Y <- merge(Norms_df, TS_100_avg) #Good
+
+
+#Now for YoC and Yoc-1. Should have 1155 columns and 1764 obs (87-90 rows NAs for Yoc variables):
+climNA_nemo_merge <- merge(Norms_100Y, YoC_df, all.x = TRUE)
+
+```
+
+```{r}
+#Creating Anomalies for the 100Y average - ignore Rad variables, too many NAs
+#climNa_nemo_all1 <- climNA_nemo_merge %>% 
+# mutate_at(vars(Tmax01_100Y:RH_100Y))
+
+
+
+write_csv(climNA_nemo_merge, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
+
+
+```
+
+
+
+Update after calculating anomalies here. Since each observation must have annual data to calculate the anomalies, save (overwrite) new csv over YoC_df.  
+
+
+
+**NEXT STEPS**
+- Find out the best way to calculate Climate anomalies - Calculate Anomalies
+- Research which climate parameters other studies have found to be important - help in finding most influential ones  
+- Climate EDA & Analyses  
+
+
+
