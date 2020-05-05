@@ -1,0 +1,495 @@
+---
+title: "Exploratory Analyses 2"
+author: "Devin Gamble"
+date: "4/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(corrplot)
+library(visreg)
+```
+
+
+### Objective: First stab at models for DOY ~ Climate  
+
+Please see 'EDA1.Rmd' for exploration of variables from the georferenced herbarium records and 'EDA_climate.Rmd' for ClimateNA variables.  
+
+These analyses will be used to construct and imporve regression models to examine the effects of different variables on phenology (DOY), as well as determine how the inclusion of certain variables affect the relationship between DOY and climate.  
+<br>  
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load in data & establish error distance bins
+
+nemo_spec <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
+                               error_dist_m > 2000 & error_dist_m <= 5000 ~ "2-5 km",
+                               error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
+                               error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
+                               error_dist_m > 15000 ~ ">15 km")) %>% 
+  select(specimen_number:error_dist_m, error_bin, everything()) %>% mutate(error_bin = factor(error_bin, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km"))) #specify factor & levels for error bin
+#1240 obs with error distance - added column with error distance categories
+#1764 obs total
+
+climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
+  rename(year = YoC) #Also 1764 obs
+
+
+#Merge herbarium records and climate data (by specimen number)
+nemo_df1 <- merge(nemo_spec, climNA_all) #1764 obs and 1181 total columns
+
+```
+
+
+## How does DoY depend on non-climatic variables?  
+Some plots in EDA1 may be similar to these. Only significant variables are shown.  
+
+
+```{r}
+lm1 <- lm(DOY ~ elev_m + year + lat, data = nemo_df1)
+
+summary(lm1)
+Anova(lm1, type = 3)
+
+visreg(lm1, xvar = "elev_m", xlab = "Elevation (m)") #better than ggplot  
+visreg(lm1, "year", xlab = "Year")
+visreg(lm1, "lat")
+
+cor(nemo_df1$lat, nemo_df1$long) #highly correlated, only use lat
+```
+
+**DOY is earlier for lower elevations, lower latitudes, later years.**
+
+
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE}
+#Diagnostics
+#Checking Linear Regression Assumptions
+#• Linear relationship between covariates and response (residuals vs fitted plot) - plot 1 - check
+#• Homoscedasticity (constant variance) - plot 3 - check
+#• Normality (of the error distribution) (residual QQ plot) - plot 2 - check
+#• Absence of multicollinearity - check
+#• No autocorrelation - not time series data
+
+plot(lm1)
+
+vif(lm1) #VIF < 2 generally okay.  
+sqrt(vif(lm1)) > 2
+
+#check correlations  
+cor(nemo_df1$lat, nemo_df1$long) #highly correlated, only use lat
+#PI and DOY likely correlated?
+cor(nemo_df1$MAT_100Y, nemo_df1$MAP_100Y) moderately correlated...
+
+#Check outliers
+plot(lm1, 4)
+#Use influence threshold of 4/n = 0.0022
+
+#Influence of points on each coefficient
+dfbetasPlots(lm1, id.n = 2, id.col = "red")
+
+
+#Partial resid plots
+crPlots(m1)
+```
+
+
+<br>  
+
+## How does DOY depend on climate?  
+
+##### These models will establish the relationship between Day of Year of collection (DOY) and climate variables across the whole dataset of herbarium specimens.  
+
+
+<br>  
+
+#### Annual Climate  
+
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+MAT_lm1 <- lm(DOY ~ MAT_100Y + year + elev_m + lat, data = nemo_df1)
+summary(MAT_lm1) #R2 = .2646, MAT B = -2.53
+
+MAP_lm1 <- lm(DOY ~ MAP_100Y + year + elev_m + lat, data = nemo_df1)
+summary(MAP_lm1) #R2 = .2838, MAP B = 0.0192
+
+
+ann_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + lat + elev_m + year, data = nemo_df1)
+summary(ann_lm1) #R2 = .2862 #MAT estimate is much lower than in first lm (MAP slightly lower)
+```
+
+
+```{r message = FALSE, warning = FALSE}
+MAT_lm1 <- lm(DOY ~ MAT_100Y + year + elev_m + lat, data = nemo_df1)
+visreg(MAT_lm1, "MAT_100Y")
+
+MAP_lm1 <- lm(DOY ~ MAP_100Y + year + elev_m + lat, data = nemo_df1)
+visreg(MAP_lm1, "MAP_100Y")
+
+#Analyses w normals not shown
+#R2 highest (and coeffs most -) for 100Y avg climate - use it for long term avg.  
+
+ffd_lm1 <- lm(DOY ~ NFFD_100Y + lat + elev_m + year, data = nemo_df1)
+#summary(ffd_lm1)
+visreg(ffd_lm1, "NFFD_100Y") #reflects relationship of DOY with MAT
+
+
+```
+
+MAT is advancing DOY, MAP is delaying DOY.
+
+Elevation and MAP/MAT appear to have the most significant effects on DOY. 
+<br>  
+
+
+**Seasonal Variables**  
+
+##### Temperature  
+
+
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#Tmin
+Tmin_wt_lm1 <- lm(DOY ~ Tmin_wt_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tmin_wt_lm1) #ns
+
+Tmin_sp_lm1 <- lm(DOY ~ Tmin_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tmin_sp_lm1) #R2 = .2677 B = -2.57
+
+Tmin_sm_lm1 <- lm(DOY ~ Tmin_sm_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tmin_sm_lm1) #R2 = .265 B = -1.64
+
+
+
+#Tave
+Tave_wt_lm1 <- lm(DOY ~ Tave_wt_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tave_wt_lm1) #ns
+
+Tave_sp_lm1 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tave_sp_lm1) # R = .2724 B = -3.58  #lat ns here
+
+Tave_sm_lm1 <- lm(DOY ~ Tave_sm_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tave_sm_lm1) #R2 = .263 B = -1.15
+
+#Tmax
+Tmax_sp_lm1 <- lm(DOY ~ Tmax_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tmax_sp_lm1) #R2 = .2609 B = -1.42
+```
+
+
+```{r message = FALSE, warning = FALSE}
+Tmin_sp_lm1 <- lm(DOY ~ Tmin_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tmin_sp_lm1) #R2 = .2677 B = -2.57
+
+Tave_sp_lm1 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tave_sp_lm1) # R = .2724 B = -3.58  #lat ns here
+visreg(Tave_sp_lm1, "Tave_sp_100Y")
+```
+
+Spring Tave has slighltly larger estimate and explains more variation in DOY than Spring Tmin (and Tmax). Winter temperature is nonsignificant on DOY.  
+
+Interestingly, latitude is nonsignificant in the Tave model, but not in the Tmin model
+<br>  
+
+##### PPT  
+
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#PPT
+PPT_wt_lm1 <- lm(DOY ~ PPT_wt_100Y + year + elev_m + lat, data = nemo_df1) #log transform PPT? here or in df?
+summary(PPT_wt_lm1) #R2 = .2815 B = 0.035
+visreg(PPT_wt_lm1, "PPT_wt_100Y")
+
+PPT_sp_lm1 <- lm(DOY ~ PPT_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(PPT_sp_lm1) #R2 = .2882 B = 0.081   #lat ns #preferred model?
+visreg(PPT_sp_lm1, "PPT_sp_100Y")
+
+PPT_sm_lm1 <- lm(DOY ~ PPT_sm_100Y + year + elev_m + lat, data = nemo_df1)
+summary(PPT_sm_lm1) #R2 = .263 B = 0.26
+visreg(PPT_sm_lm1, "PPT_sm_100Y")
+#var. in PPT much lower than for spring and witner
+```
+
+
+```{r message = FALSE, warning = FALSE}
+PPT_sp_lm1 <- lm(DOY ~ PPT_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(PPT_sp_lm1) #R2 = .2882 B = 0.081
+visreg(PPT_sp_lm1, "PPT_sp_100Y")
+
+PPT_sm_lm1 <- lm(DOY ~ PPT_sm_100Y + year + elev_m + lat, data = nemo_df1)
+#summary(PPT_sm_lm1) #R2 = .263 B = 0.26
+visreg(PPT_sm_lm1, "PPT_sm_100Y")
+
+```
+
+Delaying effect of PPT observable in wt, sp, and sm. Model with spring PPT has highest $R^2$ and a higher parameter estimate than that of winter PPT. The estimate for the summer PPT model is quite large, but has a low R2.  
+
+<br>  
+
+
+**In Summary**  
+
+DOY is sensitive to both MAT (advancing effect) and MAP (delaying effect) over 100 years, and precipitation may be just as stronger, or even stronger, than MAT.  
+
+Spring temperatures (particularly Tave and also Tmin) explain more variation and have larger estimates in their relationship with DOY than winter temperatures.  
+
+Precipitation has the strongest effect on DOY for spring, followed by winter, averages. Summer PPT had a large paramter estimate but the model R2 was much lower.  
+<br>  
+
+
+## Effect of Error Distance  
+
+
+The following analyses aim to measure the effect of different error distance on model outputs, specifically,  
+
+- $R^2$ values  
+- Parameter estimates and  
+- significance of climate variables in their effect on DOY  
+
+
+For 100 year averages for MAT, MAP, Tmin_sp, Tave_sp, PPT_sp, PPT_wt
+
+
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+MAT_lm1
+MAT_lm2 <- lm(DOY ~ MAT_100Y + year + elev_m + lat + error_bin, data = nemo_df1) #add effect of error distance
+#summary(MAT_lm1)
+summary(MAT_lm2)
+
+MAP_lm1
+MAP_lm2 <- lm(DOY ~ MAP_100Y + year + elev_m + lat + error_bin, data = nemo_df1)
+#summary(MAP_lm1)
+summary(MAP_lm2)
+#Other variables checked above
+```
+Including error distance (or error bin) as a covariate has no visible effect, does not improve models.  
+
+<br>  
+
+Create subset of data where each observation has an error distance:  
+
+```{r warning = FALSE, message = FALSE}
+nemo_all_errors <- nemo_df1 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") #1081 entries
+
+#0-4 km
+nemo_e0_4 <-  nemo_all_errors %>% 
+  filter(error_dist_m >= 0 & error_dist_m <= 4000) #1010 obs #Do Not include error_bin in models
+
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") #761 obs
+```
+
+<br>  
+
+MAT
+ 
+```{r warning = FALSE, message = FALSE}
+MAT_lm3 <- lm(DOY ~ MAT_100Y + year + elev_m + lat + error_bin, data = nemo_all_errors)
+#summary(MAT_lm3) #R2 = .2608 B = -2.9                        (MAT_lm1 original had R2 = .2646 B = -2.53)
+
+#Small imrpovement (not shown) in R2 when filtering out > 15 km 
+#Diff b/w bins <2 and 2-5 but model no better than original
+#R2 lower but parameter estimate LARGER (more negative)
+
+visreg(MAT_lm3, "error_bin")
+
+
+MAT_lm4 <- lm(DOY ~ MAT_100Y + year + elev_m + lat, data = nemo_e0_5)
+#summary(MAT_lm4) #R2 = 0.2696 B = -3.14   #error_bin covariate improved R2
+#Improvement in the model!!
+visreg(MAT_lm4, "MAT_100Y")
+MAT_lm4.5 <- lm(DOY ~ MAT_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(MAT_lm4.5) #R2 =0.2729 B = -3.17
+#More improvement -- minor difference b/w <2 and 2-5 bins
+
+
+MAT_lm5 <- lm(DOY ~ MAT_100Y + year + elev_m + lat, data = nemo_e2)
+summary(MAT_lm5) #R2 =0.262 B = -3.43   -- slightly lower R2 BUT larger estimate 
+#error_bin covariate not included - no effect of error_dist_m
+
+
+
+#Checking out 0-4 km resolution
+
+MAT_lm5.5 <- lm(DOY ~ MAT_100Y + year + elev_m + lat, data = nemo_e0_4)
+#summary(MAT_lm5.5) #R2 = .264 B = -2.90
+
+#B much lower than 0-2 and 0-5 km models..
+```
+
+
+```{r warning = FALSE, message = FALSE, eval = FALSE, echo = FALSE}
+#Create Confidence Intervals for parameter estimates of 3 MAT models: Original, all error distances, and 0-5 km:
+#Can these be used for comparison? Or simply for B being different from 0...
+
+confint(MAT_lm3, "MAT_100Y", level = 0.95) # confindence band includes much more uncertainty than SE alone
+confint(MAT_lm5, "MAT_100Y", level = 0.95)
+#None are statistically significant different - confidence bands overlap
+
+#Is there a better test for significant model improvements?
+
+```
+
+Filtering out larger error_bins improves model $R^2$s AND results in larger parameter estimates for MAT. 'error_dist_m', the actual numeric distance, has a similar effect withl less nested (more var in distance) MAT models but not as pronounced, and otherwise had no effect.  
+
+Including error bin as a covariate (for models with 2+ bins) slightly increases R2 but not parameter estimate (by much).  
+
+Significant effect of 2-5 km bin for error distance on DOY - slightly earlier - likely due to chance. Difference b/w/ <2 and 2-5 km bins? Difficult to see in lm outputs.  
+<br>  
+
+
+MAP:  
+
+```{r warning = FALSE, message = FALSE, eval = FALSE}
+
+MAP_lm3<- lm(DOY ~ MAP_100Y + year + elev_m + lat + error_bin, data = nemo_all_errors)
+summary(MAP_lm3) #R2 = .273 B = 0.017     -- (original MAP_lm1 had R2=.284 and B = 0.019)
+#No improvement
+
+MAP_lm4 <- lm(DOY ~ MAP_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(MAP_lm4) #R2 = .281 B = .017  #Minor improvement in R2 w/ error_bin as covariate
+
+
+MAP_lm5 <- lm(DOY ~ MAP_100Y + year + elev_m + lat, data = nemo_e2)
+summary(MAP_lm5) #R2 = .275 B = 0.019 #v similar to og model
+
+```
+
+*Less improvement* seen in MAP models (relative to MAT models) when filtering out error distances above 5 km 
+
+
+Could 0-5 km be the most appropriate error to use in analyses? ClimateNA is scaled by 4km resolution...  
+
+
+#### Seasonal Climate  
+
+Spring Temp:  
+
+```{r warning = FALSE, message = FALSE, eval = FALSE}
+#Tmin
+Tmin_sp_lm2 <- lm(DOY ~ Tmin_sp_100Y + year + elev_m + lat + error_bin, data = nemo_all_errors)
+summary(Tmin_sp_lm2) #R2 = .262 B = -2.73     #og lm1 had R2 = .2677 B = -2.57
+#Larger estimate but not R2
+
+Tmin_sp_lm3 <- lm(DOY ~ Tmin_sp_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(Tmin_sp_lm3) #R2 = .272 B = -2.85 #Still slight improvement when error_bin not included
+
+Tmin_sp_lm4 <- lm(DOY ~ Tmin_sp_100Y + year + elev_m + lat, data = nemo_e2)
+summary(Tmin_sp_lm4) #R2 = .2565 (error bin missing) B = -2.69
+
+
+#
+#Tave
+#
+Tave_sp_lm2 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat, data = nemo_all_errors)
+summary(Tave_sp_lm2) #R2 = .268  B = -3.8       #[og lm1 has R = .2724 B = -3.58]
+
+#R2 lower than original - suggests some records without error dist may be influential?
+#Similar, v slightly lower R2 and B when error9_bin left out
+
+Tave_sp_lm3 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(Tave_sp_lm3) #R2 = .281 B = -4.2
+#R2 = .278 and B = -4.22 when error_bin excluded as a covariate
+
+
+Tave_sp_lm4 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat, data = nemo_e2)
+summary(Tave_sp_lm4) #R2 = .271 B = -4.5  
+#reduction in R2 compared to prev model (error bin left out)
+
+
+#Checking out 0-4 km resolution
+Tave_sp_lm4.5 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat, data = nemo_e0_4)
+#summary(Tave_sp_lm4.5) #R2 = .272 B = -3.947
+#B much lower than 0-2 and 0-5 km models, same as in MAT model
+```
+
+```{r message = FALSE, warning = FALSE}
+Tave_sp_lm1 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat, data = nemo_df1)
+summary(Tave_sp_lm1) # R = .2724 B = -3.58  #lat ns here
+
+Tave_sp_lm3 <- lm(DOY ~ Tave_sp_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(Tave_sp_lm3) #R2 = .281 B = -4.2
+#R2 = .278 and B = -4.22 when error_bin excluded as a covariate
+
+visreg(Tave_sp_lm1, "Tave_sp_100Y")
+visreg(Tave_sp_lm3, "Tave_sp_100Y")
+
+
+
+
+```
+
+
+
+While model improvements aren't too different b/w datasets with 0-5 km and 0-2 km, lack of improvements may be due to loss of variation from records with 2-5 km error. More reason to include this group. Also, looking only at records with any error distance, there is a reduction in $R^2$ values and parameter estimates. Though smaller errors may better explain variation in DOY, the many records without error distance are not inconsequential.  
+
+It's looking like the filtering to 0-5 km error may be the best case for temperature models, though improvements aren't huge.  
+
+<br>  
+
+Precipitation:  
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#PPT winter
+PPT_wt_lm2 <- lm(DOY ~ PPT_wt_100Y + year + elev_m + lat + error_bin, data = nemo_all_errors)
+summary(PPT_wt_lm2) #R2 = .271 B = 0.031    #Similar but reduced R2 excluding error_bin
+
+###no improvements relative to  ## og lm1 [#R2 = .2815 B = 0.035]
+
+PPT_wt_lm3 <- lm(DOY ~ PPT_wt_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(PPT_wt_lm3) #R2 = .277 B = 0.029
+
+PPT_wt_lm4 <- lm(DOY ~ PPT_wt_100Y + year + elev_m + lat, data = nemo_e2)
+summary(PPT_wt_lm4) #R2 = .272 B = 0.0347
+#Still not as nice as og lm1
+
+
+#
+#PPT spring
+#
+PPT_sp_lm2 <- lm(DOY ~ PPT_sp_100Y + year + elev_m + lat + error_bin, data = nemo_all_errors)
+summary(PPT_sp_lm2) #R2 = .2774 B = .075    #[og lm1 has R2 = .2882 B = 0.081]
+
+PPT_sp_lm3 <- lm(DOY ~ PPT_sp_100Y + year + elev_m + lat + error_bin, data = nemo_e0_5)
+summary(PPT_sp_lm3) #R2 = .287 B = .076
+#similar estimate but R2 is much better! #Pretty similar when error_bin excluded
+
+PPT_sp_lm4 <- lm(DOY ~ PPT_sp_100Y + year + elev_m + lat, data = nemo_e2)
+summary(PPT_sp_lm4) #R2 = .281 B = .082
+```
+
+**In Summary**  
+
+Including only records with error_distance (all bins) does not improve models compared to those where all 17864 observations are present, likely becuase some records without error distance explain variation in DOY.  
+
+Filtering out records with larger error distances generally improves models, but improvements seem greatest for `MAT`, `Tmin` and `Tave`. `PPT_sp` models had no large improvements (v slight $R^2$ increase in 0-5 km), and `PPT_wt` models saw reductions in both $R^2$s and estimates for all error bins.  
+
+Filtering finely to records with 0-2 km error led to larger parameter estimates, but at the cost of reduced R2 values compared to 0-5 km models. This could be due to a loss of variation and represents a trade-off to consider with future models. Oddly, a couple models with errors from 0-4 km were worse (for MAT, Tave_sp) than 0-2 or 0-5 error models.  
+
+Model improvements were persistent when the error_bin covariate was removed from models, though R2 values were very slightly reduced.  
+
+<br>  
+
+
+In future models,  
+- Consider treating error distance as a random effect
+- Compare only two models: those with all records and those with *errors b/w 0-5 km* 
+
+<br>  
+
+## Investigating the effect of manually georeferenced specimens on the relationship b/w DOY and climate variables  
+
+
+

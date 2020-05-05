@@ -49,13 +49,15 @@ climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")
 
 
 
-### Climate Normals  
+# Climate Normals/ Long-term Averages  
+
+## Annual Variables
 
 #### 1951 - 1980  
 
-```{r}
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#Temperature 
 
-#MAT
 ggplot(data = climNA_all, aes(x = MAT_N51)) +
   geom_histogram(fill = "blue", color = "black") +
   geom_vline(aes(xintercept = mean(MAT_N51)), col = "red", size = 1.5) + #mean
@@ -66,6 +68,34 @@ ggplot(data = climNA_all, aes(x = MAT_N51)) +
   ylab("Count") + 
   xlab("MAT 1951 - 1980")
 
+
+ggplot(data = climNA_all, aes(x = MWMT_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(MWMT_N51)), col = "red", size = 1.5) + #mean
+  geom_text(aes(x = mean(MWMT_N51), y = 0, label = round(mean(MWMT_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  geom_vline(aes(xintercept = median(MWMT_N51)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,350)) +
+  ylab("Count") + 
+  xlab("MWMT 1951 - 1980")
+
+
+ggplot(data = climNA_all, aes(x = MCMT_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(MCMT_N51)), col = "red", size = 1.5) + #mean
+  geom_text(aes(x = mean(MCMT_N51), y = 0, label = round(mean(MCMT_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  geom_vline(aes(xintercept = median(MCMT_N51)), col = "orange", size = 1) + #median
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,250)) +
+  ylab("Count") + 
+  xlab("MCMT 1951 - 1980")
+```
+
+Annual Temp distributions look okay.  
+
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
 ggplot(data = climNA_all, aes(x = MAP_N51)) +
   geom_histogram(fill = "blue", color = "black", binwidth = 100) +
   geom_vline(aes(xintercept = mean(MAP_N51)), col = "red", size = 1.5) + #mean
@@ -76,41 +106,355 @@ ggplot(data = climNA_all, aes(x = MAP_N51)) +
   ylab("Count") + 
   xlab("MAP 1951 - 1980")
 
-  
-#Tave by seasons
-#Long_pivot here for subset of data?
-
-ggplot(data = climNA_all, aes(x = MAT_N51)) +
-  geom_histogram(fill = "blue", color = "black") +
-  geom_vline(aes(xintercept = mean(MAT_N51)), col = "red", size = 1.5) + #mean
-  geom_text(aes(x = mean(MAT_N51), y = 0, label = round(mean(MAT_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
-  geom_vline(aes(xintercept = median(MAT_N51)), col = "orange", size = 1) + #median
+ggplot(data = climNA_all, aes(x = MSP_N51)) +
+  geom_histogram(fill = "blue", color = "black", binwidth = 10) +
+  geom_vline(aes(xintercept = mean(MSP_N51)), col = "red", size = 1.5) + #mean
+    geom_text(aes(x = mean(MSP_N51), y = 0, label = round(mean(MSP_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  geom_vline(aes(xintercept = median(MSP_N51)), col = "orange", size = 1) + #median
   theme_classic() +
-  scale_y_continuous(expand = c(0,0), limits = c(0,250)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,550)) +
   ylab("Count") + 
-  xlab("MAT 1951 - 1980")
+  xlab("MSP 1951 - 1980")
 
-
-  
+ggplot(data = climNA_all, aes(x = PAS_N51)) +
+  geom_histogram(fill = "blue", color = "black", binwidth = 5) +
+  geom_vline(aes(xintercept = mean(PAS_N51)), col = "red", size = 1) + #mean
+    geom_text(aes(x = mean(PAS_N51), y = 0, label = round(mean(PAS_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  ylab("Count") + 
+  xlab("PAS 1951 - 1980")
 ```
 
 
-#### 1981 - 2010
+
+Looks like most precipitation parameters will need some kind of transformation - log. There also look to be a lot of outliers.  
+
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#Heat moisture Indeces - measured as Temp over PPT fraction (standardized)
+
+ggplot(data = climNA_all, aes(x = AHM_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(AHM_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(AHM_N51), y = 0, label = round(mean(AHM_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,350)) +
+  ylab("Count") + 
+  xlab("AHM 1951 - 1980")
+#Slightly right skewed
+
+ggplot(data = climNA_all, aes(x = SHM_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(SHM_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(SHM_N51), y = 0, label = round(mean(SHM_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,250)) +
+  ylab("Count") + 
+  xlab("SHM 1951 - 1980")
+
+#Also right skewed
+
+
+#Degree days
+
+ggplot(data = climNA_all, aes(x = DD_0_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(DD_0_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(DD_0_N51), y = 0, label = round(mean(DD_0_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,400)) +
+  ylab("Count") + 
+  xlab("DD < 0 1951 - 1980")
+
+
+ggplot(data = climNA_all, aes(x = DD5_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(DD5_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(DD5_N51), y = 0, label = round(mean(DD5_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  ylab("Count") + 
+  xlab("DD > 5 1951 - 1980")
+```
+
+
+I don't understand why DD > 5 has values over 365 days (and over 31 days for monthly variables), in all climateNA files?? Are they scaled somehow? It doesn't seem to be a decimal error.  
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+
+ggplot(data = climNA_all, aes(x = NFFD_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(NFFD_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(NFFD_N51), y = 0, label = round(mean(NFFD_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,260)) +
+  ylab("Count") + 
+  xlab("NFFD 1951 - 1980")
+
+#Left skewed
+  
+ggplot(data = climNA_all, aes(x = CMD_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(CMD_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(CMD_N51), y = 0, label = round(mean(CMD_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  ylab("Count") + 
+  xlab("CMD 1951 - 1980")
+
+
+ggplot(data = climNA_all, aes(x = RH_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(RH_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(RH_N51), y = 0, label = round(mean(RH_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,300)) +
+  ylab("Count") + 
+  xlab("RH 1951 - 1980")
+
+
+```
+
+
+It seems likely that a lot of the skew in the above variables may be associated with the skew in elevation - fewer specimens collected at high elevations, but tail out into extremes.  
+<br>  
+
+
+#### All Normals/Long-term climate  
+
+Here I compare between different normal periods, since the underlying distributions are unlikely to change much in shape, but may shift over time.  
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(data = climNA_all, aes(x = MAT_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = MAT_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = MAT_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.25)) +
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("MAT")
+
+#The long term average is clearly very similar to the 1951 - 1980 norms
+
+
+ggplot(data = climNA_all, aes(x = MWMT_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = MWMT_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = MWMT_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.25)) +
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Desnity") + 
+  xlab("MWMT")
+
+
+ggplot(data = climNA_all, aes(x = MCMT_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = MCMT_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = MCMT_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.25)) +
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("MCMT")
+```
+
+Looks like MCMT and MAT have changed more than MWMT wrt time - positive shifts from 100Y avg to '51 Norms to `81 Norms.  
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+
+#Precipitation
+
+ggplot(data = climNA_all, aes(x = MAP_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = MAP_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = MAP_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.0018)) +
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("MAP")
+
+#Distributions among normals for MAP very similar
+
+
+ggplot(data = climNA_all, aes(x = MSP_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = MSP_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = MSP_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.03)) +
+  scale_x_continuous(limit = c(0, 200)) + #Cuts off outliers
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("MSP")
+
+
+ggplot(data = climNA_all, aes(x = PAS_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = PAS_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = PAS_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.2)) +
+  scale_x_continuous(limit = c(0, 50)) + #Cuts off outliers
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("PAS")
+
+```
+
+There doesn't appear to be much difference in Precipitation among climate normals.  
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(data = climNA_all, aes(x = AHM_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = AHM_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = AHM_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.02)) +
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("AHM")
+
+ggplot(data = climNA_all, aes(x = SHM_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = SHM_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = SHM_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.001)) +
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("SHM")
+
+
+ggplot(data = climNA_all, aes(x = DD_0_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = DD_0_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = DD_0_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.04)) +
+  scale_x_continuous(limits = c(0,150)) + #Cut off tail
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("DD < 0")
+
+#DD < 0 looks like it might be getting smaller over time 
+
+ggplot(data = climNA_all, aes(x = DD5_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = DD5_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = DD5_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.00075)) + 
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("DD > 5")
+
+#GDD becoming greater ober time! Another case where 51 and 100Y are very similar
+```
+
+Looks like GDD (Days > 5) are becoming greater and days < 0 fewer over time (though still unsure about values).  
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(data = climNA_all, aes(x = NFFD_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = NFFD_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = NFFD_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.02)) + 
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("NFFD")
+
+#Fewer FFD in more recent Normals set
+
+
+ggplot(data = climNA_all, aes(x = CMD_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = CMD_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = CMD_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.0021)) + 
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("CMD")
+
+#CMD distribution slightly left-shifted (lower values) for normals 
+
+
+ggplot(data = climNA_all, aes(x = RH_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = RH_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = RH_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.08)) + 
+  scale_fill_manual(name = "Period", values = c("1951-1980" = "blue", "1981-2010" = "green", "1901-2000" = "orange")) +
+  ylab("Density") + 
+  xlab("RH")
+
+#But RH is right-shifted - greater - in `81 Norms!
+
+
+```
+
+Increase in RH probably tied to temperature.  
+<br>  
+
+
+
+## Seasonal & Monthly Variables  
+
+### Exploring Seasonal/Monthly Temperature  
+<br>  
+
+#### Tmin  
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(data = climNA_all, aes(x = Tmin_sp_N51)) + 
+  geom_density(aes(fill = "1951-1980"), alpha = 0.5) +
+  geom_density(aes(x = Tmin_sp_N81, fill = "1981-2010"), alpha = 0.5) +
+  geom_density(aes(x = Tmin_sp_100Y, fill = "1901-2000"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.25)) +
+  ylab("Density") + 
+  xlab("Spring Tmin")
+
+
+ggplot(data = climNA_all, aes(x = Tmin_wt_100Y)) + 
+  geom_density(aes(fill = "Winter"), alpha = 0.5) +
+  geom_density(aes(x = Tmin_sp_100Y, fill = "Spring"), alpha = 0.5) +
+  geom_density(aes(x = Tmin_sm_100Y, fill = "Summer"), alpha = 0.5) +
+  geom_density(aes(x = Tmin_at_100Y, fill = "Autumn"), alpha = 0.5) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,.25)) +
+  ylab("Density") + 
+  xlab("Tmin by Season")
+
+```
 
 
 
 
 
 
-
-
-
-#### Annual Climate over time
+# YoC Annual Climate and Anomalies  
 
 ## Looking at climates of collection across California  
 
 
-```{r}
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+library(sf)
+ca_border <- read_sf(here::here("analyses", "ca_state_border"), layer = "CA_State_TIGER2016") # imports all files with prefix
+
 nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat"))
 clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
 
@@ -137,6 +481,9 @@ ggplot() +
 
 
 ```{r}
+#MOVE TO ANALYSES 1
+
+
 newdf <- merge(nemo_all1, climNA_all)
 
 
@@ -180,20 +527,4 @@ ggplot(data = newdf, aes(x = MAP_N51, y = DOY)) +
 
 
 
-
-
-### Examine Correlations among climate variables for Normals and YoC data  
-```{r}
-#Norms correlations
-Norms_cor <- Norms_df %>% #Annual variables
-  select(c("MAT_N51", "MWMT_N51", "MCMT_N51", "TD_N51", "MAP_N51", "MSP_N51", "PAS_N51", "AHM_N51", "SHM_N51", "DD_0_N51", "DD5_N51", "NFFD_N51", "CMD_N51", "RH_N51")) %>% 
-  cor()
-
-
-corrplot(Norms_cor, method = "circle")
-
-#Come back to these when we have a better idea of which variables to use
-
-
-```
 

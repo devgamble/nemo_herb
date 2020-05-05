@@ -92,6 +92,10 @@ ggplot(data = nemo_all1, aes(x = DOY)) +
   ylab("Count") + 
   xlab("DoY of Collection")
 
+ggplot(data=nemo_all1, aes(y = DOY)) + 
+  geom_boxplot(fill = "green", color = "black") +
+  theme_classic()
+
 
 #Elevation
 ggplot(data = nemo_all1, aes(x = elev_m)) +
@@ -144,6 +148,14 @@ ggplot(data = nemo_all1, aes(x = long, y = lat)) +
   scale_x_continuous(expand = c(0,0)) +
   ylab("Latitude (deg)") + 
   xlab("Longitude (deg)")
+
+
+ggplot(data = nemo_all1, aes(x = long, y = lat)) + 
+  geom_hex() +
+  scale_fill_continuous(type = "viridis") + 
+  theme_classic()
+
+
 
 ```
 
@@ -241,10 +253,6 @@ Does not look like it - not much to check.
 
 
 ```{r echo = FALSE}
-#ggplot(data = nemo_all1, aes(x = elev_m, y = lat))+
-  #geom_point()
-
-
 ggplot(data = nemo_all1, aes(x = elev_m, y = DOY)) + 
   geom_point() +
   geom_smooth(method = "lm") + 
@@ -312,52 +320,3 @@ ggplot() +
 ```
  
  
-
-
-
-
-
-
-
-```{r warning = FALSE, message = FALSE, echo = FALSE}
-YoC_df <- read_csv(here::here("climateNA", "all_cna", "YoC_Y_and_L1_raw.csv")) %>% 
-  rename(year = YoC)
-
-Norms_df <- read_csv(here::here("climateNA", "all_CNA", "norms_raw_51_and_81.csv")) %>% 
-  rename(year = YoC)
-
-climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
-  rename(year = YoC)
-
-```
-
-
-## Looking at climates of collection across California  
-
-
-```{r}
-nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat"))
-clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
-
-
-ggplot() +
-  geom_sf(data = ca_border, fill = "") +
-  geom_sf(data = clim_dfsf, aes(color = MAT_N51), alpha = 0.5, size = 2, show.legend = TRUE) +
-  scale_color_gradientn(colors = c("#fff71c", "#e60000"), values = c(0, 1)) +
-  theme_void()
-
-
-ggplot() +
-  geom_sf(data = ca_border, fill = "") +
-  geom_sf(data = clim_dfsf, aes(color = MAP_N51), alpha = 0.8, size = 2, show.legend = TRUE) +
-  scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
-  theme_void()
-
-
-```
-
-
-
-
-
-
