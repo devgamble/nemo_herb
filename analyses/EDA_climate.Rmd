@@ -460,10 +460,12 @@ clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
 
 
 ggplot() +
-  geom_sf(data = ca_border, fill = "") +
-  geom_sf(data = clim_dfsf, aes(color = MAT_N51), alpha = 0.5, size = 2, show.legend = TRUE) +
-  scale_color_gradientn(colors = c("#fff71c", "#e60000"), values = c(0, 1)) +
-  theme_void()
+  geom_sf(data = ca_border, fill = "#dfffd1") +
+  geom_sf(data = clim_dfsf, aes(color = MAT_100Y), alpha = 0.8, size = 2, show.legend = TRUE) +
+  labs(color = "MAT (°C)") +
+  scale_color_gradientn(colors = c("#fdff91", "#e30000"), values = c(0, 1)) +
+  theme_minimal() #1764 points
+ggsave(here::here("analyses", "MAT_100Y_raster.png"))
 
 
 ggplot() +

@@ -144,6 +144,28 @@ visreg(ffd_lm1, "NFFD_100Y") #reflects relationship of DOY with MAT
 
 ```
 
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+#Get nice plot of DOY ~ MAT + year
+MAT_lm1 <- lm(DOY ~ MAT_100Y + year + elev_m + lat, data = nemo_df1)
+summary(MAT_lm1) #R2 = .2646, MAT B = -2.53
+
+
+
+ggplot(aes(x = MAT_100Y, y = DOY), data = nemo_df1) +
+  geom_point(aes(color = MAP_100Y), alpha = .8) +
+  labs(color = "MAP (mm)") +
+  geom_smooth(method = "lm", color = "#454545") +
+  scale_color_gradientn(colors = c("#ade2ff", "#001775"), values = c(0, 1)) +
+  xlab("MAT (°C)") +
+  ylab("DOY") +
+  theme_classic()
+ggsave(here::here("analyses", "DOY-MAT_MAP_point.png"), height = 6, width = 4)
+  
+
+```
+
+
+
 MAT is advancing DOY, MAP is delaying DOY.
 
 Elevation and MAP/MAT appear to have the most significant effects on DOY. 
