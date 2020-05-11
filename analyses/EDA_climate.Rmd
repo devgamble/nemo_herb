@@ -94,7 +94,7 @@ ggplot(data = climNA_all, aes(x = MCMT_N51)) +
 Annual Temp distributions look okay.  
 
 
-
+Precipitation
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
 ggplot(data = climNA_all, aes(x = MAP_N51)) +
   geom_histogram(fill = "blue", color = "black", binwidth = 100) +
@@ -129,6 +129,37 @@ ggplot(data = climNA_all, aes(x = PAS_N51)) +
 
 
 Looks like most precipitation parameters will need some kind of transformation - log. There also look to be a lot of outliers.  
+
+**Log Transformed** Precipitation:  
+
+```{r warning = FALSE, echo = FALSE, message = FALSE}
+#Log transformations for precipitation
+ggplot(data = climNA_all, aes(x = log(MAP_N51))) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  ylab("Count") + 
+  xlab("Log(MAP) 1951 - 1980")
+
+ggplot(data = climNA_all, aes(x = log(MSP_N51))) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  ylab("Count") + 
+  xlab("Log(MSP) 1951 - 1980")
+
+ggplot(data = climNA_all, aes(x = log(PAS_N51))) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  ylab("Count") + 
+  xlab("Log(PAS) 1951 - 1980")
+
+#These appear to create more normal distributions (except PAS) - transform variables in `EDA2` where new csv is saved.
+
+#Back transform when reporting results
+```
+
 
 
 
@@ -177,10 +208,19 @@ ggplot(data = climNA_all, aes(x = DD5_N51)) +
   scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
   ylab("Count") + 
   xlab("DD > 5 1951 - 1980")
+
+
+ggplot(data = climNA_all, aes(x = CMD_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,200)) +
+  ylab("Count") + 
+  xlab("CMD 1951 - 1980")
+
 ```
 
 
-I don't understand why DD > 5 has values over 365 days (and over 31 days for monthly variables), in all climateNA files?? Are they scaled somehow? It doesn't seem to be a decimal error.  
+I don't understand why DD > 5 has values over 365 days (and over 31 days for monthly variables), in all climateNA files?? They are the cumulative degrees in a period (month, season, year) for days where temps are under 0/over 5.
 
 
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
@@ -195,6 +235,17 @@ ggplot(data = climNA_all, aes(x = NFFD_N51)) +
   xlab("NFFD 1951 - 1980")
 
 #Left skewed
+
+
+ggplot(data = climNA_all, aes(x = NFFD_N51)) +
+  geom_histogram(fill = "blue", color = "black") +
+  geom_vline(aes(xintercept = mean(NFFD_N51)), col = "red", size = 1) + #mean
+  geom_text(aes(x = mean(NFFD_N51), y = 0, label = round(mean(NFFD_N51), 4)),  size = 4, vjust = -30, hjust = -1) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,260)) +
+  ylab("Count") + 
+  xlab("NFFD 1951 - 1980")
+
   
 ggplot(data = climNA_all, aes(x = CMD_N51)) +
   geom_histogram(fill = "blue", color = "black") +

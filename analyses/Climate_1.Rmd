@@ -1,0 +1,319 @@
+---
+title: "Climate Analyses 1"
+author: "Devin Gamble"
+date: "5/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(broom)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+```
+
+## Objective:  
+#### Identify the *climate variables*, *periods* (YoC, Norms), and *temporal windows* (seasons, months, before/after) for which phenology is most sensitive.  
+* See 'EDA2.Rmd' for exploration of different models. Currently, it looks as though MAT, MAP, and Tmin/ave + PPT in the spring explain the most variation in DOY.  
+<br>  
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load in data & establish error distance bins
+nemo_spec <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
+                               error_dist_m > 2000 & error_dist_m <= 5000 ~ "2-5 km",
+                               error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
+                               error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
+                               error_dist_m > 15000 ~ ">15 km")) %>% 
+  select(specimen_number:error_dist_m, error_bin, everything()) %>% mutate(error_bin = factor(error_bin, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km"))) #specify factor & levels for error bin
+#1764 total obs. #1240 obs with error distance
+climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
+  rename(year = YoC) #Also 1764 obs
+
+#Transform Precipitation variables to be normal -- Log transforms Monthly and seasonal PPT, MAP, MSP #PAS ignored
+climNA_all1 <- climNA_all %>% 
+  mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
+                 PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
+                 PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+                 PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
+                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+  na_if(y = -Inf)
+#see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
+#Transform anomalies after they are added to ClimNA_nemo_all csv!
+
+#Merge herbarium records and climate data (by specimen number)
+nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1181 total columns
+
+#FILTER YEARS to those after 1901 (start of climate data).
+nemo_df2 <- nemo_df1 %>% 
+  filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
+sum(!is.na(nemo_df2$MAT_L1)) #YoC-1
+sum(!is.na(nemo_df2$MAT_Y)) #YoC
+#Both with 1674 total, so 3 obs miss from each (years > 1901 for YoC - 1 and years > 2017 for YoC)
+#Should therefore be 1671 obs with bot YoC and YoC-1 data
+
+#Subsetting data by error bins
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1166 after rm records before 1901
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") #1033 entries
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") #743 obs
+```
+
+For each set of parameters, compare models of cliamte parameters with respect to  
+- all the data and the subset for years >= 1901  
+- all the data and a subset with errors 0-5 km (years >= 1901)  
+
+
+### Annual Climate Variables  
+
+Models are constructed to see which climate variables explain the most variation in DOY, including covariates (elevation, lat OR long [not year]) to control for additional variation, assuming no autocorrelation
+
+
+MAT 
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+MAT_m0 <- lm(DOY ~ MAT_100Y, data = nemo_df1)
+MAT_m1 <- lm(DOY ~ MAT_100Y + elev_m, data = nemo_df1)
+MAT_m1.1 <- lm(DOY ~ MAT_100Y + elev_m, data = nemo_df2)
+MAT_m1.2 <- lm(DOY ~ MAT_100Y + elev_m, data = nemo_e0_5) #Best
+summary(MAT_m1)
+summary(MAT_m1.1)
+summary(MAT_m1.2) #or summ(MAT_m1.2, vifs =  TRUE)
+#0-5 km model best, df1 and df2 similar
+#Should elevation be included? It's moderately correlated with MAT but not MAP. Lat weakly correlated with MAT and ns, not included
+
+#Anomalies...
+
+#YoC
+MAT_m2.2 <- lm(DOY ~ MAT_Y + elev_m, data = nemo_e0_5)
+summary(MAT_m2.2)
+
+#plot_summs(MAT_m1, MAT_m1.1, MAT_m1.2, MAT_m2.2, scale = TRUE, coefs = c("MAT (1901-2000)" = "MAT_100Y", "MAT (YoC)" = "MAT_Y", "Elevation (m)" = "elev_m"), model.names = c("All records", "Records 1901-2019", "Errors 0-5 km", "YoC 0-5 km"), legend.title = expression('Model')) #Same pattern with YoC climate
+
+```
+
+
+MWMT & MCMT  
+
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+MW_m0 <- lm(DOY ~ MWMT_100Y, data = nemo_df1)
+MW_m1 <- lm(DOY ~ MWMT_100Y + elev_m + lat, data = nemo_df1)
+MW_m1.1 <- lm(DOY ~ MWMT_100Y + elev_m + lat, data = nemo_df2)
+MW_m1.2 <- lm(DOY ~ MWMT_100Y + elev_m + lat, data = nemo_e0_5) #Better
+summary(MW_m1)
+summary(MW_m1.1)
+summary(MW_m1.2)
+
+MC_m0 <- lm(DOY ~ MCMT_100Y, data = nemo_df1)
+MC_m1 <- lm(DOY ~ MCMT_100Y + elev_m + lat, data = nemo_df1) #barely better, all similar
+MC_m1.1 <- lm(DOY ~ MCMT_100Y + elev_m + lat, data = nemo_df2)
+MC_m1.2 <- lm(DOY ~ MCMT_100Y + elev_m + lat, data = nemo_e0_5) 
+summary(MC_m1)
+summary(MC_m1.1)
+summary(MC_m1.2)
+
+```
+
+DD > 5  
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+dd5_m0 <- lm(DOY ~ DD5_100Y, data = nemo_df1)
+dd5_m1 <- lm(DOY ~ DD5_100Y + elev_m, data = nemo_df1)
+dd5_m1.1 <- lm(DOY ~ DD5_100Y + elev_m, data = nemo_df2)
+dd5_m1.2 <- lm(DOY ~ DD5_100Y + elev_m, data = nemo_e0_5) #better
+##DD5 correlated w/ MAT
+#lat first included, but ns
+
+summary(dd5_m1)
+summary(dd5_m1.1)
+summary(dd5_m1.2)
+
+```
+
+NFFD
+
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+ffd_m1 <- lm(DOY ~ NFFD_100Y + elev_m + lat, data = nemo_df1) 
+ffd_m1.1 <- lm(DOY ~ NFFD_100Y + elev_m + lat, data = nemo_df2)
+ffd_m1.2 <- lm(DOY ~ NFFD_100Y + elev_m + lat, data = nemo_e0_5) #same as 1, but best estimate
+
+summary(ffd_m1)
+summary(ffd_m1.1)
+summary(ffd_m1.2)
+visreg(ffd_m1.2, "NFFD_100Y")
+
+#NFFD might need a transformation...
+```
+
+
+
+
+MAP, MSP
+
+```{r message = FALSE, warning = FALSE, results = "hide"}
+#100Y
+MAP_m1 <- lm(DOY ~ MAP_100Y + elev_m + long, data = nemo_df1) #Good
+MAP_m1.1 <- lm(DOY ~ MAP_100Y + elev_m + long, data = nemo_df2) #Better
+MAP_m1.2 <- lm(DOY ~ MAP_100Y + elev_m + long, data = nemo_e0_5)
+
+summary(MAP_m1)
+summary(MAP_m1.1)
+summary(MAP_m1.2)
+#Long more significant than lat, higher R2
+
+
+#MSP
+
+#
+#100Y
+MSP_m1 <- lm(DOY ~ MSP_100Y + elev_m, data = nemo_df1) 
+MSP_m1.1 <- lm(DOY ~ MSP_100Y + elev_m, data = nemo_df2) 
+MSP_m1.2 <- lm(DOY ~ MSP_100Y + elev_m, data = nemo_e0_5)
+#Long does not significant here
+#Models all very similar
+
+summary(MSP_m1)
+summary(MSP_m1.1)
+summary(MSP_m1.2)
+
+```
+
+
+CMD, RH
+
+```{r message = FALSE, warning = FALSE, results = "hide"}
+#100Y
+#RH ALL ns at the annual, 100Y scale
+
+#CMD
+#100Y
+cmd_m0 <- lm(DOY ~ CMD_100Y, data = nemo_df1)
+cmd_m1 <- lm(DOY ~ CMD_100Y + elev_m, data = nemo_df1)
+cmd_m1.1<- lm(DOY ~ CMD_100Y + elev_m, data = nemo_df2) #slightly higher estimate
+cmd_m1.2 <- lm(DOY ~ CMD_100Y + elev_m, data = nemo_e0_5) #better but not by much
+
+summary(cmd_m1)
+summary(cmd_m1.1)
+summary(cmd_m1.2)
+
+```
+
+AHM (SHM)
+
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#AHM
+#100Y
+ahm_m0 <- lm(DOY ~ AHM_100Y, data = nemo_df1)
+ahm_m1 <- lm(DOY ~ AHM_100Y + elev_m, data = nemo_df1)
+ahm_m1.1<- lm(DOY ~ AHM_100Y + elev_m, data = nemo_df2) 
+ahm_m1.2 <- lm(DOY ~ AHM_100Y + elev_m, data = nemo_e0_5) #better 
+#Pretty correlated to temp, dd>5
+
+summary(ahm_m1)
+summary(ahm_m1.1)
+summary(ahm_m1.2)
+
+#SHM not as significant as AHM
+
+```
+
+
+Annual climate models
+
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+
+ann_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
+ann_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m, data = nemo_df2)
+ann_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long, data = nemo_df2)
+ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2)
+
+summary(ann_clim1)
+summary(ann_clim2)
+summary(ann_clim3)
+summary(ann_clim4)
+#Controlling for elevation severely reduces the effect of MAT (ns)
+#Controlling for elev and long - the effect of temperature returns but is still quite small
+```
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#plots
+visreg(ann_clim1, "MAT_100Y")
+visreg(ann_clim2, "MAT_100Y")
+visreg(ann_clim3, "MAT_100Y")
+
+
+
+#CREATE PLOTSSSSSSSSS for effect of year, elevation, MAT, MAP
+
+visreg(ann_clim4)
+
+```
+
+
+The relationship b/w DOY and MAT weakens as the model is parameterized, WHILE the estimate of MAP strengthens. There was no significant interaction between any covariates. 
+While MAT still appears to advance DOY, controlling for geography seems to explain a good deal of this variation. Examining seasonal climate and anomalies should shed more light on this.  
+<br>  
+
+
+Moving forward it is probably best to use `nemo_df2` (records after 1900) or `nemo_e0_5` (records with errors 0-5 km)  
+
+
+
+### Seasonal Climate Variables  
+
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+#Temp
+Ts_m0 <- lm(DOY ~ Tave_sp_100Y, data = nemo_df2)
+Ts_m1 <- lm(DOY ~ Tave_sp_100Y + elev_m + year, data = nemo_df2) #no effect of lat/long
+Ts_m2 <- lm(DOY ~ Tave_sp_100Y + elev_m + year , data = nemo_e0_5)
+
+summary(Ts_m0)
+summary(Ts_m1)
+summary(Ts_m2)
+
+
+
+#PPT
+
+
+
+
+#Temp & PPT
+
+sz_m2 <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y + elev_m + year, data = nemo_df2)
+sz_m3 <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y + elev_m + year + long, data = nemo_df2)
+
+```
+
+
+
+
+
+## Variation in Phenological Sensitvity  
+
+Using the slope of basic regression models (DOY ~ one climate variable)
+- subset data by years  
+- subset data by geographic/climate region  
+
+and calculate sensitivities for each subset, to compare
+
+
