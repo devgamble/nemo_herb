@@ -520,10 +520,12 @@ ggsave(here::here("analyses", "MAT_100Y_raster.png"))
 
 
 ggplot() +
-  geom_sf(data = ca_border, fill = "") +
-  geom_sf(data = clim_dfsf, aes(color = MAP_N51), alpha = 0.8, size = 2, show.legend = TRUE) +
+  geom_sf(data = ca_border, fill = "#dfffd1") +
+  geom_sf(data = clim_dfsf, aes(color = MAP_100Y), alpha = 0.8, size = 2, show.legend = TRUE) +
+  labs(color = "MAP (mm)") +
   scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
-  theme_void()
+  theme_minimal()
+ggsave(here::here("analyses", "MAP_100Y_raster.png"))
 
 
 ```
