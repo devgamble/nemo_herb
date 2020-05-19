@@ -1,0 +1,206 @@
+---
+title: "get_cna_short"
+author: "Devin Gamble"
+date: "5/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#Load packages
+library(tidyverse)
+library(here)
+library(stringr)
+library(janitor)
+```
+
+
+Read in climate data csv
+
+```{r warning = FALSE, message = FALSE}
+nemo_cna <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
+#Whole set of climate data - may have anomalies if already added - be sure to rewrite new anoms...
+
+```
+
+Objective: calculate climate anomalies for each observation for  
+
+- Temperature Variables  
+- Precipitation variables  
+
+by subtracting 100Y-average variables from their corresponding year-of-collection variables (Y or YoC)  
+
+
+```{r warning = FALSE, message = FALSE}
+#Select subset of df with longterm avg (100Y) and YoC to make anomalies
+climNA_anom1 <- nemo_cna %>% 
+  select(specimen_number:elev_m, 
+         Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y, 
+         Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y) %>% #retain only variables to calculate anomalies for
+  filter(!is.na(MAT_Y)) #remove records without YoC climate
+#1674 observations, good
+
+#Calculating anomalies using 100Y averages
+#PPT variables not yet log transformed
+
+```
+
+
+```{r warning = FALSE, message = FALSE}
+#Anomalies = YoC - 100y (long-term) climate 
+
+#Example: 1 anomaly variables
+climNA_anom1.1 <- climNA_anom1 %>% 
+  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y) #adds 1 new column: Tmax01 anomaly
+
+
+#Do this for all variables in df: Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y
+#Is there a tidy-compatible method to avoid hand-typing out each variable? Couldn't find one
+
+#Manually using mutate()
+climNA_anom1.2 <- climNA_anom1 %>% 
+  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y,
+         Tmax02_A = Tmax02_Y - Tmax02_100Y,
+         Tmax03_A = Tmax03_Y - Tmax03_100Y,
+         Tmax04_A = Tmax04_Y - Tmax04_100Y,
+         Tmax05_A = Tmax05_Y - Tmax05_100Y,
+         Tmax06_A = Tmax06_Y - Tmax06_100Y,
+         Tmax07_A = Tmax07_Y - Tmax07_100Y,
+         Tmax08_A = Tmax08_Y - Tmax08_100Y,
+         Tmax09_A = Tmax09_Y - Tmax09_100Y,
+         Tmax10_A = Tmax10_Y - Tmax10_100Y,
+         Tmax11_A = Tmax11_Y - Tmax11_100Y,
+         Tmax12_A = Tmax12_Y - Tmax12_100Y,
+         Tmin01_A = Tmin01_Y - Tmin01_100Y,
+         Tmin02_A = Tmin02_Y - Tmin02_100Y,
+         Tmin03_A = Tmin03_Y - Tmin03_100Y,
+         Tmin04_A = Tmin04_Y - Tmin04_100Y,
+         Tmin05_A = Tmin05_Y - Tmin05_100Y,
+         Tmin06_A = Tmin06_Y - Tmin06_100Y,
+         Tmin07_A = Tmin07_Y - Tmin07_100Y,
+         Tmin08_A = Tmin08_Y - Tmin08_100Y,
+         Tmin09_A = Tmin09_Y - Tmin09_100Y,
+         Tmin10_A = Tmin10_Y - Tmin10_100Y,
+         Tmin11_A = Tmin11_Y - Tmin11_100Y,
+         Tmin12_A = Tmin12_Y - Tmin12_100Y,
+         Tave01_A = Tave01_Y - Tave01_100Y,
+         Tave02_A = Tave02_Y - Tave02_100Y,
+         Tave03_A = Tave03_Y - Tave03_100Y,
+         Tave04_A = Tave04_Y - Tave04_100Y,
+         Tave05_A = Tave05_Y - Tave05_100Y,
+         Tave06_A = Tave06_Y - Tave06_100Y,
+         Tave07_A = Tave07_Y - Tave07_100Y,
+         Tave08_A = Tave08_Y - Tave08_100Y,
+         Tave09_A = Tave09_Y - Tave09_100Y,
+         Tave10_A = Tave10_Y - Tave10_100Y,
+         Tave11_A = Tave11_Y - Tave11_100Y,
+         Tave12_A = Tave12_Y - Tave12_100Y,
+         PPT01_A = PPT01_Y - PPT01_100Y,
+         PPT02_A = PPT02_Y - PPT02_100Y,
+         PPT03_A = PPT03_Y - PPT03_100Y,
+         PPT04_A = PPT04_Y - PPT04_100Y,
+         PPT05_A = PPT05_Y - PPT05_100Y,
+         PPT06_A = PPT06_Y - PPT06_100Y,
+         PPT07_A = PPT07_Y - PPT07_100Y,
+         PPT08_A = PPT08_Y - PPT08_100Y,
+         PPT09_A = PPT09_Y - PPT09_100Y,
+         PPT10_A = PPT10_Y - PPT10_100Y,
+         PPT11_A = PPT11_Y - PPT11_100Y,
+         PPT12_A = PPT12_Y - PPT12_100Y,
+         Tmax_wt_A = Tmax_wt_Y - Tmax_wt_100Y,
+         Tmax_sp_A = Tmax_sp_Y - Tmax_sp_100Y,
+         Tmax_sm_A = Tmax_sm_Y - Tmax_sm_100Y,
+         Tmax_at_A = Tmax_at_Y - Tmax_at_100Y,
+         Tmin_wt_A = Tmin_wt_Y - Tmin_wt_100Y,
+         Tmin_sp_A = Tmin_sp_Y - Tmin_sp_100Y,
+         Tmin_sm_A = Tmin_sm_Y - Tmin_sm_100Y,
+         Tmin_at_A = Tmin_at_Y - Tmin_at_100Y,
+         Tave_wt_A = Tave_wt_Y - Tave_wt_100Y,
+         Tave_sp_A = Tave_sp_Y - Tave_sp_100Y,
+         Tave_sm_A = Tave_sm_Y - Tave_sm_100Y,
+         Tave_at_A = Tave_at_Y - Tave_at_100Y,
+         PPT_wt_A = PPT_wt_Y - PPT_wt_100Y,
+         PPT_sp_A = PPT_sp_Y - PPT_sp_100Y,
+         PPT_sm_A = PPT_sm_Y - PPT_sm_100Y,
+         PPT_at_A = PPT_at_Y - PPT_at_100Y,
+         MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_C = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+climNA_anom2 <- climNA_anom1.2 %>% 
+  select(specimen_number:elev_m, Tmax01_A:MSP_A)
+```
+
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Visualizing anomalies
+ggplot(data = climNA_anom2, aes(x = MAT_A)) +
+  geom_histogram(fill = "blue", color = "black") + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+
+ggplot(data = climNA_anom2, aes(x = Tmin_sp_A)) +
+  geom_histogram(fill = "blue", color = "black") + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+
+ggplot(data = climNA_anom2, aes(x = Tave_sp_A)) +
+  geom_histogram(fill = "blue", color = "black") + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+
+#
+
+ggplot(data = climNA_anom2, aes(x = MAP_A)) +
+  geom_histogram(fill = "blue", color = "black") + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+
+ggplot(data = climNA_anom2, aes(x = PPT_sp_A)) +
+  geom_histogram(fill = "blue", color = "black") + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+```
+
+
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
+#Alternative 2:
+#grpl or stringr to ID columns to subtract? Use rename ftn to append 'A' to column names...
+#non-intuituve, tedious
+
+#rename_ftn <- function(x, apnd, rang){         
+#  names_x <- colnames(x)[rang]
+#  print(paste(names_x, apnd, sep = ""))} 
+
+#Where `x` is the df, `apnd` is the string to be added as a suffix, and `rang` is the range of columns, by position, to add the character string to.
+
+```
+
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
+#Trying to use mutate_at()....
+Climate_nemo_all2 <- climNA_anom1 %>% 
+  mutate_at(vars(Tmax01_Y:Tmax12_Y), - (Tmax01_100Y:Tmax12_100Y))
+#not working
+```
+
+
+
+```{r warning = FALSE, message = FALSE, eval = FALSE}
+
+#Save anomalies in new csv to be merged back with 'climNA_all.csv' in 'get_cna_all.Rmd'
+
+write_csv(climNA_anom2, here::here("climateNA", "all_cna", "climNA_anoms.csv"))
+#69 new variables for anomalies
+#No NAs apparent!
+
+```
+
+
+
+

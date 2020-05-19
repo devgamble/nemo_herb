@@ -360,7 +360,7 @@ Anomalies = deviations from the average climate. These could be computed as `x_Y
 Calculate anomalies for long-term average climate *and/or* climate normals - compare later.  
 
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 #Combine all into one df to calculate anomalies
 #First, Norms and 100y avg. Both have 1764 obs (the total)
 
@@ -373,67 +373,34 @@ climNA_nemo_merge <- merge(Norms_100Y, YoC_df, all.x = TRUE)
 
 ```
 
-```{r}
-#Creating Anomalies for the 100Y average
-#Just Temperature and PPT anomalies (for now)
+```{r warning = FALSE, message = FALSE}
+#Anomalies calculated in separate file = get_cna_anoms
+#Load in csv and merge with whole set of climate data
+climNA_anom2 <- read_csv(here::here("climateNA", "all_cna", "climNA_anoms.csv"))
+#74 cols w/ 1674 rows (YoC specimens only)
 
-
-#Select subset of df with longterm avg (100Y) and YoC to make anomalies
-climNA_nemo_all1 <- climNA_nemo_merge %>% 
-  select(specimen_number:elev_m, Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y, Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y) %>% 
-  filter(!is.na(MAT_Y)) #remove records without collection year climate
-#1764 obs - 90 = 1674, good
-
-climNA_nemo_all2 <- climNA_nemo_all1 %>% 
-  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y,
-         Tmax02_A = Tmax02_Y - Tmax02_100Y,
-         Tmax03_A = Tmax03_Y - Tmax03_100Y,
-         Tmax04_A = Tmax04_Y - Tmax04_100Y,
-         Tmax05_A = Tmax05_Y - Tmax05_100Y,
-         Tmax06_A = Tmax06_Y - Tmax06_100Y,
-         Tmax07_A = Tmax07_Y - Tmax07_100Y,
-         Tmax08_A = Tmax08_Y - Tmax08_100Y,
-         Tmax09_A = Tmax09_Y - Tmax09_100Y,
-         Tmax10_A = Tmax10_Y - Tmax10_100Y,
-         Tmax11_A = Tmax11_Y - Tmax11_100Y,
-         Tmax12_A = Tmax12_Y - Tmax12_100Y,
-         Tmin01_A = Tmin01_Y - Tmin01_100Y,
-         Tmin02_A = Tmin02_Y - Tmin02_100Y,
-         Tmin03_A = Tmin03_Y - Tmin03_100Y,
-         Tmin04_A = Tmin04_Y - Tmin04_100Y,
-         Tmin05_A = Tmin05_Y - Tmin05_100Y,
-         Tmin06_A = Tmin06_Y - Tmin06_100Y,
-         Tmin07_A = Tmin07_Y - Tmin07_100Y,
-         Tmin08_A = Tmin08_Y - Tmin08_100Y,
-         Tmin09_A = Tmin09_Y - Tmin09_100Y,
-         Tmin10_A = Tmin10_Y - Tmin10_100Y,
-         Tmin11_A = Tmin11_Y - Tmin11_100Y,
-         Tmin12_A = Tmin12_Y - Tmin12_100Y,
-         Tave01_A = Tave01_Y - Tave01_100Y,
-         Tave02_A = Tave02_Y - Tave02_100Y,
-         Tave03_A = Tave03_Y - Tave03_100Y,
-         Tave04_A = Tave04_Y - Tave04_100Y,
-         Tave05_A = Tave05_Y - Tave05_100Y,
-         Tave06_A = Tave06_Y - Tave06_100Y,
-         Tave07_A = Tave07_Y - Tave07_100Y,
-         Tave08_A = Tave08_Y - Tave08_100Y,
-         Tave09_A = Tave09_Y - Tave09_100Y,
-         Tave10_A = Tave10_Y - Tave10_100Y,
-         Tave11_A = Tave11_Y - Tave11_100Y,
-         Tave12_A = Tave12_Y - Tave12_100Y)
-  
-
-#Yes, there is probably an easier way than individually mutating these, but I spent too much time trying to figure it out.
-  
-#  mutate_at(vars(Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y), - vars(Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y) ) #create anomalies, but they retain YoC names
-
-  
 #merge anomalies back with main df
+
+
+#1155 + 69 anomalies = 1224 columns total:
+climNA_nemo_merge2 <- merge(climNA_nemo_merge, climNA_anom2, all.x = TRUE)
+#Looks good!
+
+```
+
+
+```{r}
+
+#Save final climate data
+
+#write_csv(climNA_nemo_merge, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
+#Very first save
+
+
+#Now with anomalies
+write_csv(climNA_nemo_merge2, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
+
   
-
-write_csv(climNA_nemo_merge, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
-
-
 ```
 
 
