@@ -273,6 +273,100 @@ ggplot(data = climNA_all, aes(x = RH_N51)) +
 It seems likely that a lot of the skew in the above variables may be associated with the skew in elevation - fewer specimens collected at high elevations, but tail out into extremes.  
 <br>  
 
+##### Climate Anomalies  
+
+```{r message = FALSE, warning = FALSE}
+
+ggplot(data = climNA_all, aes(x = MAT_A)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  ylab("Count") + 
+  xlab("MAT Anomalies")
+
+#Does PPT_A need to be log transformed or scaled somehow?
+ggplot(data = climNA_all, aes(x = MAP_A)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  ylab("Count") + 
+  xlab("MAP Anomalies")
+
+
+ggplot(data = climNA_all, aes(x = Tmin_sp_A)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  ylab("Count") + 
+  xlab("Tmin_sp Anomalies")
+
+ggplot(data = climNA_all, aes(x = PPT_wt_A)) +
+  geom_histogram(fill = "blue", color = "black") +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  ylab("Count") + 
+  xlab("PPT_st Anomalies")
+
+#Everything is pretty normally distributed
+
+
+
+#ANOMALIES over time
+ggplot(data = climNA_all, aes(x = year, y = MAT_A)) + 
+  geom_point() + 
+  geom_smooth(method = "loess", col = "red") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+#gam fit is also cool
+
+ggplot(data = climNA_all, aes(x = year, y = Tmin_wt_A)) + 
+  geom_point() + 
+  geom_smooth(method = "gam", col = "red") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+ggplot(data = climNA_all, aes(x = year, y = Tmin_sp_A)) + 
+  geom_point() + 
+  geom_smooth(method = "gam", col = "red") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+
+
+#PPT
+ggplot(data = climNA_all, aes(x = year, y = MAP_A)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", col = "blue") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+#No change in PPT anomalies
+
+ggplot(data = climNA_all, aes(x = year, y = PPT_wt_A)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", col = "blue") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+
+ggplot(data = climNA_all, aes(x = year, y = PPT_sp_A)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", col = "blue") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+#Increase in dry anomalies in the spring over time?
+
+ggplot(data = climNA_all, aes(x = year, y = PPT_sm_A)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", col = "blue") +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+
+```
+
+
+
+
+
+
+<br>  
+
 
 #### All Normals/Long-term climate  
 

@@ -129,7 +129,7 @@ climNA_anom1.2 <- climNA_anom1 %>%
          PPT_at_A = PPT_at_Y - PPT_at_100Y,
          MAT_A = MAT_Y - MAT_100Y,
          MWMT_A = MWMT_Y - MWMT_100Y,
-         MCMT_C = MCMT_Y - MCMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
          MAP_A = MAP_Y - MAP_100Y,
          MSP_A = MSP_Y - MSP_100Y)
 
@@ -137,36 +137,6 @@ climNA_anom2 <- climNA_anom1.2 %>%
   select(specimen_number:elev_m, Tmax01_A:MSP_A)
 ```
 
-
-```{r warning = FALSE, message = FALSE, echo = FALSE}
-#Visualizing anomalies
-ggplot(data = climNA_anom2, aes(x = MAT_A)) +
-  geom_histogram(fill = "blue", color = "black") + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme_classic()
-
-ggplot(data = climNA_anom2, aes(x = Tmin_sp_A)) +
-  geom_histogram(fill = "blue", color = "black") + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme_classic()
-
-ggplot(data = climNA_anom2, aes(x = Tave_sp_A)) +
-  geom_histogram(fill = "blue", color = "black") + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme_classic()
-
-#
-
-ggplot(data = climNA_anom2, aes(x = MAP_A)) +
-  geom_histogram(fill = "blue", color = "black") + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme_classic()
-
-ggplot(data = climNA_anom2, aes(x = PPT_sp_A)) +
-  geom_histogram(fill = "blue", color = "black") + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme_classic()
-```
 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
@@ -184,8 +154,8 @@ ggplot(data = climNA_anom2, aes(x = PPT_sp_A)) +
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
 #Trying to use mutate_at()....
-Climate_nemo_all2 <- climNA_anom1 %>% 
-  mutate_at(vars(Tmax01_Y:Tmax12_Y), - (Tmax01_100Y:Tmax12_100Y))
+#Climate_nemo_all2 <- climNA_anom1 %>% 
+#  mutate_at(vars(Tmax01_Y:Tmax12_Y), - (Tmax01_100Y:Tmax12_100Y))
 #not working
 ```
 

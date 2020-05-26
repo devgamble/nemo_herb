@@ -135,13 +135,21 @@ cor_sz <- cor(nemo_corrcheck_sz)
 corrplot(cor_sz, type = "upper", method = "square", addCoef.col = "black", number.cex = .5, diag = F)
 
 
-##Correlations among YoC, Normals, and anomalies...   ##Add anomalies here
+##Correlations among YoC, Normals, and anomalies...   
 nemo_cor_norms <- nemo_df2 %>% 
   filter(year >= 1901, year <= 2017) %>% 
-  select(MAT_100Y, MAT_N51, MAT_N81, MAP_100Y, MAP_N51, MAP_N81, Tave_sp_100Y, Tave_sp_N81, MAT_Y, MAP_Y)
+  select(MAT_100Y, MAT_N51, MAT_N81, MAP_100Y, MAP_N51, MAP_N81, Tave_sp_100Y, Tave_sp_N81, MAT_Y, MAP_Y, Tave_sp_Y)
 cor_norm <- cor(nemo_cor_norms)
 corrplot(cor_norm, method = "square", addCoef.col = "black", number.cex = .8, diag = F, type = "upper", na.label = "o")
 #Unsurprising, all normals extremely well correlated, choice of which not too important
+
+#Anomalies
+nemo_cor4 <- nemo_df2 %>% 
+  filter(year >= 1901, year <= 2017) %>% 
+  select(MAT_100Y, MAP_100Y, Tmin_sp_100Y, PPT_wt_100Y, MAT_Y, MAP_Y, Tmin_sp_Y, PPT_wt_Y, MAT_A, MAP_A, Tmin_sp_A, PPT_wt_A)
+cor4 <- cor(nemo_cor4)
+corrplot(cor4, method = "square", addCoef.col = "black", number.cex = .6, diag = F, type = "upper", na.label = "o")
+
 
 #Significance test of correlations
 #cr2 <- cor.mtest(nemo_corrcheck_sz, conf.level = 0.7)
@@ -158,6 +166,7 @@ corrplot(cor_norm, method = "square", addCoef.col = "black", number.cex = .8, di
 [Climatic]  
 - *MAT* with MAP/MSP (.59), DD5 (~1), DD_0 (-.76), CMD:NFFD (.6-.7), PAS (.62)
 - *MAP* also with DD5 (.62), AHM (.9)  
+- *Anomalies*: Some variables negatively correlated b/w _Y and _As  
 
 * Seasonal temperature variables correlated with each other, with elevation
 * Seasonal PPT correlated with DD5, Spring temperatures, *not* correlated to elevation
@@ -192,6 +201,19 @@ dfbetasPlots(lm1, id.n = 2, id.col = "red")
 #Partial resid plots
 crPlots(lm1)
 
+#Check autocorrelation
+rd <- residuals(lm1)
+
+par(mfrow = c(1,2))
+plot(rd, ylab = "Residuals", main = "Residuals plot", font.main=1, cex.main = 1)
+abline(h=0)
+plot(rd[-length(rd)], rd[-1],
+     xlab = expression(hat(epsilon)[i]),
+     ylab = expression(hat(epsilon)[i+1]), main = "Autocorrelation Check", font.main=1, cex.main = 1)
+lines(lowess(rd[-length(rd)],rd[-1]), col = "red", lty = 2)
+
+
+
 #
 # * Re-do these diagnostics for final models in the future
 ```
@@ -201,10 +223,56 @@ crPlots(lm1)
 
 ## How have climate variables changed over time???  
 
+Objective:  
+Describe trends and rates of change over time *across California* in the following types of variables in  
+- YoC Climates  
+- Climate Anomalies
 
-
+Split by climate regions, geography, other?  
 
 #### Annual Variables  
+
+
+**MAT**  
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#YoC
+mat_t1 <- lm(MAT_Y ~ year, data = nemo_df2)
+summary(mat_t1)
+visreg(mat_t1,points = list(col = "#404040"))
+
+#Control for geography (and PI) - use this model
+mat_t1.1 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_df2)
+summary(mat_t1.1)
+visreg(mat_t1.1, xvar = "year", points = list(col = "#404040"))
+
+
+mat_t1.3 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_e0_5)
+#summary(mat_t1.3)  #0 - 5 km: lower R2, greater SE
+
+#Compare model estimates
+plot_summs(mat_t1, mat_t1.1, mat_t1.3, scale = TRUE)
+
+```
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#MAT Anomalies
+mat_t2 <- lm(MAT_A ~ year + elev_m + long, data = nemo_df2)
+summary(mat_t2)
+
+visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE) + 
+  geom_smooth(method = "loess", col = "red") + 
+  theme_classic()
+#Maybe a different type of model would be more appropriate (not lm)
+
+
+plot(mat_t2)
+
+#MAT_A is normal, but the residuals are not - autocorrelation?
+durbinWatsonTest(mat_t2)
+#Looks like residuals are correlated.... 
+#Do we need to create better models if we're just following a trend? No, but to quantify the rate of change (Slope) we would.
+```
 
 
 
@@ -216,6 +284,19 @@ crPlots(lm1)
 
 
 #### Monthly (& custom windows)  
+
+
+
+
+
+
+Quantify rate of climate change in 
+- Tmin wt and sp  
+- PPT wt and sp  
+- MAT  
+_ MAP  
+
+Consider differences across geographic climate regions?  
 
 
 
