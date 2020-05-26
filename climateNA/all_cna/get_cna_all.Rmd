@@ -93,6 +93,12 @@ norms_1981_2010 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% 
   filter(!(specimen_number %in% c("DAV300381", "UC880904")))
 
+#Also get norms for 1961-1990 - can choose to include later...
+norms_1961_1990 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all_CNA_Normal_1961_1990MSY.csv"), na = c("-9999", "-9999.0")) %>% #Fix NAs
+  rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% 
+  filter(!(specimen_number %in% c("DAV300381", "UC880904")))
+
+
 #252 total columns in these
 
 
@@ -105,6 +111,12 @@ These data has monthly, seasonal, and annual variables for ALL YEARS (1901 - 201
 
 ```{r warning = FALSE, message = FALSE}
 TS_1901_2018 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all_CNA_1901-2018MSY.csv"), na = c("-9999", "-9999.0")) %>%
+  rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% 
+  filter(!(specimen_number %in% c("DAV300381", "UC880904")))
+
+
+#Updated TS with 2019 data
+TS_1901_2019 <- read_csv(here::here("climateNA", "all_cna", "cna_rawfiles", "all_CNA_1901-2019MSY.csv"), na = c("-9999", "-9999.0")) %>%
   rename(specimen_number = ID1, YoC = ID2, lat = Latitude, long = Longitude, elev_m = Elevation) %>% 
   filter(!(specimen_number %in% c("DAV300381", "UC880904")))
 
@@ -127,7 +139,7 @@ For some reason, two records come back with all NAs:
 
 #### Match TS data to specimens for the Yoc and the Yoc - 1 (previous year)  
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 TS_YoC <- TS_1901_2018 %>% 
   filter(YoC == Year) %>% 
   select(-Year)
@@ -135,10 +147,24 @@ TS_YoC <- TS_1901_2018 %>%
 
 
 TS_YoC_less1 <- TS_1901_2018 %>% 
-  filter(YoC == Year - 1) %>% 
+  filter(Year == YoC - 1) %>% 
   select(-Year)
-#1677 obs - similar issue [2 more obs]
+#1665 obs - similar issue 
 
+
+#####
+#UPDATED - with 2019 data
+#####
+TS_YoC <- TS_1901_2019 %>% 
+  filter(YoC == Year) %>% 
+  select(-Year)
+#1677 obs - now includes the two 2019 observations!
+
+
+TS_YoC_less1 <- TS_1901_2019 %>% 
+  filter(Year == YoC - 1) %>% 
+  select(-Year)
+#1665
 
 ```
 
@@ -176,6 +202,9 @@ colnames(norms51)[6:252] <- rename_ftn(norms51, apnd = "_N51", rang = 6:252)
 norms81 <- norms_1981_2010
 colnames(norms81)[6:252] <- rename_ftn(norms81, apnd = "_N81", rang = 6:252)
 
+#Option - include 1961-1990 norms...
+#norms61 <- norms_1961_1990
+#colnames(norms81)[6:252] <- rename_ftn(norms81, apnd = "_N61", rang = 6:252)
 
 Norms_df <- merge(norms51, norms81) %>% 
   select(-c(Rad01_N51:Rad12_N51, Rad_wt_N51:Rad_at_N51, MAR_N51, Rad01_N81:Rad12_N81, Rad_wt_N81:Rad_at_N81, MAR_N81)) #Mostly NAs
@@ -194,24 +223,23 @@ write_csv(Norms_df, here::here("climateNA", "all_CNA", "norms_raw_51_and_81.csv"
 
 YoC_1 <- TS_YoC
 colnames(YoC_1)[6:252] <- rename_ftn(YoC_1, apnd = "_Y", rang = 6:252)
-#2 less obs than YoC_less1 [1675]
+# obs [1677]
 
 
 YoC_less1 <- TS_YoC_less1
 colnames(YoC_less1)[6:252] <- rename_ftn(YoC_less1, apnd = "_L1", rang = 6:252) #L1 for last year
-# obs [1677]
+# obs [1665]
 
 
-YoC_df <- merge(YoC_less1, YoC_1, all.x = TRUE) %>% 
+YoC_df <- merge(YoC_1, YoC_less1, all.x = TRUE) %>% 
   select(-c(Rad01_L1:Rad12_L1, Rad_wt_L1:Rad_at_L1, MAR_L1, Rad01_Y:Rad12_Y, Rad_wt_Y:Rad_at_Y, MAR_Y)) #Remove NAs
-#1677 obs and 465 rows - looks good! No rows should have been eliminated.
+#1677 obs and 465 cols - looks good! No rows should have been eliminated.
 #2 obs should be NAs for "_Y1" parameters BUT sum(is.na(YoC_df$MAT_Y)) is showing 3. strange. NA introduced in merge??
 #Removing the all.x = TRUE leads to a df with 1674 obs - there is a non-overlapping difference! YoC_less1 has a record included that YoC_1 does not, and vice versa, hence the 3NA values when merged - all good.
 
 write_csv(YoC_df, here::here("climateNA", "all_cna", "YoC_Y_and_L1.csv"))
 
 ```
-###### Keeping the YoC and Norms datasets separate for now, there's no reason to combine them (yet)  
 
 
 <br>  
@@ -223,7 +251,7 @@ write_csv(YoC_df, here::here("climateNA", "all_cna", "YoC_Y_and_L1.csv"))
 
 #Average across years 1901 - 2000 for each specimen
 
-TS_100_avg <- TS_1901_2018 %>% 
+TS_100_avg <- TS_1901_2019 %>% 
   filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
   group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
   summarize_at(vars(Tmax01:RH), mean) %>%  #It works!
@@ -353,11 +381,11 @@ Norms_dfc <- Norms_df %>%
 
 
 
-##### Calculate Anomalies   
+**Calculate Anomalies**  
+See 'get_cna_anoms.Rmd' for anomalies  
+
+
 Anomalies = deviations from the average climate. These could be computed as `x_YoC - x_norm` where 'x' is a climate variable.  
-
-
-Calculate anomalies for long-term average climate *and/or* climate normals - compare later.  
 
 
 ```{r warning = FALSE, message = FALSE}
@@ -373,11 +401,19 @@ climNA_nemo_merge <- merge(Norms_100Y, YoC_df, all.x = TRUE)
 
 ```
 
+
+```{r eval = FALSE}
+#Save final climate data
+#Very first save - re-run this line when updating climate datasets!
+#write_csv(climNA_nemo_merge, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
+```
+
+
 ```{r warning = FALSE, message = FALSE}
 #Anomalies calculated in separate file = get_cna_anoms
 #Load in csv and merge with whole set of climate data
 climNA_anom2 <- read_csv(here::here("climateNA", "all_cna", "climNA_anoms.csv"))
-#74 cols w/ 1674 rows (YoC specimens only)
+#74 cols w/ 1665 rows (YoC specimens only)
 
 #merge anomalies back with main df
 
@@ -390,13 +426,6 @@ climNA_nemo_merge2 <- merge(climNA_nemo_merge, climNA_anom2, all.x = TRUE)
 
 
 ```{r}
-
-#Save final climate data
-
-#write_csv(climNA_nemo_merge, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
-#Very first save
-
-
 #Now with anomalies
 write_csv(climNA_nemo_merge2, here::here("climateNA", "all_cna", "climNA_nemo_all.csv"))
 

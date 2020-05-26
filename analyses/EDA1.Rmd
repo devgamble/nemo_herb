@@ -297,6 +297,9 @@ nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat")) #specifies
 ca_border <- read_sf(here::here("analyses", "ca_state_border"), layer = "CA_State_TIGER2016") # imports all files with prefix
 
 
+#Can Also retrieve maps from 'rnaturalearth'
+
+
 ggplot() +
   geom_sf(data = ca_border, fill = "#d9fae8") +
   geom_sf(data = nemo_sf, aes(color = year), alpha = 0.5, size = 1.5, show.legend = TRUE) + #Add 'pch' for borders
