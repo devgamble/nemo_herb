@@ -17,14 +17,14 @@ library(here)
 library(ggplot2)
 library(corrplot)
 library(visreg)
-library(dotwhisker)
 library(jtools)
+library(interactions)
 ```
 
 
 ### Objective: First stab at models for DOY ~ Climate  
 
-Please see 'EDA1.Rmd' for exploration of variables from the georferenced herbarium records and 'EDA_climate.Rmd' for ClimateNA variables.  
+See 'EDA1.Rmd' for exploration of variables from the georferenced herbarium records and 'EDA_climate.Rmd' for ClimateNA variables.  
 
 These analyses will be used to construct and imporve regression models to examine the effects of different variables on phenology (DOY), as well as determine how the inclusion of certain variables affect the relationship between DOY and climate.  
 <br>  
@@ -228,7 +228,7 @@ Describe trends and rates of change over time *across California* in the followi
 - YoC Climates  
 - Climate Anomalies
 
-Split by climate regions, geography, other?  
+Split by climate group and include as covariate? (As in Natalies *Streptanthus* analyses)
 
 #### Annual Variables  
 
@@ -237,27 +237,54 @@ Split by climate regions, geography, other?
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
 #YoC
 mat_t1 <- lm(MAT_Y ~ year, data = nemo_df2)
-summary(mat_t1)
-visreg(mat_t1,points = list(col = "#404040"))
+#summary(mat_t1)
+
 
 #Control for geography (and PI) - use this model
 mat_t1.1 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_df2)
-summary(mat_t1.1)
-visreg(mat_t1.1, xvar = "year", points = list(col = "#404040"))
+#summary(mat_t1.1)
 
+mat_t1.3 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long, data = nemo_df2)
+summary(mat_t1.3) #Best model
+visreg(mat_t1.3, xvar = "year", points = list(col = "#404040"))
 
-mat_t1.3 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_e0_5)
-#summary(mat_t1.3)  #0 - 5 km: lower R2, greater SE
+mat_t1.4 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long + MAP_Y*elev_m*long, data = nemo_df2)
+summary(mat_t1.4) #Better R2 - significant interactions, lowest AIC w/ 3-way interaction
+visreg(mat_t1.4, xvar = "year", points = list(col = "#404040"))
+#Too many interactions and this gets crazy...
+
+#Visualize Interactions
+johnson_neyman(mat_t1.4, pred = "MAP_Y", modx = "long")
+johnson_neyman(mat_t1.4, pred = "elev_m", modx = "long")
+johnson_neyman(mat_t1.4, pred = "MAP_Y", modx = "elev_m") 
+interact_plot(mat_t1.4, pred = "MAP_Y", modx = "elev_m")
+interact_plot(mat_t1.4, pred = "elev_m", modx = "long", mod2 = "MAP_Y")
 
 #Compare model estimates
-plot_summs(mat_t1, mat_t1.1, mat_t1.3, scale = TRUE)
+plot_summs(mat_t1, mat_t1.1, mat_t1.3, mat_t1.4, scale = TRUE)
+
+
+#Change over time: MAT~Year beta = 0.011 [mat_t1.4]
+.011*120
+
 
 ```
 
 
+
+MAT (YoC) has warmed about 1.3 degrees over about 120 years
+
+ 
+Interactions:  
+- MAT_Y is greater at more inland longitudes, and at lower elevations  
+- MAT_Y declines faster going up in elevation with more inland longitudes. This effect is strengthened by greater  MAP_Y (below 1000 m) in the west and weakened by greater MAP_Y in the east 
+- Interactions with long are less significant than with elev_m and MAP  
+
+
+
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
 #MAT Anomalies
-mat_t2 <- lm(MAT_A ~ year + elev_m + long, data = nemo_df2)
+mat_t2 <- lm(MAT_A ~ year + elev_m + long, data = nemo_df2) #No effect of MAP_A
 summary(mat_t2)
 
 visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE) + 
@@ -546,9 +573,9 @@ an_lm_g1.3<- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_ng
 summary(an_lm_g1.2)
 summary(an_lm_g1.3)
 
-plot_summs(an_lm_e, an_lm_g1.2, model.names = c("Herb geo", "Geo"), scale = TRUE)
+plot_summs(an_lm_e, an_lm_g1, an_lm_g1.2, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
 
-plot_summs(an_lm_ec, an_lm_g1.3, model.names = c("Herb geo", "Geo"), scale = TRUE)
+plot_summs(an_lm_ec, an_lm_g1.1, an_lm_g1.3, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
 
 ```
 
