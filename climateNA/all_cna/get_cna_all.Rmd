@@ -365,7 +365,7 @@ RH	= 	mean annual relative humidity (%)
 <br>  
  
 ```{r echo = FALSE, eval = FALSE}
-#Removing Variables #Optional!
+#Removing Variables #Optional - not done here!
 YoC_dfc <- YoC_df %>% 
   select(-c(Rad01_L1:Rad12_L1, DD_18_01_L1:DD18_12_L1, Rad_wt_L1:Rad_at_L1, DD_18_wt_L1:DD18_at_L1, PAS_sm_L1, PAS_at_L1,  DD_18_L1, DD18_L1, bFFP_L1:FFP_L1, MAR_L1, #Last year
             Rad01_Y1:Rad12_Y1, DD_18_01_Y1:DD18_12_Y1, Rad_wt_Y1:Rad_at_Y1, DD_18_wt_Y1:DD18_at_Y1, PAS_sm_Y1, PAS_at_Y1,  DD_18_Y1, DD18_Y1, bFFP_Y1:FFP_Y1, MAR_Y1)) #YoC

@@ -96,7 +96,7 @@ _sp2 = Feb-Mar; _sp3 = Feb-Apr
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 #Merge herbarium records and climate data (by specimen number)
-nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1181 total columns
+nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1250 total columns
 
 #FILTER YEARS to those after 1901 (start of climate data).
 nemo_df2 <- nemo_df1 %>% 
