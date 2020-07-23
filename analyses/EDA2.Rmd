@@ -22,11 +22,23 @@ library(interactions)
 ```
 
 
-### Objective: First stab at models for DOY ~ Climate  
+### Objective: Explore Models of DOY  
 
-See 'EDA1.Rmd' for exploration of variables from the georferenced herbarium records and 'EDA_climate.Rmd' for ClimateNA variables.  
+See 'EDA1.Rmd' for exploration of variables from the georeferrenced herbarium records and 'EDA_climate.Rmd' for ClimateNA variables (mostly distributions).  
 
-These analyses will be used to construct and imporve regression models to examine the effects of different variables on phenology (DOY), as well as determine how the inclusion of certain variables affect the relationship between DOY and climate.  
+**In This Document**  
+1. DOY ~ Non-climatic variables [line 100]  
+2. Correlations among variables [line 125]  (Model Diagnostic code [line 190])  
+3. How has climate change over time [line 240]  
+4. What is the effect of Error distance on models? [?line 400?]  
+5. Exploratory DOY~Climate models [???700?]  
+
+
+**To-Do**  
+- Update models in this script with *PI as a covariate*  
+- Measure change in seasonal climate variables over time  
+- Finalize analyses/script for 'Herbarium Methods' manuscript  
+
 <br>  
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
@@ -57,7 +69,7 @@ climNA_all1 <- climNA_all %>%
 #see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
 
 #Merge herbarium records and climate data (by specimen number)
-nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1181 total columns
+nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1250 total columns
 
 ```
 Create subset of data where each observation has an error distance:  
@@ -88,31 +100,39 @@ nemo_e2 <- nemo_all_errors %>%
 
 ```
 
+An combined dataset (`nemo_df2`) is saved within 'Climate_1.Rmd' and titled 'nemo_full_1901_2019.csv'
+
 <br>  
 
 
 ## How does DoY depend on non-climatic variables?  
-Some plots in EDA1 may be similar to these. Only significant variables are shown.  
-
 
 ```{r warning = FALSE, message = FALSE}
 lm1 <- lm(DOY ~ elev_m + year + long, data = nemo_df1) #all years
 lm1.1 <- lm(DOY ~ elev_m + year + long, data = nemo_df2) #>1900
-summary(lm1)
+summary(lm1.1)
 #summary(lm1.1)
 
 visreg(lm1, xvar = "elev_m", xlab = "Elevation (m)", points = list(col = "#404040")) 
 visreg(lm1, "year", xlab = "Year", points = list(col = "#404040"))
 visreg(lm1, "long", xlab = "Longitude", points = list(col = "#404040"))
 
-summ(lm1, vif = TRUE) #VIF for long, elev, MAP, MAT is high
+lm1.2 <- lm(DOY ~ elev_m + year + long + long*elev_m, data = nemo_df2) 
+summary(lm1.2)
+#No interactions with year
+#interact_plot(lm1.2, pred = "long", modx = "elev_m")
+
+#summ(lm1.1, vif = TRUE) #VIF for long, elev, MAP, MAT is high
 
 ```
 **DOY is earlier for lower elevations, lower latitudes, later years.**
 <br>  
 
 
-**Climate Variable Correlations:**
+## Variable Correlations:
+
+Which geographical and climate variables are correlated with one another?  
+(And how could these make future analyses difficult?)  
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 #check correlated climate variables for subset of whole df - 100 year averages
@@ -121,7 +141,6 @@ nemo_corrcheck_an <- nemo_df1 %>%
   select(MAT_100Y:MCMT_100Y, MAP_100Y:DD5_100Y, NFFD_100Y, PAS_100Y, CMD_100Y, RH_100Y, lat, long, elev_m, year)
 
 cor_an <- cor(nemo_corrcheck_an)
-
 corrplot(cor_an, type = "upper", method = "square", addCoef.col = "black", number.cex = .6, diag = F)
 
 #seasonal variables
@@ -164,13 +183,15 @@ corrplot(cor4, method = "square", addCoef.col = "black", number.cex = .6, diag =
 - *Elev_m* also correlated to MAT (-.47) [but not MAP], MCMT, NFFD (~-.6), DD_0 (.68), MSP, PAS (.44)  
 
 [Climatic]  
-- *MAT* with MAP/MSP (.59), DD5 (~1), DD_0 (-.76), CMD:NFFD (.6-.7), PAS (.62)
+- *MAT* with MAP/MSP (.59), DD5 (~1), DD_0 (-.76), CMD:NFFD (.6-.7), PAS (.62)  
 - *MAP* also with DD5 (.62), AHM (.9)  
 - *Anomalies*: Some variables negatively correlated b/w _Y and _As  
 
-* Seasonal temperature variables correlated with each other, with elevation
-* Seasonal PPT correlated with DD5, Spring temperatures, *not* correlated to elevation
+* Seasonal temperature variables correlated with each other, with elevation  
+* Some Spring Tave and Spring PPT parameters correlated  
+* Seasonal PPT correlated with DD5, Spring temperatures, *not* correlated to elevation  
 * Lat and Long similarly correlated to MAT [+/-0.32] and MAP [+/- 0.57], lat*long = 0.93  
+* Anomalies pretty uncorrelated to other periods!  
 
 Year had no large correlations with any variables (all < .3). Normals strongly correlated from different periods - MAT x MAP correlations consistent. 
 
@@ -232,6 +253,14 @@ Split by climate group and include as covariate? (As in Natalies *Streptanthus* 
 
 #### Annual Variables  
 
+Quantify rate of climate change in 
+- Tmin wt and sp  
+- PPT wt and sp  
+- MAT  
+_ MAP  
+
+
+Note: Though analyses of DOY ~ Climate may not include covariates (to focus on the effect of cliamte variables), geography (lat/long) and MAP are included here in addition to year to control for variation in climate over space. Also include PI when available.  
 
 **MAT**  
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
@@ -245,8 +274,8 @@ mat_t1.1 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_df2)
 #summary(mat_t1.1)
 
 mat_t1.3 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long, data = nemo_df2)
-summary(mat_t1.3) #Best model
-visreg(mat_t1.3, xvar = "year", points = list(col = "#404040"))
+#summary(mat_t1.3) #Best model
+
 
 mat_t1.4 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long + MAP_Y*elev_m*long, data = nemo_df2)
 summary(mat_t1.4) #Better R2 - significant interactions, lowest AIC w/ 3-way interaction
@@ -261,18 +290,14 @@ interact_plot(mat_t1.4, pred = "MAP_Y", modx = "elev_m")
 interact_plot(mat_t1.4, pred = "elev_m", modx = "long", mod2 = "MAP_Y")
 
 #Compare model estimates
-plot_summs(mat_t1, mat_t1.1, mat_t1.3, mat_t1.4, scale = TRUE)
-
+#plot_summs(mat_t1, mat_t1.1, mat_t1.3, mat_t1.4, scale = TRUE)
 
 #Change over time: MAT~Year beta = 0.011 [mat_t1.4]
-.011*120
+print("MAT_Y warming (°C) over 120 years")
+.0118*120
 
 
 ```
-
-
-
-MAT (YoC) has warmed about 1.3 degrees over about 120 years
 
  
 Interactions:  
@@ -282,30 +307,39 @@ Interactions:
 
 
 
-```{r message = FALSE, warning = FALSE, echo = FALSE}
-#MAT Anomalies
-mat_t2 <- lm(MAT_A ~ year + elev_m + long, data = nemo_df2) #No effect of MAP_A
-summary(mat_t2)
+**MAP**  
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#YoC
+map_t1 <- lm(MAP_Y ~ year + elev_m + long, data = nemo_df2)
+#summary(map_t1)
 
-visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE) + 
-  geom_smooth(method = "loess", col = "red") + 
+map_t1.1 <- lm(MAP_Y ~ year + elev_m + long + MAT_Y, data = nemo_df2)
+summary(map_t1.1)
+visreg(map_t1.1, xvar = "year", line = list(alpha = 0), points = list(col = "#404040"),  band = FALSE) #Not sure how to hide line without gg=TRUE...
+
+```
+No significant change in average MAP over years of collection  
+
+
+**Frost Free Days**  
+```{r warning = FALSE, message = FALSE}
+
+ffd_t1 <- lm(NFFD_Y ~ year + elev_m + long + MAP_Y, data = nemo_df2)
+summary(ffd_t1)
+
+ffd_t1.1 <- lm(bFFP_Y ~ year + elev_m + long + MAP_Y, data = nemo_df2)
+summary(ffd_t1.1)
+
+visreg(ffd_t1.1, xvar = "year", points = list(col = "#404040"), gg = TRUE) + 
   theme_classic()
-#Maybe a different type of model would be more appropriate (not lm)
 
 
-plot(mat_t2)
-
-#MAT_A is normal, but the residuals are not - autocorrelation?
-durbinWatsonTest(mat_t2)
-#Looks like residuals are correlated.... 
-#Do we need to create better models if we're just following a trend? No, but to quantify the rate of change (Slope) we would.
 ```
 
 
 
-
-
 #### Seasonal Variables  
+Note: See Climate_1.Rmd for selection of variables and seasons  
 
 
 
@@ -317,14 +351,48 @@ durbinWatsonTest(mat_t2)
 
 
 
-Quantify rate of climate change in 
-- Tmin wt and sp  
-- PPT wt and sp  
-- MAT  
-_ MAP  
-
 Consider differences across geographic climate regions?  
 
+### Change in Anomalies over time  
+
+**MAT**
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#MAT Anomalies
+mat_t2 <- lm(MAT_A ~ year + elev_m*long*MAT_Y, data = nemo_df2) #No effect of MAP_A, no interaction
+summary(mat_t2)
+
+visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE, line = list(alpha = 0), band = FALSE) + 
+  geom_smooth(method = "gam", col = "red") + 
+  theme_bw()
+#Maybe a different type of model would be more appropriate (not lm)
+
+
+plot(mat_t2)
+
+#MAT_A is normal, but the residuals are not - autocorrelation?
+durbinWatsonTest(mat_t2)
+#Looks like residuals are correlated.... 
+#Do we need to create better models if we're just following a trend? No, but to quantify the rate of change (Slope) we would.
+
+print("MAT anomalies (°C) increase over 120 years")
+.007*120 #Not sure this makes sense since the relationship is not linear...
+```
+Similar interactions explain variation in MAT_A...   
+
+
+**MAP**  
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Anomalies
+map_t2 <- lm(MAP_A ~ year + elev_m + long + MAP_Y + MAT_Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
+summary(map_t2)
+
+visreg(map_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE, line = list(alpha = 0), band = FALSE) + 
+  theme_bw()
+
+```
+
+Slightly significant effect of year becomes ns when controlling for YoC MAP/MAT
+<br>  
 
 
 ------  

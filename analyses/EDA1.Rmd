@@ -221,6 +221,9 @@ ggplot(data = nemo_all1, aes(x = source, by = georef_by)) +
 ggplot(nemo_all1, aes(x = source, y = year)) + 
   geom_boxplot()
 
+sum(nemo_all1$source == "cch1")
+sum(nemo_all1$source == "cch2")
+
 #County
 counties <- nemo_all1 %>% 
   select(specimen_number, year, DOY, county) %>% 

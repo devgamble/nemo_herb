@@ -22,7 +22,23 @@ library(jtools)
 
 ## Objective:  
 #### Identify the *climate variables*, *periods* (YoC, Norms), and *temporal windows* (seasons, months, before/after) for which phenology is most sensitive.  
-* See 'EDA2.Rmd' for exploration of different models. Currently, it looks as though MAT, MAP, and Tmin/ave + PPT in the spring explain the most variation in DOY.  
+* See 'EDA2.Rmd' for exploration of different models.  
+
+**ToC**  
+1. tbd...  
+
+
+4.? Sensitivity to long-term (normals) vs anomalies in SAME MODEL (and interaction?)
+
+
+**To-Do**  
+- Fix & clean up models describing sensitivity to different aspects of local climate  
+- Calculate new seasonal windows of climate parameters (and save to csv)  
+- Statistically compare slope estimates of climate parameters on DOY to select the most influential parameters  
+- Add in PI as a covariate in models  
+
+
+
 <br>  
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
@@ -47,19 +63,52 @@ climNA_all1 <- climNA_all %>%
                  PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
   na_if(y = -Inf)
 #see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
-#Transform anomalies after they are added to ClimNA_nemo_all csv!
+```
 
+**Formulate New Seasonal Windows**  
+
+ClimateNA wt = Dec - Feb
+ClimateNA sp = Mar - May
+
+Create *new* averages for seasons:
+
+_wt2 = Nov-Dec; _wt3 = Nov-Jan
+_sp2 = Feb-Mar; _sp3 = Feb-Apr
+
+```{r warning = FALSE, message = FALSE, results = 'hide'}
+#2-month winter average
+
+
+#3 month winter average
+
+
+
+#2 month spring average
+
+
+#3 month spring average
+
+
+```
+
+
+
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
 #Merge herbarium records and climate data (by specimen number)
 nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1181 total columns
 
 #FILTER YEARS to those after 1901 (start of climate data).
 nemo_df2 <- nemo_df1 %>% 
   filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
-sum(!is.na(nemo_df2$MAT_L1)) #YoC-1
-sum(!is.na(nemo_df2$MAT_Y)) #YoC
-#Both with 1674 total, so 3 obs miss from each (years > 1901 for YoC - 1 and years > 2017 for YoC)
-#Should therefore be 1671 obs with bot YoC and YoC-1 data
+sum(!is.na(nemo_df2$MAT_L1)) #YoC-1 -- 1665 obs
+sum(!is.na(nemo_df2$MAT_Y)) #YoC -- 1677 obs
 
+#Saving a csv with combined specimen and climate data
+write_csv(nemo_df2, here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Use this in future scripts
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
 #Subsetting data by error bins
 nemo_all_errors <- nemo_df2 %>% 
   filter(!is.na(error_dist_m)) 
@@ -73,26 +122,17 @@ nemo_e2 <- nemo_all_errors %>%
   filter(error_bin == "<2 km") #743 obs
 ```
 
-Moving forward it is probably best to use `nemo_df2` (records after 1900) or `nemo_e0_5` (records with errors 0-5 km).  
-
-### Annual Climate Variables  
+Probably best to use `nemo_df2` (records after 1900) and maybe try `nemo_e0_5` (records with errors 0-5 km).  
 
 Models are constructed to see which climate variables explain the most variation in DOY. It is not necessary to include covariates (elevation, lat/long, year). Climate data are site [and year; YoC/anomalies] specific. Include covariates when interested in the particular effect of one (e.g. elevation).  
 
 
+## Long-term (100Y) Climate Variables  
 
-Model selection:
-- Tmin, Tave for each
+May also consider:  
+- NFFD, bFFP, CMD, RH, DD5, MCMT (see EDA2)
 
-- More stringent guidelines  
-- include random effect of error distance?  
-
-
-
-
-
-Long Term Climate 100Y
-
+**Annual Variables**  
 ```{r message = FALSE, warning = FALSE, results = 'hide'}
 #100Y
 
@@ -100,6 +140,7 @@ ann_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
 ann_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m, data = nemo_df2)
 ann_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long, data = nemo_df2)
 ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2)
+#No interactions
 
 summary(ann_clim1)
 summary(ann_clim2)
@@ -110,149 +151,109 @@ summary(ann_clim4)
 
 summ(ann_clim3, vif = TRUE) #VIF for long, elev, MAP, MAT is high
 
+visreg(ann_clim1, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
+visreg(ann_clim1, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
+
+visreg(ann_clim3, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
+visreg(ann_clim3, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
+
 ```
 
 
-```{r message = FALSE, warning = FALSE, echo = FALSE}
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+#redudant with EDA2 code
 #plots
 #Non-climatic
-nonclim1 <- lm(DOY ~ elev_m + long + year, data = nemo_df2)
+#standardized: means = 0 and var = 1
+#Compare relative effect of each variable
+
+nonclim1 <- lm(DOY ~ scale(elev_m) + scale(long) + scale(year), data = nemo_df2)
 summary(nonclim1)
 
 visreg(nonclim1, xvar = "elev_m", xlab = "Elevation (m)", points = list(col = "#404040")) 
 visreg(nonclim1, "year", xlab = "Year", points = list(col = "#404040"))
 #visreg(nonclim1, "lat", xlab = "Latitude", points = list(col = "#404040"))
-#visreg(nonclim1, "long", xlab = "Longitude", points = list(col = "#404040"))
-
-#
-#
-visreg(ann_clim3, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
-visreg(ann_clim3, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
-
-
-
-visreg(ann_clim3, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg=TRUE) + 
-  theme_classic()
-visreg(ann_clim3, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
-
-
+visreg(nonclim1, "long", xlab = "Longitude", points = list(col = "#404040"))
 ```
 
 
-The relationship b/w DOY and MAT weakens as the model is parameterized,while the estimate of MAP strengthens. There was no significant interaction between any covariates. 
-While MAT still appears to advance DOY, controlling for geography seems to explain a good deal of this variation. Examining seasonal climate and anomalies should shed more light on this.  
-[Update: PPT sometimes stronger than Temp in effect on DOY]
+The relationship b/w DOY and MAT weakens as the model is parameterized,while the estimate of MAP strengthens. MAP appears to be driving variation in DOY. There were no significant interactions between any covariates.  
+While MAT still appears to advance DOY, controlling for geography seems to explain a good deal of this variation (over a 100-yr avg). Examining seasonal climate and anomalies should shed more light on this.  
+
+
+Note: Everything at the annual scale for 100Y averages is strongly correlated (see EDA2.Rmd). Refer to `ann_clim3` model above (controls for elev_m and long).  
 <br>  
 
+**Seasonal Variables**
 
-**Stepwise Regression** Model Selection
-
-Long-term climate [100Y]
-```{r message = FALSE, warning = FALSE, results = 'hide'}
-library(MASS) #Load this AFTER data cleaning using dplyr - both have select() ftn.
-library(rsq)
-library(interactions)
-
-##Annual Variables
-summary(ann_clim3)
-summary(ann_clim4)
-
-
-summary(stepAIC(ann_clim4, direction = "both"))
-
-#Check multiple annual variables and remove highly correlated ones?
-ann_clim5 <- lm(DOY ~ MAT_100Y + MAP_100Y + NFFD_100Y + CMD_100Y + AHM_100Y, data = nemo_df2)
-summ(stepAIC(ann_clim5, direction = "both"),scale = TRUE)
-
-```
-
-Everything at the annual scale for 100Y averages is strongly correlated (see EDA2.Rmd). Refer to `ann_clim3` model above (controls for elev_m and long).  
-<br>  
-
-
-For Seasonal variables, stepwise regression with:
-- Tmin & Tave (Winter, spring, summer) [No Tmax]  
+For Seasonal variables, examine models with:
+- Tmin & Tave (Winter, spring) [No Tmax]  
 - PPT (Winter, Spring, Summer)  
+
 
 May also consider  
 - DD > 5 (spring and winter)   
-- DD > 18 (spring and summer)?  
-- NFFD (winter, spring) x elev? with PAS?  
+- DD > 18 (spring and summer)  
 - CMD (winter, spring, summer)? RH?  
 <br>  
 
+
 From 'EDA2.Rmd', Both Spring temperature and precipitation (from 100Y averages) appeared to be the most influential on DOY. Tave had a higher R2 and Beta than Tmin for spring temps...  
 
-100Y- separate models by seasons, 
+Winter Conditions
 ```{r message = FALSE, warning = FALSE, results = 'hide'}
+library(interactions)
 ####Seasonal variables
 #Winter Conditions
-sz_clim1 <- lm(DOY ~ Tmin_wt_100Y + Tave_wt_100Y, data = nemo_df2)
-summary(sz_clim1)
-sz_clim1.1 <- lm(DOY ~ Tmin_wt_100Y + Tave_wt_100Y + PPT_wt_100Y, data = nemo_df2)
-summary(sz_clim1.1) #These have low R2 and high SE, plus estimates are crazy  
+sz_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
+summary(sz_wt1)
 
-sz_clim1.2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + PPT_wt_100Y*Tmin_wt_100Y, data = nemo_df2)
-summary(sz_clim1.2) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, remove Tave?
-#Interaction more significant wyhen Tave retained
-summary(stepAIC(sz_clim1.2, direction = "both"))
+visreg(sz_wt1, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
+visreg(sz_wt1, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
 
-johnson_neyman(sz_clim1.2, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
-interact_plot(sz_clim1.2, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
-interact_plot(sz_clim1.2, pred = "PPT_wt_100Y", modx = "Tmin_wt_100Y")
+sz_wt1.1 <- lm(DOY ~ Tave_wt_100Y + PPT_wt_100Y, data = nemo_df2)
+#summary(sz_clim1.1) #These have low R2 and high SE, plus estimates are crazy  
 
-#Building a "standard" model
 
-sz_wt_lm <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_lm)
-#NS Interaction Removed according to stepwise regression
-summary(stepAIC(sz_wt_lm, direction = "both"))
+sz_wt1.2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + PPT_wt_100Y*Tmin_wt_100Y, data = nemo_df2)
+summary(sz_wt1.2) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, removed Tave
+#Interaction more significant when Tave retained
 
-visreg(sz_wt_lm, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
-visreg(sz_wt_lm, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+visreg(sz_wt1.2, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
+visreg(sz_wt1.2, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+
+johnson_neyman(sz_wt1.2, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt1.2, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt1.2, pred = "PPT_wt_100Y", modx = "Tmin_wt_100Y") + theme_bw()
+
+
 ```
 
-Controlling for geographic location (long and elev), the interaction between Tmin_wt and PPT_wt disappears!  
-Independently, PPT_wt still has a large, significant delaying effect and Tmin_wt has an advancing effect.   
-Including year as a covariate slightly improves $R^2$ and Tmin estimate.  
-Long slightly more significant than Lat...  
+
+Controlling for geographic location (long and elev) [not shown], the interaction between Tmin_wt and PPT_wt disappears. Including year as a covariate slightly improves $R^2$ and Tmin estimate.  
 
 
+Spring Conditions
 ```{r message = FALSE, warning = FALSE, results = 'hide'}
 #Spring Conditions
-sz_clim2 <- lm(DOY ~ Tmin_sp_100Y + Tave_sp_100Y, data = nemo_df2)
-summary(sz_clim2)
-sz_clim2.1 <- lm(DOY ~ Tmin_sp_100Y + Tave_sp_100Y +  PPT_sp_100Y, data = nemo_df2)
-summary(sz_clim2.1)
+sz_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1)
+sz_sp1.1 <- lm(DOY ~ Tave_sp_100Y +  PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1)
 
-sz_clim2.2 <- lm(DOY ~ Tmin_sp_100Y + Tave_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
-summary(sz_clim2.2) #Interaction with Tmin much more significant, higher R2 and estimate
+sz_sp1.2 <- lm(DOY ~ Tmin_sp_100Y +  PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1.2) #Interaction with Tmin much more significant, higher R2 and estimate
 #Tave does still explain some variation, despite the interaction. Removed
-summary(stepAIC(sz_clim2.2, direction = "both")) #All retained
 
 
-johnson_neyman(sz_clim2.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y")
-interact_plot(sz_clim2.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y")
-interact_plot(sz_clim2.2, pred = "PPT_sp_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (spring)", legend.main = "Tmin (spring)") + theme_classic()
+visreg(sz_sp1, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
+visreg(sz_sp1, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+
+
+johnson_neyman(sz_sp1.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y")
+interact_plot(sz_sp1.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y", x.label = "Tmin (spring)", legend.main = "PPT (spring)") + theme_bw()
+interact_plot(sz_sp1.2, pred = "PPT_sp_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (spring)", legend.main = "Tmin (spring)") + theme_bw()
 #Swapping Tave for DD>5: similar but much weaker. DD v correlated to Tave
-
-#Building a "standard" model
-
-sz_sp_lm <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_sp_lm) #interaction becomes ns...
-summary(stepAIC(sz_sp_lm, direction = "both"))
-
-
-#Removing Interaction term...
-sz_sp_lm2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(stepAIC(sz_sp_lm2, direction = "both"))
-
-#Compare with model using Tave instead of Tmin
-sz_sp_lm3 <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-AIC(sz_sp_lm2, sz_sp_lm3) #
-
-visreg(sz_sp_lm2, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
-visreg(sz_sp_lm2, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
 
 ```
 
@@ -262,103 +263,48 @@ Interaction term becomes marginally significant. Removing it, we see results sim
 
 Tmin appears to explain more variation than Tave *in its interaction with PPT_sp*. Interaction is stronger with Tmin than Tave and PPT. Better $R^2$ and AIC with Tmin model (no interaction).  
 
-```{r message = FALSE, warning = FALSE, results = 'hide'}
+[Summer conditions are likely not biologically important in the phenology of N menziesii, patterns due to correlation]
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
 #Summer Conditions
-sz_clim3 <- lm(DOY ~ Tmin_sm_100Y + Tave_sm_100Y, data = nemo_df2)
+sz_clim3 <- lm(DOY ~ Tmin_sm_100Y + PPT_sm_100Y, data = nemo_df2)
 summary(sz_clim3)
-sz_clim3.1 <- lm(DOY ~ Tmin_sm_100Y + PPT_sm_100Y, data = nemo_df2)
+sz_clim3.1 <- lm(DOY ~ Tave_sm_100Y + PPT_sm_100Y, data = nemo_df2)
 summary(sz_clim3.1)
-
 sz_clim3.2 <- lm(DOY ~ Tmin_sm_100Y +  PPT_sm_100Y + Tmin_sm_100Y*PPT_sm_100Y, data = nemo_df2)
 summary(stepAIC(sz_clim3.2, direction = "both"))
 #Looks like Summer PPT has the largest effect, with Tmin marginally advancing DOY. No interaction
 visreg(sz_clim3.2, xvar = "PPT_sm_100Y", xlab = "PPT (summer)", points = list(col = "#404040"))
-
-#Building a "standard" model
-
-sz_sm_lm <- lm(DOY ~ Tmin_sm_100Y + PPT_sm_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_sm_lm)
-summary(stepAIC(sz_sm_lm, direction = "both"))
-
-visreg(sz_sm_lm, xvar = "PPT_sm_100Y", xlab = "PPT (summer)", points = list(col = "#404040"))
-visreg(sz_sm_lm, xvar = "Tmin_sm_100Y", xlab = "Tmin (summer)", points = list(col = "#404040"))
-
 ```
 
-Similar trends as in spring and winter models, though parameter estimates are much weaker and there was not even a marginally significant interaction accounting for non-climatic factors.  
-
-Tmin consistently appears to have a higher estimate, explain more variation in DOY, and be more significant in models compared to Tave.  
-
-
-
+Winter x Spring
 ```{r message = FALSE, warning = FALSE, results = 'hide'}
-#Combinations of seasonal variables 
+sz_wt_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y, data = nemo_df2)
+summary(sz_wt_sp1)
 
-#main effects
-sz_all_lm1 <- lm(DOY ~ Tmin_wt_100Y + Tmin_sp_100Y + Tmin_sm_100Y + PPT_wt_100Y + PPT_sp_100Y + PPT_sm_100Y, data = nemo_df2)
-summary(stepAIC(sz_all_lm1,direction = "both"))
-#Tmin_sp and PPT_sp stand out
+sz_wt_sp1.1 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_100Y*PPT_wt_100Y, data = nemo_df2)
+summary(sz_wt_sp1.1)
 
-#interactions -spring and winter
-sz_all_lm2 <- lm(DOY ~ Tmin_wt_100Y + Tmin_sp_100Y  + PPT_wt_100Y + PPT_sp_100Y, data = nemo_df2)
-summary(stepAIC(sz_all_lm2, direction = "both", scope = list(upper = ~Tmin_sp_100Y*Tmin_wt_100Y*PPT_wt_100Y*PPT_sp_100Y, lower = ~1)))
-#Shows interaction b/w Tmin_sp *PPT_sp
-#But also potential interaction b/w Tmin_sp and PPT_wt
+johnson_neyman(sz_wt_sp1.1, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt_sp1.1, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y", x.label = "Tmin (spring)", legend.main = "PPT (winter)") + theme_bw()
+johnson_neyman(sz_wt_sp1.1, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y")
+interact_plot(sz_wt_sp1.1, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (winter)", legend.main = "Tmin (spring)") + theme_bw()
 
-
-
-sz_all_lm2.1 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_100Y*PPT_wt_100Y, data = nemo_df2)
-summary(sz_all_lm2.1)
-
-#johnson_neyman(sz_all_lm2.1, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
-#interact_plot(sz_all_lm2.1, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
-#interact_plot(sz_all_lm2.1, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y")
-
-
-sz_all_lm2.2 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_100Y*PPT_wt_100Y + long + elev_m + year, data = nemo_df2)
-summary(stepAIC(sz_all_lm2.2, direction = "both")) 
-#Unlike before, this interaction persists when controlling for geographic range and year
-#Parameter estimate much weaker, but still significant
-
-#Controlling for geography, though, affects modulating effect in the interaction 
-johnson_neyman(sz_all_lm2.2, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
-interact_plot(sz_all_lm2.2, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y", x.label = "Tmin (spring)", legend.main = "PPT (winter)") + theme_classic()
-johnson_neyman(sz_all_lm2.2, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y")
-interact_plot(sz_all_lm2.2, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (winter)", legend.main = "Tmin (spring)") + theme_classic()
-
-#
-#
-#
-
-
-#Spring and summer interactions?
-sz_all_lm3 <- lm(DOY ~ Tmin_sm_100Y + Tmin_sp_100Y  + PPT_sm_100Y + PPT_sp_100Y, data = nemo_df2)
-summary(stepAIC(sz_all_lm3, direction = "both", scope = list(upper = ~Tmin_sp_100Y*Tmin_sm_100Y*PPT_sm_100Y*PPT_sp_100Y, lower = ~1)))
-#Potentially summer Tmin and PPT -- no idea how I found this out of that mess of a model...
-
-sz_all_lm3.1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sm_100Y + Tmin_sp_100Y*PPT_sm_100Y, data = nemo_df2)
-summary(sz_all_lm3.1) #still holds
-#johnson_neyman(sz_all_lm3.1, pred = "Tmin_sp_100Y", modx = "PPT_sm_100Y")
-#interact_plot(sz_all_lm3.1, pred = "Tmin_sp_100Y", modx = "PPT_sm_100Y")
-#interact_plot(sz_all_lm3.1, pred = "PPT_sm_100Y", modx = "Tmin_sp_100Y")
-sz_all_lm3.2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sm_100Y + Tmin_sp_100Y*PPT_sm_100Y + long + elev_m + year, data = nemo_df2)
-summary(stepAIC(sz_all_lm3.2, direction = "both")) 
-#Only marginally significant when controlling for geography...
-
-
-
-
-#Approach in Matthews & Mazer 
-
-sz_clim5 <- lm(DOY ~ Tmin_sp_100Y + Tave_sp_100Y + PPT_sp_100Y, data = nemo_df2)
-summary(sz_clim5)
-
-
-sz_clim6 <- lm(DOY ~ Tmin_sp_100Y + Tave_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*Tave_sp_100Y*PPT_sp_100Y, data = nemo_df2)
-summary(sz_clim6)
 
 
 ```
+
+Comparing Models
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+plot_summs(sz_wt1, sz_sp1, model.names = c("Winter", "Spring"), coefs = c("Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()#additive effects
+
+z
+plot_summs(sz_wt1.2, sz_sp1.2, sz_wt_sp1.1, coefs = c("Winter T*PPT" = "Tmin_wt_100Y:PPT_wt_100Y", "Spring T*PPT" = "Tmin_sp_100Y:PPT_sp_100Y", "Winter PPT * Spring T" = "Tmin_sp_100Y:PPT_wt_100Y"), model.names = c("Winter", "Spring", "Wt x Sp"), scale = TRUE) +
+  theme_bw()#multiplicative effects
+
+```
+
+
 
 
 <br>  
