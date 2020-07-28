@@ -378,14 +378,9 @@ summary {
 3. How has climate change over time [line 240]<br />
 4. What is the effect of Error distance on models? [?line 400?]<br />
 5. Exploratory DOY~Climate models [???700?]</p>
-<p><strong>To-Do</strong><br />
-- Update models in this script with <em>PI as a covariate</em><br />
-- Measure change in seasonal climate variables over time<br />
-- Finalize analyses/script for ‘Herbarium Methods’ manuscript<br />
-- Add back in Collector information from original datasets</p>
 <p><br></p>
-<div id="note-on-datasets-and-organization" class="section level4">
-<h4>Note on Datasets and Organization:</h4>
+<div id="notes-on-data-sets-and-organization" class="section level4">
+<h4>Notes on Data sets and Organization:</h4>
 <p>Through separate rounds of cleaning and duplicate removal, georeferencing, obtaining climate data, and (soon) scoring, there are several different csv files with <em>Nemophila</em> specimen data present in this project repository. For clarity, they are listed out her detailing what they contain and how recently they were made.</p>
 <p><strong>Specimen Records</strong>:<br />
 These csv files can be found in the ‘data_cleaning’ folder. They include</p>
@@ -401,7 +396,7 @@ These csv files can be found in the ‘data_cleaning’ folder. They include</p>
 * See “combine_cch1_cch2_V2.R” for more details.<br />
 - <code>cch1&amp;2_combined.csv</code> - attempt at combination, NOT cleaned<br />
 - <code>nemo_all_1.csv</code> - first updated combination of CCH1 and CCH2 records<br />
-- <code>nemo_all_2.csv</code> - second combination of CCH1 and CCH2 records, added elevation (m) from ‘elevatr’ package. (Used to make latest PI splits). <strong>Most up-to-date CCH2-only data!!</strong></p>
+- <code>nemo_all_2.csv</code> - second combination of CCH1 and CCH2 records, added elevation (m) from ‘elevatr’ package. (Used to make latest PI splits). <strong>Most up-to-date combined specimen data!!</strong></p>
 <p><strong>Climate Data</strong>:<br />
 See “get_cna_all.Rmd” for more details. Uses <code>nemo_all_2.csv</code> as input to create ClimateNA compatible csv <code>all_CNA_s.csv</code>.<br />
 - First-attempt CCH1 and 2 climate data can be found in their respective folders under “ClimateNA”<br />
@@ -410,8 +405,11 @@ See “get_cna_all.Rmd” for more details. Uses <code>nemo_all_2.csv</code> as 
 - Anomalies calculated in ‘get_cna_anoms.Rmd’, creates <code>climNA_anoms.csv</code><br />
 - All the above data sets combined into <code>climNA_nemo_all.csv</code> saved in “all_cna” folder <strong>Most up-to-date Climate-only data!!</strong></p>
 <p><strong>Combined data sets</strong>:<br />
-In “Climate_1.Rmd”, <code>nemo_all_2.csv</code>, with added error distance, and <code>climNA_nemo_all.csv</code>, with PPT vars. log-transformed, are combined and saved to <code>nemo_full_1901_2019.csv</code>, filtering for years only from 1901-2019. <strong>Most up-to-date combined file!!</strong></p>
+In this Rmd, <code>nemo_all_2.csv</code>, with added error distance, and <code>climNA_nemo_all.csv</code>, with PPT vars. log-transformed, are combined and saved to <code>nemo_full_1901_2019.csv</code>, filtering for years only from 1901-2019. <strong>Most up-to-date combined file!!</strong></p>
 <p><br></p>
+<pre><code>## [1] 1665</code></pre>
+<pre><code>## [1] 1677</code></pre>
+<p><strong>Add back in Collector information for CCH1 and CCH2 specimen records!</strong></p>
 <p>Create subset of data where each observation has an error distance:</p>
 <pre class="r"><code>#Filter specimens to those collected after 1900
 nemo_df2 &lt;- nemo_df1 %&gt;% 

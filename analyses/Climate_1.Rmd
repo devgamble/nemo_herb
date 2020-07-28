@@ -41,7 +41,10 @@ library(jtools)
 
 <br>  
 
-```{r echo = FALSE, message = FALSE, warning = FALSE}
+```{r echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE}
+### OLD #### REMOVE IF EVERYTHING WORKS BELOW - same code and write_csv in EDA2.Rmd
+#
+
 #Load in data & establish error distance bins
 nemo_spec <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
   mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
@@ -63,6 +66,29 @@ climNA_all1 <- climNA_all %>%
                  PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
   na_if(y = -Inf)
 #see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
+
+##
+
+#Merge herbarium records and climate data (by specimen number)
+nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1250 total columns
+
+#FILTER YEARS to those after 1901 (start of climate data).
+nemo_df2 <- nemo_df1 %>% 
+  filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
+sum(!is.na(nemo_df2$MAT_L1)) #YoC-1 -- 1665 obs
+sum(!is.na(nemo_df2$MAT_Y)) #YoC -- 1677 obs
+
+#Saving a csv with combined specimen and climate data
+write_csv(nemo_df2, here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Use this in future scripts
+
+```
+
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Combined specimen & climate data from 1901-2019
+#1677 obs, 1250 columns
+
 ```
 
 **Formulate New Seasonal Windows**  
@@ -92,21 +118,6 @@ _sp2 = Feb-Mar; _sp3 = Feb-Apr
 ```
 
 
-
-
-```{r echo = FALSE, message = FALSE, warning = FALSE}
-#Merge herbarium records and climate data (by specimen number)
-nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1250 total columns
-
-#FILTER YEARS to those after 1901 (start of climate data).
-nemo_df2 <- nemo_df1 %>% 
-  filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
-sum(!is.na(nemo_df2$MAT_L1)) #YoC-1 -- 1665 obs
-sum(!is.na(nemo_df2$MAT_Y)) #YoC -- 1677 obs
-
-#Saving a csv with combined specimen and climate data
-write_csv(nemo_df2, here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Use this in future scripts
-```
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 #Subsetting data by error bins
