@@ -87,7 +87,7 @@ write_csv(nemo_df2, here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Use
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 
 nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Combined specimen & climate data from 1901-2019
-#1677 obs, 1250 columns
+#1677 obs, 1251 columns
 
 ```
 

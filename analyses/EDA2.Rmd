@@ -30,7 +30,6 @@ See 'EDA1.Rmd' for exploration of variables from the georeferrenced herbarium re
 1. DOY ~ Non-climatic variables [line 100]  
 2. Correlations among variables [line 125]  (Model Diagnostic code [line 190])  
 3. How has climate change over time [line 240]  
-4. What is the effect of Error distance on models? [?line 400?]  
 5. Exploratory DOY~Climate models [???700?]  
 
 
@@ -157,6 +156,9 @@ nemo_spec2 <- collectormerge2 %>%
 #Merge herbarium records and climate data (by specimen number)
 nemo_df1 <- merge(nemo_spec2, climNA_all1) #1764 obs and 1251 total columns
 
+write_csv(nemo_df1, here::here("data_cleaning", "nemo_full_1861_2019.csv")) #All years in the data
+
+
 #FILTER YEARS to those after 1901 (start of climate data).
 nemo_df2 <- nemo_df1 %>% 
   filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
@@ -171,10 +173,6 @@ write_csv(nemo_df2, here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Use
 Create subset of data where each observation has an error distance:  
 
 ```{r warning = FALSE, message = FALSE}
-
-#Filter specimens to those collected after 1900
-nemo_df2 <- nemo_df1 %>% 
-  filter(year >= 1901) #1677 obs
 
 nemo_all_errors <- nemo_df2 %>% 
   filter(!is.na(error_dist_m)) 
@@ -196,7 +194,6 @@ nemo_e2 <- nemo_all_errors %>%
 
 ```
 
-A combined data set (`nemo_df2`) is saved within 'Climate_1.Rmd' and titled 'nemo_full_1901_2019.csv'
 
 <br>  
 
@@ -491,265 +488,6 @@ Slightly significant effect of year becomes ns when controlling for YoC MAP/MAT
 <br>  
 
 
-------  
-
-## Effect of Error Distance on DOY ~ Climate models  
-
-The following analyses aim to measure the effect of different error distance on model outputs, specifically,  
-
-- $R^2$ values  
-- Parameter estimates and  
-- significance of climate variables in their effect on DOY  
-
-For 100 year averages for MAT, MAP, Tmin_sp, Tave_sp, PPT_sp, PPT_wt
-
-Including error distance (or error bin) as a covariate shows no model improvement. Though the smallest bin, 0-2 km error, has a significant effect in the model, none of the parameter estimates of the bins are significantly different from one another.  
-
-<br>  
-
-
-```{r message = FALSE, warning = FALSE, echo = FALSE, results = 'hide'}
-#Effect of Error Distance
-
-##
-#Single Temp
-##
-MAT_e <- lm(DOY ~ MAT_100Y, data = nemo_df2)
-
-er_mat0 <- lm(DOY ~ MAT_100Y, data = nemo_all_errors)
-er_mat1 <- lm(DOY ~ MAT_100Y, data = nemo_e0_5)
-er_mat2 <- lm(DOY ~ MAT_100Y, data = nemo_e2)
-
-plot_summs(MAT_e, er_mat0, er_mat1, er_mat2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(MAT_e)
-summary(er_mat0)$r.squared
-summary(er_mat1)$r.squared
-summary(er_mat2)$r.squared
-
-
-Tsp_e <- lm(DOY ~ Tmin_sp_100Y, data = nemo_df2)
-
-er_tsp0 <- lm(DOY ~ Tmin_sp_100Y, data = nemo_all_errors)
-er_tsp1 <- lm(DOY ~ Tmin_sp_100Y, data = nemo_e0_5)
-er_tsp2 <- lm(DOY ~ Tmin_sp_100Y, data = nemo_e2)
-
-plot_summs(Tsp_e, er_tsp0, er_tsp1, er_tsp2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(Tsp_e)
-summary(er_tsp0)$r.squared
-summary(er_tsp1)$r.squared
-summary(er_tsp2)$r.squared
-
-
-#Single PPT
-
-MAP_e <- lm(DOY ~ MAP_100Y, data = nemo_df2)
-
-er_map0 <- lm(DOY ~ MAP_100Y, data = nemo_all_errors)
-er_map1 <- lm(DOY ~ MAP_100Y, data = nemo_e0_5)
-er_map2 <- lm(DOY ~ MAP_100Y, data = nemo_e2)
-
-plot_summs(MAP_e, er_map0, er_map1, er_map2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(MAP_e)
-summary(er_map0)$r.squared
-summary(er_map1)$r.squared
-summary(er_map2)$r.squared
-
-
-Psp_e <- lm(DOY ~ PPT_sp_100Y, data = nemo_df2)
-
-er_psp0 <- lm(DOY ~ PPT_sp_100Y, data = nemo_all_errors)
-er_psp1 <- lm(DOY ~ PPT_sp_100Y, data = nemo_e0_5)
-er_psp2 <- lm(DOY ~ PPT_sp_100Y, data = nemo_e2)
-
-plot_summs(Psp_e, er_psp0, er_psp1, er_psp2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(Psp_e)
-summary(er_psp0)$r.squared
-summary(er_psp1)$r.squared
-summary(er_psp2)$r.squared
-
-```
-
-
-```{r message = FALSE, warning = FALSE, echo = FALSE}
-#Effect of Error Distance
-
-##
-#MAT & MAP
-##
-an_lm_e <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
-
-er_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors)
-er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
-er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
-
-plot_summs(an_lm_e, er_an0, er_an1, er_an2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(an_lm_e)
-summary(er_an0)$r.squared
-summary(er_an1)$r.squared
-summary(er_an2)$r.squared
-
-#Including other covariates
-an_lm_ec <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_df2)
-
-erc_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_all_errors)
-erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_e0_5)
-erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_e2)
-
-plot_summs(an_lm_ec, erc_an0, erc_an1, erc_an2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-summary(an_lm_ec)
-summary(erc_an0)$r.squared
-summary(erc_an1)$r.squared
-summary(erc_an2)$r.squared
-
-
-##
-#Winter
-##
-#Without covariates
-sz_wt_lm_e <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
-
-er_wt0 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_all_errors)
-er_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e0_5)
-er_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e2)
-
-plot_summs(sz_wt_lm_e, er_wt0, er_wt1, er_wt2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-summary(sz_wt_lm_e)
-summary(er_wt0)$r.squared
-summary(er_wt1)$r.squared
-summary(er_wt2)$r.squared
-
-#With Covariates
-sz_wt_lm_ec <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-
-erc_wt0 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_all_errors)
-erc_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e0_5)
-erc_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e2)
-
-plot_summs(sz_wt_lm_ec, erc_wt0, erc_wt1, erc_wt2, model.names = c("OG", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-summary(sz_wt_lm_ec)
-summary(erc_wt0)$r.squared
-summary(erc_wt1)$r.squared
-summary(erc_wt2)$r.squared
-
-
-##
-#Spring
-##
-#Without covariates
-sz_sp_lm_e <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
-
-er_sp0 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_all_errors)
-er_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e0_5)
-er_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e2)
-
-plot_summs(sz_sp_lm_e, er_sp0, er_sp1, er_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-summary(sz_sp_lm_e)
-summary(er_sp0)$r.squared
-summary(er_sp1)$r.squared
-summary(er_sp2)$r.squared
-
-#With Covariates - interaction ns and removed
-sz_sp_lm_ec <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-
-erc_sp0 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_all_errors)
-erc_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e0_5)
-erc_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e2)
-
-plot_summs(sz_sp_lm_ec, erc_sp0, erc_sp1, erc_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-summary(sz_sp_lm_ec)
-summary(erc_sp0)$r.squared
-summary(erc_sp1)$r.squared
-summary(erc_sp2)$r.squared
-
-```
-
-
-##### In Summary  
-
-
-Filtering out larger error_bins led to no real improvements in model $R^2$s, though of the *subsets* the 0-5 group often had better $R^2$s. Based on confidence intervals, there are no significant differences in parameter estiamtes between data including all observations and data including less uncertain coordinate estimates.
-
-Using data from more precise error distances led to **increases in parameter estimate varaition (SE)**, especially for 0-2 km.  
-
-Lack of improvements may be due to loss of meaningful variation from records with greater uncertainty. Also, looking only at records with any error distance, there is a reduction in $R^2$ values.
-
-
-[From old models]  
-> Including error bin as a covariate (for models with 2+ bins) slightly increases $R^2$ but not parameter estimate (by much). For this reason, and the fact that uncertainty should have no direct effect on DOY, I've removed it. 
-The significant effect of 2-5 km bin for error distance on DOY - slightly earlier - is likely due to chance.  
-
-> Filtering out records with larger error distances generally improves models, but improvements seem greatest for `MAT`, `Tmin` and `Tave`. `MAP`, `PPT_wt`, and `PPT_sp` models had larger parameter estimates for 0-2 km errors but Filtering finely to records with 0-2 km error led to larger parameter estimates, but at the cost of reduced R2 values and much larger SE. This could be due to a loss of variation and represents a trade-off to consider with future models. Oddly, a couple models with errors from 0-4 km were worse (for MAT, Tave_sp) than 0-2 or 0-5 error models.  Model improvements were persistent when the error_bin covariate was removed from models, though R2 values were very slightly reduced.  
-
-
-
-
-In future models,  
-- Consider treating error distance as a random effect?
-- Consider comparing all data with those with *errors from 0-5 km* 
-
-<br>  
-
-
-### Investigating the effect of manually georeferenced specimens on the relationship b/w DOY and climate variables  
-
-```{r message = FALSE, warning = FALSE, echo = FALSE}
-#Records we georeferenced:
-nemo_geor <- nemo_df1 %>% 
-  filter(!is.na(georef_by)) #458 obs
-
-nemo_ngeo <- nemo_df1 %>% 
-  filter(is.na(georef_by)) #records that we did not georeference
-
-```
-
-MAT & MAP
-
-```{r message = FALSE, warning = FALSE}
-#summary(an_lm_e) #nemo_df2
-#summary(an_lm_ec) #with other covariates
-
-an_lm_g1<- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_geor)
-an_lm_g1.1<- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_geor)
-summary(an_lm_g1) #R2 = 0.2026 B = -2.38
-summary(an_lm_g1.1)
-
-
-plot_summs(an_lm_e, an_lm_g1, model.names = c("All data", "Geo"), scale = TRUE)
-
-plot_summs(an_lm_ec, an_lm_g1.1, model.names = c("All data", "Geo"), scale = TRUE)
-
-```
-
-From these averages it's clear that subsetting by specimens we georeferenced increases variation in the parameter estiamte, as did subsetting by smaller error distances earlier.
-
-What about data we did not georeference?  
-
-```{r warning = FALSE, message = FALSE, echo = FALSE}
-#summary(an_lm_e) #nemo_df2
-#summary(an_lm_ec) #with covariates
-an_lm_g1.2<- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_ngeo)
-an_lm_g1.3<- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_ngeo)
-summary(an_lm_g1.2)
-summary(an_lm_g1.3)
-
-plot_summs(an_lm_e, an_lm_g1, an_lm_g1.2, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
-
-plot_summs(an_lm_ec, an_lm_g1.1, an_lm_g1.3, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
-
-```
-
-Ours still seem a little more variables (and NS in a couple cases), but are quite similar to herbarium-georeferenced data.
-
-
-------  
-
-
-<br>  
 
 ## EXPLORATORY ANALYSES - See 'Climate_1.Rmd' for more finalized analyses  
 

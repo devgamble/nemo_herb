@@ -1,0 +1,497 @@
+---
+title: "Bias and Error in Herbarium data"
+author: "Devin Gamble"
+date: "7/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(corrplot)
+library(visreg)
+library(jtools)
+library(interactions)
+```
+
+# Examining the effect of error distance and other potential biases in herbarium data  
+
+## Objective: Deteremine how records' error distance and other collection information might bias pheno-climatic models in *N. menziesii*  
+
+### Table of Contents    
+- Error distance  
+    - By Data subsets  
+    - As a covariate   
+- Georeferrencing  
+- Collection Biases  
+
+Note: Several code chunks copied over from `EDA2.Rmd` and refined.    
+
+**TO DO**  
+- Add Analyses on potential biases  
+- Standardize data and variables used  
+- Explore more complex models?  
+- Include *interactions*  
+- Include *sample sizes*  
+
+<br>  
+
+#### Load Data  
+```{r message = FALSE, warning = FALSE}
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+```
+
+Data subset by error distances/bins  
+```{r message = FALSE, warning = FALSE}
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+#1166 after rm records before 1901
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") 
+
+#0-4 km
+nemo_e0_4 <-  nemo_all_errors %>% 
+  filter(error_dist_m >= 0 & error_dist_m <= 4000) #Do Not include error_bin in models
+
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") 
+
+```
+
+
+## Effect of Error Distance on DOY ~ Climate models  
+
+Measure the effect of error distance on pheno-climatic models'
+- $R^2$ values  
+- Parameter estimates  
+- significance of climate variables in their effect on DOY  
+
+For 100 year averages for MAT, MAP, Tmin_sp, Tmin_wt, PPT_sp, PPT_wt  
+
+*Note*: Rationale for using nemo_df2: error distance estiamtes are likely more accurate  after 1900.  
+
+<br>  
+
+
+### Subsetting data by error bins
+
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+## DIAGNOSTICS ##
+#V. large sample size may make some tests unreliable - graphical methods more appropraite
+
+#Annual climate model
+M100Y_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
+plot(M100Y_lm2)
+
+summ(M100Y_lm1, vifs = TRUE)
+vif(M100Y_lm1)
+shapiro.test(M100Y_lm1$residuals)
+durbinWatsonTest(M100Y_lm1) #Address with more covariates or more complex models to improve fit
+
+```
+
+Only significant interactions are shown, though interactions among climate variables were tested for each original model.  
+
+```{r message = FALSE, warning = FALSE}
+##
+#MAT & MAP
+##
+M100Y_lm1 <- lm(DOY ~ MAT_100Y*MAP_100Y, data = nemo_df2)
+
+er_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors)
+er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
+er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
+
+plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
+summary(M100Y_lm1)
+summary(er_an0)$r.squared
+summary(er_an1)$r.squared
+summary(er_an2)$r.squared
+
+
+#Including other covariates
+M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_df2)
+
+erc_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_all_errors)
+erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_e0_5)
+erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y+ elev_m + long + year, data = nemo_e2)
+
+plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(M100Y_lm2)
+summary(erc_an0)$r.squared
+summary(erc_an1)$r.squared
+summary(erc_an2)$r.squared
+```
+
+
+
+```{r message = FALSE, warning = FALSE}
+##
+#Winter
+##
+
+
+#Without covariates
+Wt100Y_lm1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
+
+er_wt0 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_all_errors)
+er_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e0_5)
+er_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e2)
+
+plot_summs(Wt100Y_lm1, er_wt0, er_wt1, er_wt2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(Wt100Y_lm1)
+summary(er_wt0)$r.squared
+summary(er_wt1)$r.squared
+summary(er_wt2)$r.squared
+
+#
+#With Interactions (without other covariates)
+Wt100Y_lm1i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_df2)
+
+er_wt0i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_all_errors)
+er_wt1i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_e0_5)
+er_wt2i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_e2)
+
+plot_summs(Wt100Y_lm1i, er_wt0i, er_wt1i, er_wt2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(Wt100Y_lm1i)
+summary(er_wt0i)$r.squared
+summary(er_wt1i)$r.squared
+summary(er_wt2i)$r.squared
+
+
+#
+#With Covariates
+Wt100Y_lm2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
+
+erc_wt0 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_all_errors)
+erc_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e0_5)
+erc_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e2)
+
+plot_summs(Wt100Y_lm2, erc_wt0, erc_wt1, erc_wt2, model.names = c("OG", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(Wt100Y_lm2)
+summary(erc_wt0)$r.squared
+summary(erc_wt1)$r.squared
+summary(erc_wt2)$r.squared
+```
+Including finer-scale error distances in 'wt' models with interactions increases the variance and, for 0-2 and 0-5 km, makes parameter estimates non-significant.  
+
+
+```{r message = FALSE, warning = FALSE}
+##
+#Spring
+##
+
+#Without covariates
+Sp100Y_lm1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_df2)
+
+er_sp0 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_all_errors)
+er_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_e0_5)
+er_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_e2)
+
+plot_summs(Sp100Y_lm1, er_sp0, er_sp1, er_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(Sp100Y_lm1)
+summary(er_sp0)$r.squared
+summary(er_sp1)$r.squared
+summary(er_sp2)$r.squared
+
+#
+#With interactions (without other covariates)
+Sp100Y_lm1i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
+
+er_sp0i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_all_errors)
+er_sp1i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e0_5)
+er_sp2i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e2)
+
+plot_summs(Sp100Y_lm1i, er_sp0i, er_sp1i, er_sp2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(Sp100Y_lm1i)
+summary(er_sp0i)$r.squared
+summary(er_sp1i)$r.squared
+summary(er_sp2i)$r.squared
+
+
+#
+#With Covariates - interaction ns and removed
+Sp100Y_lm2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
+
+erc_sp0 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_all_errors)
+erc_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e0_5)
+erc_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e2)
+
+plot_summs(Sp100Y_lm2, erc_sp0, erc_sp1, erc_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+summary(Sp100Y_lm2)
+summary(erc_sp0)$r.squared
+summary(erc_sp1)$r.squared
+summary(erc_sp2)$r.squared
+
+```
+
+
+##### In Summary  
+
+
+Filtering out larger error_bins led to no real improvements in model $R^2$s, though of the *subsets* the 0-5 group may have slightly better $R^2$s. Based on confidence intervals, there are no significant differences in parameter estimates between all observations and data including less uncertain coordinate estimates.  
+
+
+Using data from more precise error distances led to **increases in parameter estimate variation (SE)**, especially for 0-2 km.  
+
+Lack of improvements may be due to loss of meaningful variation from records with greater uncertainty. Also, looking only at records with any error distance, there is a reduction in $R^2$ values.
+
+Using finer error distances may actually reduce variation and obscure meaningful variable interactions!!  
+
+
+[Notes from old models]  
+
+> Including error bin as a covariate (for models with 2+ bins) slightly increases $R^2$ but not parameter estimate (by much). For this reason, and the fact that uncertainty should have no direct effect on DOY, I've removed it. 
+The significant effect of 2-5 km bin for error distance on DOY - slightly earlier - is likely due to chance.  
+
+> Filtering out records with larger error distances generally improves models, but improvements seem greatest for `MAT`, `Tmin` and `Tave`. `MAP`, `PPT_wt`, and `PPT_sp` models had larger parameter estimates for 0-2 km errors but Filtering finely to records with 0-2 km error led to larger parameter estimates, but at the cost of reduced R2 values and much larger SE. This could be due to a loss of variation and represents a trade-off to consider with future models. Oddly, a couple models with errors from 0-4 km were worse (for MAT, Tave_sp) than 0-2 or 0-5 error models.  Model improvements were persistent when the error_bin covariate was removed from models, though R2 values were very slightly reduced.  
+
+In future models consider comparing all data with those with *errors from 0-5 km*?   
+
+
+<br>  
+
+
+
+
+
+#### Error Distance as a covariate   
+
+```{r message = FALSE, warning = FALSE}
+hist(log(nemo_df2$error_dist_m))
+#Does error distance need to be transformed? Still fails shapiro test regardless
+
+
+
+M100Y_lm3a <- lm(DOY ~ MAT_100Y + MAP_100Y + log(error_dist_m), data = nemo_df2)
+M100Y_lm3b <- lm(DOY ~ MAT_100Y + MAP_100Y + error_bin, data = nemo_df2)
+
+summary(M100Y_lm3a)
+summary(M100Y_lm3b)
+
+
+visreg(M100Y_lm1)
+visreg(M100Y_lm3a)
+visreg(M100Y_lm3b)
+
+```
+
+At a glance, $R^2$ values do not seem to be improved. Is there any benefit to including error distance as a covariate in these models?  
+
+Compare AIC values?  
+
+
+
+
+Including error distance (or error bin) as a covariate shows no model improvement. Though the smallest bin, 0-2 km error, has a significant effect in the model, none of the parameter estimates of the bins are significantly different from one another. 
+
+
+#### ANOVAs/ANCOVAs for effect of error distance bins  
+
+Are there differences in collected records lat/long, elevation, MAT/MAP (other climate) associated with error distance (bins)?  
+
+```{r}
+edbin1 <- lm(lat ~ error_bin, data = nemo_df2)
+
+anova(edbin1)
+
+```
+
+
+
+<br>  
+----  
+
+
+
+### Investigating the effect of manually georeferenced specimens on the relationship b/w DOY and climate variables  
+
+```{r message = FALSE, warning = FALSE}
+#Records we georeferenced:
+nemo_geor <- nemo_df2 %>% 
+  filter(!is.na(georef_by)) #458 obs
+
+nemo_ngeo <- nemo_df2 %>% 
+  filter(is.na(georef_by)) #records that we did not georeference
+
+```
+
+
+MAT & MAP
+
+```{r message = FALSE, warning = FALSE}
+#Our georeferenced records relative to all records
+M100Y_lmg1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_geor)
+M100Y_lmg2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_geor)
+summary(M100Y_lmg1) #R2 = 0.2026 B = -2.38
+summary(M100Y_lmg2)
+
+
+plot_summs(M100Y_lm1, M100Y_lmg1, model.names = c("All data", "Geo"), scale = TRUE)
+
+plot_summs(M100Y_lm2, M100Y_lmg2, model.names = c("All data", "Geo"), scale = TRUE)
+
+```
+
+From these averages it's clear that subsetting by specimens we georeferenced increases variation in the parameter estimate, as did subsetting by smaller error distances earlier.
+
+What about data we did not georeference?  
+
+```{r warning = FALSE, message = FALSE}
+M100Y_lmg3<- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_ngeo)
+M100Y_lmg4<- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_ngeo)
+summary(M100Y_lmg3)
+summary(M100Y_lmg4)
+
+plot_summs(M100Y_lm1, M100Y_lmg1, M100Y_lmg3, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+
+plot_summs(M100Y_lm2, M100Y_lmg2, M100Y_lmg4, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+
+```
+
+Ours still seem a little more variables (and NS in a couple cases), but are quite similar to herbarium-georeferenced data. It looks like our manually referenced specimens produce a smaller sensitivity to MAT_100Y, but this becomes non-significant when goegrapy is accounted for.  
+
+
+
+
+### Other potential sources of noise aside from error distance or georeferenced location?  
+
+------  
+
+
+<br>  
+
+
+## Investigating Collection Bias on the relatinoship between climate and DOY  
+
+
+#### Year  
+Are there certain years or period with significantly higher collections? Has collections increased or decreased through time?  
+
+```{r warning = FALSE, message = FALSE}
+
+cb_lm1 <- lm(DOY ~ year, data = nemo_df2)
+summary(cb_lm1)
+
+
+#Correlate YoC with DOY collection to look for temporal collecting trend (as in Panchen 2019)
+
+
+```
+
+No significant effect of year on DOY.  
+
+```{r warning = FALSE, message = FALSE, echo = FALSE, results = 'hide'}
+#Recall the distribution of DOY
+
+ggplot(aes(x = DOY), data = nemo_df2) +
+  geom_histogram(fill = "blue", color = "black") + 
+  scale_y_continuous(expand = c(0,0)) + 
+  theme_classic()
+```
+
+
+```{r warning = FALSE, message = FALSE}
+#Number of specimens in each year - ID periods of low and high collection
+ggplot(aes(x = year), data = nemo_df2) +
+  geom_bar(stat = 'count', width = 1, fill = "blue", color = "black") +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(limits = c(1900, 2020)) +
+  theme_classic()
+
+
+#Parse by decade?
+
+```
+
+
+#### Month  
+(?) certain months preferred for collections? Check lat/long/elevation interactions  
+
+
+
+```{r}
+
+```
+
+Bin months intwo 2 (or 3?) month periods to approximate seasons?  
+
+
+
+Are collection dates randomly distributed compared to all dates in the data set?  
+
+
+
+#### Location  
+Are certain parts of the species range sampled more heavily (e.g. Southeast)? Interaction with year?
+Lat  
+Long  
+
+
+```{r}
+
+cb_lmxx <- lm(year ~ lat + long, data = nemo_df2)
+
+```
+
+
+
+Spatial Collection Patterns (Panchen 2019)  
+- calculate density of specimens per [2500 m x 2500 m pixel] [or .25deg x .25deg - Daru 2018, sp package] using `geosphere` package  
+- model relationship of density and distance to community (raster package)
+- [test for spatial autocorrelation to detect a temporal*spatial trend]  
+
+
+
+Elevation  
+
+
+
+#### Collector Bias  
+
+Are there super-collectors who've collected a relatively large proportion of specimens?  
+First name listed = primary collector (as in *Panchen 2019*)
+- Sort primary collectors by # specimens collected. Top collectors = those who collected XX% (e.g. 90%) of all specimens  
+- calculate % of collectors top collectors represent  
+- (over time: correlate top collectors mean # collections per year ~ collectors' mean year of collecting)  
+- (Mean DOY of top collectors - is it normally distributed? shapiro-wilks test. ID temporal biases)  
+
+**or**  
+[Via Daru 2018 - multi-spp study..]  
+- Calculate # specimens for each collector  
+- Is this skewed toward few collectors?  
+
+
+
+
+
+#### Phenological stage [when PI scoring complete]  
+Are certain phenophases (e.g. peak flowering) over-represented?  
+(Are plants preferrentially collected during peak flowering) (Biases against v. early or late-stage phenophases)
+
+
+
+
+
+
+
+
+
+
+
