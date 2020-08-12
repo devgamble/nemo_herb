@@ -27,9 +27,9 @@ library(interactions)
 See 'EDA1.Rmd' for exploration of variables from the georeferrenced herbarium records and 'EDA_climate.Rmd' for ClimateNA variables (mostly distributions).  
 
 **In This Document**  
-1. DOY ~ Non-climatic variables [line 100]  
-2. Correlations among variables [line 125]  (Model Diagnostic code [line 190])  
-3. How has climate change over time [line 240]  
+1. DOY ~ Non-climatic variables [line 200]  
+2. Correlations among variables [line 225]  (Model Diagnostic code [line 290])  
+3. How has climate change over time [line 340]  
 5. Exploratory DOY~Climate models [???700?]  
 
 
