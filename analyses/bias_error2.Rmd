@@ -1,0 +1,250 @@
+---
+title: "bias_error2"
+author: "Devin Gamble"
+date: "8/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Additional analyses on the effecto of coordinate uncertainty (error distance) on pheno-climatic models  
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(corrplot)
+library(visreg)
+library(jtools)
+library(interactions)
+library(kableExtra)
+```
+
+
+#### Load Data  
+```{r message = FALSE, warning = FALSE}
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+Data subset by error distances/bins  
+```{r message = FALSE, warning = FALSE}
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+#1166 after rm records before 1901
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") 
+
+#0-4 km
+nemo_e0_4 <-  nemo_all_errors %>% 
+  filter(error_dist_m >= 0 & error_dist_m <= 4000) #Do Not include error_bin in models
+
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") 
+
+```
+
+
+## Randomly sampling equal subsets of different error bins  
+**Bins**  
+- Original Data set  
+- Error Distance present  
+- 0-5 km error  
+- 0-2 km error  
+
+*Use some kind of statistical resampling test?*
+*Hit up Tadeo*  
+
+Smallest sample size is N = 743 in 0-2 km data subset. Randomly sample 743 obs from each subset and compare models.  
+
+MAT & MAP  
+```{r warning = FALSE, message = FALSE, results = 'hide'}
+#####
+# Full Data
+#####
+
+#Only MAT & MAP
+#Sample 1
+M100Y_sub1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 2
+M100Y_sub2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 3
+M100Y_sub3 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 4
+M100Y_sub4 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 5
+M100Y_sub5 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+
+plot_summs(M100Y_sub1, M100Y_sub2, M100Y_sub3, M100Y_sub4, M100Y_sub5, model.names = c("og1", "og2", "og3", "og4", "og5"), scale = TRUE) + theme_bw()
+
+#all_obs_MATMAP_models <- list(M100Y_sub1, M100Y_sub2, M100Y_sub3, M100Y_sub4, M100Y_sub5) #Cannot extract models for 
+
+#With other geography & year
+#Sample 1
+M100Y_sub1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 2
+M100Y_sub2c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 3
+M100Y_sub3c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 4
+M100Y_sub4c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+#Sample 5
+M100Y_sub5c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_df2, size = 743, replace = FALSE))
+
+plot_summs(M100Y_sub1c, M100Y_sub2c, M100Y_sub3c, M100Y_sub4c, M100Y_sub5c, model.names = c("og1", "og2", "og3", "og4", "og5"), scale = TRUE) + theme_bw()
+
+
+#####
+# All Errors  
+#####
+
+#Only MAT & MAP
+#Sample 1
+M100Y_sube1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 2
+M100Y_sube2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 3
+M100Y_sube3 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 4
+M100Y_sube4 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 5
+M100Y_sube5 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+
+plot_summs(M100Y_sube1, M100Y_sube2, M100Y_sube3, M100Y_sube4, M100Y_sube5, model.names = c("all_e1", "all_e2", "all_e3", "all_e4", "all_e5"), scale = TRUE) + theme_bw()
+
+#With other geography & year
+#Sample 1
+M100Y_sube1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 2
+M100Y_sube2c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 3
+M100Y_sube3c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 4
+M100Y_sube4c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+#Sample 5
+M100Y_sube5c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_all_errors, size = 743, replace = FALSE))
+
+plot_summs(M100Y_sube1c, M100Y_sube2c, M100Y_sube3c, M100Y_sube4c, M100Y_sube5c, model.names = c("all_e1", "all_e2", "all_e3", "all_e4", "all_e5"), scale = TRUE) + theme_bw()
+
+
+#####
+# 0-5 km Error  
+#####
+
+#Only MAT & MAP
+#Sample 1
+M100Y_sube51 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 2
+M100Y_sube52 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 3
+M100Y_sube53 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 4
+M100Y_sube54 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 5
+M100Y_sube55 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+
+plot_summs(M100Y_sube51, M100Y_sube52, M100Y_sube53, M100Y_sube54, M100Y_sube55, model.names = c("0-5_1", "0-5_2", "0-5_3", "0-5_4", "0-5_5"), scale = TRUE) + theme_bw()
+
+#With other geography & year
+#Sample 1
+M100Y_sube51c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 2
+M100Y_sube52c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 3
+M100Y_sube53c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 4
+M100Y_sube54c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+#Sample 5
+M100Y_sube55c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = sample_n(nemo_e0_5, size = 743, replace = FALSE))
+
+plot_summs(M100Y_sube51c, M100Y_sube52c, M100Y_sube53c, M100Y_sube54c, M100Y_sube55c, model.names = c("0-5_1", "0-5_2", "0-5_3", "0-5_4", "0-5_5"), scale = TRUE) + theme_bw()
+
+
+#####
+# 0-2 km Error  
+#####
+M100Y_sube21 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
+
+M100Y_sube21c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e2)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+#Compare different subsets...
+
+#Assign multiple models (different samples of same data) to a vector and randomly draw from them to plot? Doesn't work with lists
+
+
+plot_summs(M100Y_sub1, M100Y_sube1, M100Y_sube51, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub2, M100Y_sube2, M100Y_sube52, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub3, M100Y_sube3, M100Y_sube53, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub4, M100Y_sube4, M100Y_sube54, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub5, M100Y_sube5, M100Y_sube55, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+
+#All covariates
+plot_summs(M100Y_sub1c, M100Y_sube1c, M100Y_sube51c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub2c, M100Y_sube2c, M100Y_sube52c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub3c, M100Y_sube3c, M100Y_sube53c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub4c, M100Y_sube4c, M100Y_sube54c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub5c, M100Y_sube5c, M100Y_sube55c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+
+
+#Summary Table
+summ(M100Y_sub1, scale = TRUE)
+
+export_summs(M100Y_sub1, M100Y_sube1, M100Y_sube51, M100Y_sube21, scale = TRUE)
+
+```
+
+
+```{r warning = FALSE, message = FALSE}
+er_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors)
+er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
+er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
+
+plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
+summary(M100Y_lm1) # N = 1677
+summary(er_an0)$r.squared # N = 1166
+summary(er_an1)$r.squared # N = 1033
+summary(er_an2)$r.squared # N = 743
+
+
+#Including other covariates
+M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2)
+
+erc_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_all_errors)
+erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e0_5)
+erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e2)
+
+plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2.png"), width = 6, height = 4)
+summary(M100Y_lm2)
+summary(erc_an0)$r.squared
+summary(erc_an1)$r.squared
+summary(erc_an2)$r.squared
+
+
+
+
+```
+
+
+
+
+

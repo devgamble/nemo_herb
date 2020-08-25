@@ -629,7 +629,7 @@ ggplot() +
 
 
 
-```{r}
+```{r warning = FALSE, message = FALSE, echo = FALSE, results = 'hide'}
 #MOVE TO ANALYSES 1
 
 

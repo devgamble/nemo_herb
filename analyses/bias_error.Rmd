@@ -65,7 +65,7 @@ nemo_all_errors <- nemo_df2 %>%
 nemo_e0_5 <- nemo_all_errors %>% 
   filter(error_bin == "<2 km" | error_bin == "2-5 km") 
 
-#0-4 km
+#0-4 km`
 nemo_e0_4 <-  nemo_all_errors %>% 
   filter(error_dist_m >= 0 & error_dist_m <= 4000) #Do Not include error_bin in models
 
@@ -73,6 +73,8 @@ nemo_e0_4 <-  nemo_all_errors %>%
 nemo_e2 <- nemo_all_errors %>% 
   filter(error_bin == "<2 km") 
 
+#Set contrasts to sums
+options(contrasts = c("contr.sum", "contr.poly"))
 ```
 
 
@@ -105,6 +107,7 @@ er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
 er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
 
 plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
 summary(M100Y_lm1) # N = 1677
 summary(er_an0)$r.squared # N = 1166
@@ -120,11 +123,13 @@ erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e0_5
 erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e2)
 
 plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2.png"), width = 6, height = 4)
 summary(M100Y_lm2)
 summary(erc_an0)$r.squared
 summary(erc_an1)$r.squared
 summary(erc_an2)$r.squared
 ```
+
 ```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
 ## DIAGNOSTICS ##
 #V. large sample size may make some tests unreliable - graphical methods more appropraite
@@ -154,6 +159,7 @@ er_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e0_5)
 er_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e2)
 
 plot_summs(Wt100Y_lm1, er_wt0, er_wt1, er_wt2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1.png"), width = 6, height = 4)
 summary(Wt100Y_lm1)
 summary(er_wt0)$r.squared
 summary(er_wt1)$r.squared
@@ -167,7 +173,9 @@ er_wt0i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_all_errors)
 er_wt1i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_e0_5)
 er_wt2i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_e2)
 
-plot_summs(Wt100Y_lm1i, er_wt0i, er_wt1i, er_wt2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm1i, er_wt0i, er_wt1i, er_wt2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+  theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1i.png"), width = 6, height = 4)
 summary(Wt100Y_lm1i)
 summary(er_wt0i)#$r.squared
 summary(er_wt1i)#$r.squared
@@ -183,6 +191,7 @@ erc_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = ne
 erc_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e2)
 
 plot_summs(Wt100Y_lm2, erc_wt0, erc_wt1, erc_wt2, model.names = c("OG", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_Wt2.png"), width = 6, height = 4)
 summary(Wt100Y_lm2)
 summary(erc_wt0)$r.squared
 summary(erc_wt1)$r.squared
@@ -204,6 +213,7 @@ er_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_e0_5)
 er_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_e2)
 
 plot_summs(Sp100Y_lm1, er_sp0, er_sp1, er_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_Sp1.png"), width = 6, height = 4)
 summary(Sp100Y_lm1)
 summary(er_sp0)$r.squared
 summary(er_sp1)$r.squared
@@ -218,6 +228,7 @@ er_sp1i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e0_5)
 er_sp2i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e2)
 
 plot_summs(Sp100Y_lm1i, er_sp0i, er_sp1i, er_sp2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_Sp1i.png"), width = 6, height = 4)
 summary(Sp100Y_lm1i)
 summary(er_sp0i)$r.squared
 summary(er_sp1i)$r.squared
@@ -233,6 +244,7 @@ erc_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = ne
 erc_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e2)
 
 plot_summs(Sp100Y_lm2, erc_sp0, erc_sp1, erc_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_Sp2.png"), width = 6, height = 4)
 summary(Sp100Y_lm2)
 summary(erc_sp0)#$r.squared
 summary(erc_sp1)#$r.squared
@@ -291,7 +303,8 @@ summary(M100Y_lm3b)
 visreg(M100Y_lm3a)
 visreg(M100Y_lm3b)
 
-plot_summs(M100Y_lm1, M100Y_lm3a, M100Y_lm3b, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1, M100Y_lm3a, M100Y_lm3b, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_MAT-MAP1.png"), width = 6, height = 4)
 
 
 
@@ -317,8 +330,8 @@ Wt100Y_lm3b <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + error_bin, data = nemo_df2)
 summary(Wt100Y_lm3a)
 summary(Wt100Y_lm3b)
 
-plot_summs(Wt100Y_lm1, Wt100Y_lm3a, Wt100Y_lm3b, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
-
+plot_summs(Wt100Y_lm1, Wt100Y_lm3a, Wt100Y_lm3b, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Wt1.png"), width = 6, height = 4)
 
 #With Interactions
 #No interactions with error dist/bin
@@ -329,7 +342,7 @@ summary(Wt100Y_lm3ai)
 summary(Wt100Y_lm3bi)
 
 plot_summs(Wt100Y_lm1i, Wt100Y_lm3ai, Wt100Y_lm3bi, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
-
+ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Wt1i.png"), width = 6, height = 4)
 
 #With other predictors
 Wt100Y_lm4a <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year + error_dist_m, data = nemo_df2)
@@ -356,8 +369,8 @@ Sp100Y_lm3b <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + error_bin, data = nemo_df2)
 summary(Sp100Y_lm3a)
 summary(Sp100Y_lm3b)
 
-plot_summs(Sp100Y_lm1, Sp100Y_lm3a, Sp100Y_lm3b, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
-
+plot_summs(Sp100Y_lm1, Sp100Y_lm3a, Sp100Y_lm3b, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Sp1.png"), width = 6, height = 4)
 
 #With Interactions
 Sp100Y_lm3ai <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y + error_dist_m, data = nemo_df2)
@@ -366,8 +379,8 @@ Sp100Y_lm3bi <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y + error_bin, data = nemo_df2)
 summary(Sp100Y_lm3ai)
 summary(Sp100Y_lm3bi)
 
-plot_summs(Sp100Y_lm1i, Sp100Y_lm3ai, Sp100Y_lm3bi, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
-
+plot_summs(Sp100Y_lm1i, Sp100Y_lm3ai, Sp100Y_lm3bi, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Sp1i.png"), width = 6, height = 4)
 
 #With more covariates
 Sp100Y_lm4a <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year + error_dist_m, data = nemo_df2)
@@ -402,6 +415,18 @@ In models with `error_bin`, the 2-5 km bin had, on multiple occasions, a signifi
 
 
 Are there differences in collected records lat/long, elevation, MAT/MAP (other climate) due to error distance (bins)?  
+
+DOY
+```{r warning = FALSE, message = FALSE}
+
+edbin0 <- lm(DOY ~ error_bin, data = nemo_df2)
+summary(edbin0)
+anova(edbin0) #ns
+
+visreg(edbin0)
+
+
+```
 
 Latitude & Longitude  
 ```{r warning = FALSE, message = FALSE}
@@ -542,9 +567,9 @@ M100Y_lmg2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_g
 summary(M100Y_lmg2)
 
 
-plot_summs(M100Y_lm1, M100Y_lmg1, model.names = c("All data", "Geo"), scale = TRUE)
+plot_summs(M100Y_lm1, M100Y_lmg1, model.names = c("All data", "GeoL"), scale = TRUE)
 
-plot_summs(M100Y_lm2, M100Y_lmg2, model.names = c("All data", "Geo"), scale = TRUE)
+plot_summs(M100Y_lm2, M100Y_lmg2, model.names = c("All data", "GeoL"), scale = TRUE)
 
 ```
 
@@ -559,9 +584,11 @@ M100Y_lmg4<- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_ng
 summary(M100Y_lmg3)
 summary(M100Y_lmg4)
 
-plot_summs(M100Y_lm1, M100Y_lmg1, M100Y_lmg3, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(M100Y_lm1, M100Y_lmg1, M100Y_lmg3, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "geor_plotsumms_MAT-MAP1.png"), width = 6, height = 4)
 
-plot_summs(M100Y_lm2, M100Y_lmg2, M100Y_lmg4, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(M100Y_lm2, M100Y_lmg2, M100Y_lmg4, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "geor_plotsumms_MAT-MAP2.png"), width = 6, height = 4)
 ```
 
 
@@ -581,11 +608,14 @@ Wt100Y_lmg2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data 
 Wt100Y_lmg4<- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_ngeo)
 
 
-plot_summs(Wt100Y_lm1, Wt100Y_lmg1, Wt100Y_lmg3, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(Wt100Y_lm1, Wt100Y_lmg1, Wt100Y_lmg3, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "geor_plotsumms_Wt1.png"), width = 6, height = 4)
 
-plot_summs(Wt100Y_lm1i, Wt100Y_lmg1i, Wt100Y_lmg3i, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(Wt100Y_lm1i, Wt100Y_lmg1i, Wt100Y_lmg3i, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "geor_plotsumms_Wt1i.png"), width = 6, height = 4)
 
-plot_summs(Wt100Y_lm2, Wt100Y_lmg2, Wt100Y_lmg4, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(Wt100Y_lm2, Wt100Y_lmg2, Wt100Y_lmg4, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+#ggsave(here::here("analyses", "figs1", "geor_plotsumms_Wt2.png"), width = 6, height = 4)
 ```
 
 
@@ -615,11 +645,14 @@ Sp100Y_lmg2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data 
 Sp100Y_lmg4<- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_ngeo)
 
 
-plot_summs(Sp100Y_lm1, Sp100Y_lmg1, Sp100Y_lmg3, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(Sp100Y_lm1, Sp100Y_lmg1, Sp100Y_lmg3, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "geor_plotsumms_Sp1.png"), width = 6, height = 4)
 
-plot_summs(Sp100Y_lm1i, Sp100Y_lmg1i, Sp100Y_lmg3i, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(Sp100Y_lm1i, Sp100Y_lmg1i, Sp100Y_lmg3i, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "geor_plotsumms_Sp1i.png"), width = 6, height = 4)
 
-plot_summs(Sp100Y_lm2, Sp100Y_lmg2, Sp100Y_lmg4, model.names = c("All data", "Geo", "Herb"), scale = TRUE)
+plot_summs(Sp100Y_lm2, Sp100Y_lmg2, Sp100Y_lmg4, model.names = c("All data", "GeoL", "Herb"), scale = TRUE) + theme_bw()
+#ggsave(here::here("analyses", "figs1", "geor_plotsumms_Wt1.png"), width = 6, height = 4)
 ```
 
 
@@ -635,15 +668,15 @@ summary(Sp100Y_lmg4)
 
 Ours still seem a little more variable (and NS in a couple cases), but are quite similar to herbarium-georeferenced data. It looks like our manually referenced specimens produce a **smaller sensitivity to long-term temperature**, but this becomes non-significant when geography is accounted for. Most likely due to a smaller sample size of records we georeferenced, though we may have been less accurate than others.  
 
+Georef_by as a covariate  
+```{r warning = FALSE, message = FALSE, echo = FALSE}
 
-```{r warning = FALSE, message = FALSE,}
-#Georef_by as a covariate  
 nemo_gby <- nemo_df2 %>% 
   mutate(geo_f = as_factor(case_when(!is.na(georef_by) ~ "y",
                            is.na(georef_by) ~ "n")))
 
 M100Y_lmg3b <- lm(DOY ~ MAT_100Y + MAP_100Y + geo_f, data = nemo_gby)
-M100Y_lmg4b <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year + geo_f, data = nemo_gby)
+M100Y_lmg4b <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year + geo_f, data = nemo_gby) #adding lat improves R2 by 0.001
 
 summary(M100Y_lmg3b)
 visreg(M100Y_lmg3b)
@@ -656,6 +689,21 @@ M100Y_lmg3bi <- lm(DOY ~ MAT_100Y + MAP_100Y + geo_f + geo_f:MAT_100Y, data = ne
 
 summary(M100Y_lmg3bi)
 visreg(M100Y_lmg3bi)
+```
+
+
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
+
+ggplot(data = nemo_gby, aes(x = error_bin, by = geo_f)) + #Updated figure from EDA1.Rmd
+  geom_bar(color = "black", aes(fill = geo_f), show.legend = FALSE) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  ylab("Count") + 
+  xlab("Error Distance (binned)") +
+  scale_fill_manual(values = c("#0ba4e0", "#a3a3a3")) +
+  labs(fill = "Independently Georeferenced")
+
+ggsave(here::here("analyses", "figs1", "georef_errorbins.png"), height = 4, width = 6)
 ```
 
 
@@ -755,10 +803,11 @@ ggplot(aes(x = DOY), data = nemo_df2) +
 
 ```{r warning = FALSE, message = FALSE}
 #Number of specimens in each year - ID periods of low and high collection
-ggplot(aes(x = year), data = nemo_df2) +
+ggplot(aes(x = year), data = nemo_df1) +
   geom_bar(stat = 'count', width = 1, fill = "blue", color = "black") +
   scale_y_continuous(expand = c(0,0)) +
-  scale_x_continuous(limits = c(1900, 2020)) +
+  scale_x_continuous(limits = c(1850, 2020), expand = c(0,0)) +
+  geom_vline(aes(xintercept = 1900), col = "red2", size = 1) +
   theme_classic()
 
 
@@ -819,7 +868,7 @@ visreg(cb_lmy1a)
 
 cb_lmy1b <- lm(lat ~ year + long, data = nemo_df2)
 summary(cb_lmy1b) #No interactions present, year ns
-visreg(cb_lmy1b)
+#visreg(cb_lmy1b)
 
 cb_lmy2a <- lm(elev_m ~ year, data = nemo_df2)
 summary(cb_lmy2a)
@@ -839,15 +888,16 @@ Over time, there appears to be relatively more collections made at more inland l
 
 *Option*:  
 Spatial Collection Patterns (Panchen 2019)  
-- calculate density of specimens per [2500 m x 2500 m pixel]using `geosphere` package [or .25deg x .25deg - Daru 2018, sp package]  
-- model relationship of density and distance to community (raster package)
+- calculate density of specimens per [2500 m x 2500 m pixel] using `geosphere` package [or .25deg x .25deg - Daru 2018, sp package]  
+- model relationship of density and distance to community (raster package)  
 - [test for spatial autocorrelation to detect a temporal*spatial trend]  
 
 
 
 
 
-DOY as a response
+DOY as a response  
+(This doesn't really address collection bias)     
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 #Lat/long
@@ -878,11 +928,12 @@ visreg(cbl_lm1a)
 
 
 #Interactions
-cbl_lm2a <- lm(DOY ~ elev_m + year*long*lat, data = nemo_df2)  
+cbl_lm2a <- lm(DOY ~ elev_m + year*long*lat + MAT_100Y + MAP_100Y, data = nemo_df2)  
 summary(cbl_lm2a) #No interactions w elevation
 visreg(cbl_lm2a)
 
-interact_plot(cbl_lm2a, pred = "year", modx = "long", mod2 = "lat") #probably better? accounts for elev_m
+interact_plot(cbl_lm2a, pred = "year", modx = "long", mod2 = "lat") + theme_bw() #probably better? accounts for elev_m
+ggsave(here::here("analyses", "figs1", "interactp1.png"), height = 4, width = 7)
 
 
 cbl_lm2b <- lm(DOY ~ year*long*lat, data = nemo_df2)  
@@ -900,6 +951,33 @@ summary(cbl_lm2c) #no year:long interaction
 
 
 #Check VIFs?
+```
+
+
+Geographic Collection Trends:  
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+ggplot(aes(x = elev_m), data = nemo_df2) +
+  geom_histogram(fill = "blue", color = "black", binwidth = 25) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  xlab("Elevation (m)") +
+  theme_classic()
+
+ggplot(aes(x = lat), data = nemo_df2) +
+  geom_histogram(fill = "blue", color = "black") +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  xlab("Latitude") +
+  theme_classic()
+
+ggplot(aes(x = long), data = nemo_df2) +
+  geom_histogram(fill = "blue", color = "black") +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  xlab("Longitude") +
+  theme_classic()
+
 ```
 
 
@@ -978,7 +1056,7 @@ nemo_df1_coll_top <- nemo_df1_coll %>%
 ggplot(aes(x = DOY), data = nemo_df1_coll_top) +
   geom_histogram(fill = "blue", color = "black") + 
   scale_y_continuous(expand = c(0,0)) + 
-  theme_classic() +
+  theme_bw() +
   facet_wrap(~collector_p1)
 
 #Does not appear to be any bias in DOY due to collector!
@@ -1004,16 +1082,90 @@ Not sure this makes sense, top collectors contributed a large number of records
 nemo_df1_notop <- nemo_df1_coll %>% 
   filter(!collector_p1 %in% c("Sanders", "Gander", "Swinney", "Munz", "Tracy", "Rebman", "Helmkamp", "Jepson", "Smith", "Boyd", "Chandler", "Wheeler", "Constance", "White", "Baker"))
 
-collb_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df1_coll) #Base data, with collector_p
-collb_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df1_notop)
+collb_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df1) #Base data, with collector_p
+collb_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df1_notop)
 
 summary(collb_lm1)
 summary(collb_lm2)
 
-plot_summs(collb_lm1, collb_lm2, model.names = c("Original", "No top collectors"), scale = TRUE)
+plot_summs(collb_lm1, collb_lm2, model.names = c("Original", "No top collectors"), scale = TRUE) + theme_bw()
 
 ```
 
+
+
+### Trends in *N. menziesii* Subspecies  
+
+Are certain subspecies collected from certain geographic regions?  
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Geographic patterns in subspecies
+
+## ? PLOT NAs as well?
+
+sspb_lm1a <- lm(lat ~ sub_sp, data = nemo_df2)
+summary(sspb_lm1a)
+anova(sspb_lm1a)
+visreg(sspb_lm1a)
+
+sspb_lm1b <- lm(long ~ sub_sp, data = nemo_df2)
+summary(sspb_lm1b)
+anova(sspb_lm1b)
+visreg(sspb_lm1b)
+
+sspb_lm1c <- lm(elev_m ~ sub_sp, data = nemo_df2)
+summary(sspb_lm1c)
+anova(sspb_lm1c)
+visreg(sspb_lm1c)
+
+
+#
+sspb_lm2a <- lm(long ~ sub_sp + lat + elev_m, data = nemo_df2)
+summary(sspb_lm2a)
+anova(sspb_lm2a)
+visreg(sspb_lm2a)
+```
+
+
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
+#Map of subspecies
+library(sf)
+
+ca_border <- read_sf(here::here("analyses", "ca_state_border"), layer = "CA_State_TIGER2016") # imports all files with prefix
+
+nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat"))
+clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
+
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "#dfffd1") +
+  geom_sf(data = clim_dfsf, aes(color = MAP_100Y), alpha = 0.8, size = 2, show.legend = TRUE) +
+  labs(color = "MAP (mm)") +
+  scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
+  theme_minimal()
+
+
+```
+
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Temporal patterns in subspecies
+sspb_lm3a <- lm(DOY ~ sub_sp, data = nemo_df2)
+summary(sspb_lm3a)
+anova(sspb_lm3a)
+visreg(sspb_lm3a)
+
+sspb_lm3b <- lm(month ~ sub_sp, data = nemo_df2)
+summary(sspb_lm3b)
+anova(sspb_lm3b)
+visreg(sspb_lm3b)
+
+sspb_lm3c <- lm(year ~ sub_sp, data = nemo_df2)
+summary(sspb_lm3c)
+anova(sspb_lm3c)
+visreg(sspb_lm3c)
+```
+
+From certain periods in time?  
 
 
 
