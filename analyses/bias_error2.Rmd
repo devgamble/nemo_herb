@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Additional analyses on the effecto of coordinate uncertainty (error distance) on pheno-climatic models  
+# Additional analyses on the effect of coordinate uncertainty (error distance) on pheno-climatic models  
 
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 #Load Packages
@@ -17,11 +17,11 @@ library(car)
 library(tidyverse)
 library(here)
 library(ggplot2)
-library(corrplot)
 library(visreg)
 library(jtools)
 library(interactions)
 library(kableExtra)
+library(stringr)
 ```
 
 
@@ -66,16 +66,17 @@ nemo_e2 <- nemo_all_errors %>%
 - 0-5 km error  
 - 0-2 km error  
 
-*Use some kind of statistical resampling test?*
-*Hit up Tadeo*  
 
 Smallest sample size is N = 743 in 0-2 km data subset. Randomly sample 743 obs from each subset and compare models.  
 
-MAT & MAP  
-```{r warning = FALSE, message = FALSE, results = 'hide'}
+### MAT & MAP  
+```{r warning = FALSE, message = FALSE, results = 'hide', fig.show='hide'}
 #####
 # Full Data
 #####
+
+#Set seed for consistency?
+#set.seed(407)
 
 #Only MAT & MAP
 #Sample 1
@@ -183,67 +184,400 @@ M100Y_sube21c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nem
 ```
 
 
-```{r warning = FALSE, message = FALSE}
+```{r warning = FALSE, message = FALSE, results = 'asis'}
 #Compare different subsets...
 
+
+plot_summs(M100Y_sub1, M100Y_sube1, M100Y_sube51, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub2, M100Y_sube2, M100Y_sube52, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub3, M100Y_sube3, M100Y_sube53, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub4, M100Y_sube4, M100Y_sube54, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub5, M100Y_sube5, M100Y_sube55, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+
+#All covariates
+plot_summs(M100Y_sub1c, M100Y_sube1c, M100Y_sube51c, M100Y_sube21c, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub2c, M100Y_sube2c, M100Y_sube52c, M100Y_sube21c, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub3c, M100Y_sube3c, M100Y_sube53c, M100Y_sube21c, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub4c, M100Y_sube4c, M100Y_sube54c, M100Y_sube21c, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_sub5c, M100Y_sube5c, M100Y_sube55c, M100Y_sube21c, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+```
+
+##### Summary tables  
+```{r warning = FALSE, message = FALSE, results = 'asis', fig.show = 'hide', eval = FALSE}
+#Summary Table with multiple models
+#Compare different error classes, or random samples of the same class?
+
+###
+#! Gets tricky to read with 9+ models...!
+###
+export_summs(M100Y_sub1, M100Y_sube1, M100Y_sube51, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE, error_format = "[{conf.low}, {conf.high}]",
+             coefs = c("MAT_100Y", "MAP_100Y")) #exclude intercept coefficients
+             #save to file arg doesn't work well
+
+export_summs(M100Y_sub2, M100Y_sube2, M100Y_sube52, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE, error_format = "[{conf.low}, {conf.high}]", coefs = c("MAT_100Y", "MAP_100Y"))
+export_summs(M100Y_sub3, M100Y_sube3, M100Y_sube53, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE, error_format = "[{conf.low}, {conf.high}]", coefs = c("MAT_100Y", "MAP_100Y"))
+export_summs(M100Y_sub4, M100Y_sube4, M100Y_sube54, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE, error_format = "[{conf.low}, {conf.high}]", coefs = c("MAT_100Y", "MAP_100Y"))
+export_summs(M100Y_sub5, M100Y_sube5, M100Y_sube55, M100Y_sube21, model.names = c("OG", "All_E", "0-5 km", "0-2 km"), scale = TRUE, error_format = "[{conf.low}, {conf.high}]", coefs = c("MAT_100Y", "MAP_100Y"))
+
+```
+
+### Resampling  
+
+**Objective**  
+1. Re-sample from the three larger data sets (OG, All errors, 0-5 km) at N = 743 (size of 0-2 km)  
+2. For each resample, fit a pheno-climatic model (for each data set)  
+3. Compare the parameter estimates (for MAT and MAP) and confidence intervals based on xxxx samples  
+4. Compute significance of differences between estimates among each data set  
+
+
+
+
+```{r message = FALSE}
 #Assign multiple models (different samples of same data) to a vector and randomly draw from them to plot? Doesn't work with lists
 
 
-plot_summs(M100Y_sub1, M100Y_sube1, M100Y_sube51, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub2, M100Y_sube2, M100Y_sube52, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub3, M100Y_sube3, M100Y_sube53, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub4, M100Y_sube4, M100Y_sube54, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub5, M100Y_sube5, M100Y_sube55, M100Y_sube21, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+# Attempt first with one data set
 
-#All covariates
-plot_summs(M100Y_sub1c, M100Y_sube1c, M100Y_sube51c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub2c, M100Y_sube2c, M100Y_sube52c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub3c, M100Y_sube3c, M100Y_sube53c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub4c, M100Y_sube4c, M100Y_sube54c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
-plot_summs(M100Y_sub5c, M100Y_sube5c, M100Y_sube55c, M100Y_sube21c, model.names = c("og1", "all_e1", "0-5_1", "0-2*"), scale = TRUE) + theme_bw()
+samplelm_params <- matrix(data = NA, nrow = 100, ncol = 8)
+colnames(samplelm_params) <-  c("MAT_est", "MAP_est", "MAT_SE", "MAP_SE", "MAT_Clo", "MAT_Cup", "MAP_Cup", "MAP_Clo")
 
 
-#Summary Table
-summ(M100Y_sub1, scale = TRUE)
 
-export_summs(M100Y_sub1, M100Y_sube1, M100Y_sube51, M100Y_sube21, scale = TRUE)
+for(i in 1:100){
+  #sample
+  sample_og <- sample_n(nemo_df2, size = 743, replace = FALSE)
 
-```
+  #modeling
+  lm_n <- lm(DOY ~ MAT_100Y + MAP_100Y, data = sample_og)
+    
+  #store coeffs, std.e [row, col]
+  coeffs <- summary(lm_n)$coefficients[c(2:3),1] #2:3 to exclude intercept, inc MAT & MAP
+  stde <- summary(lm_n)$coefficients[c(2:3),2]
+  
+  samplelm_params[i,] <- as.numeric(c(coeffs, stde, 
+                            as.numeric(confint(object = lm_n, parm = 'MAT_100Y', level = 0.95)), 
+                            as.numeric(confint(object = lm_n, parm = 'MAP_100Y', level = 0.95)))) #Calculate CIs. Must specify vars
+  
+} 
+#for 1:1000, takes about a minute
 
+####
+# Significance Tests
+####
 
-```{r warning = FALSE, message = FALSE}
-er_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors)
-er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
-er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
-
-plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(M100Y_lm1) # N = 1677
-summary(er_an0)$r.squared # N = 1166
-summary(er_an1)$r.squared # N = 1033
-summary(er_an2)$r.squared # N = 743
-
-
-#Including other covariates
-M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2)
-
-erc_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_all_errors)
-erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e0_5)
-erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e2)
-
-plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2.png"), width = 6, height = 4)
-summary(M100Y_lm2)
-summary(erc_an0)$r.squared
-summary(erc_an1)$r.squared
-summary(erc_an2)$r.squared
+# Are parameter estimates significantly different from 0?
+#How much do the fits of each sample differ? (variance?)
+#Cross-validation: estimate test error? Bootstrapping?
 
 
+
+# Are parameter estimates significantly different from those of different error bin sets?
 
 
 ```
 
+*Include Other covariates to improve model assumptions??*  
+
+*CI type: Norm or BCa (or other e.g. PERC)??*  
+
+*Use the original lm estimates as points, or the bootstrap ('original') estimates from samples for CI plotting?*  
+
+
+```{r message = FALSE}
+#ALTERNATIVE: BOOTSTRAP analysis
+# Estimate the sampling distribution of a statistic (regression coefficient). The repeated sampling provides the bootstrap mean and SE of the metric. Mimics the sampling of our data from the population. Obtain sampling distribution of the metric.
+#Default method for lm regression bootstrap is random-x or case resampling. Bias estimates the bias of the statistic relative to the true population value.
+#Confidence Intervals
+
+#Below, each call of the function is without replacement, but replacement = TRUE over multiple samples
+library(boot)
+#May also try Boot() ftn from `car` package
+
+#Create function to call in boot()
+param_est <- function(df, index){ # df = data, index = # obs
+  
+  df_samp <- sample_n(df, size = 743, replace = FALSE) #assuming boot() recomputes the function for each re-sample
+  
+  lm_c <- lm(DOY ~ MAT_100Y + MAP_100Y, data = df_samp)
+  coef(lm_c)
+}
+
+#e.g. param_est(nemo_df2, 1:743)
+
+#Get bootstrapped standard error estimate
+set.seed(12345)
+
+boot_df2 <- boot(nemo_df2, param_est, 2000)
+
+#norm type assumes estimates are normally distributed - looks accurate from samplelm_params histogram
+#ALT: BCA confint method - corrects for bias/skewedness in bootstrapped distribution, uses original estimates unlike norm method
+#index = 2 for MAT, = 3 for MAP
+
+#boot_df2_ci_MAT <- boot.ci(boot_df2, index = 2, conf = 0.95, type = 'norm') 
+#boot_df2_ci_MAP <- boot.ci(boot_df2, index = 3, conf = 0.95, type = 'norm') #low ci is especially negative...
+#Confint method - car package
+boot_df2_ci <- Confint(boot_df2, level = 0.95, type = "norm") #identical to boot.ci() above
+
+#
+#Outputs
+summary(boot_df2) #boott
+boot_df2_ci #confidence intervals do not include bootstrapped estimates...
+
+#compare to SEs in regular summary:
+summary(lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2))
+
+
+plot(boot_df2)
+hist(boot_df2, ci = 'norm', legend = "separate")
+#Distribution of samples appear fairly normally distributed, though confidence intervals (horizontal black bars) are uneven. #Observed value of statistic = original estimate (bootMed)
+
+
+boot_df2_gg <- data.frame(c(boot_df2$t0[2], boot_df2$t0[3]), boot_df2_ci[2:3, 1:2])
+
+boot_df2_ggp <- rownames_to_column(boot_df2_gg) %>% 
+  mutate(data = "all")
+colnames(boot_df2_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+
+```
+
+
+```{r message = FALSE}
+#####
+# For the subset data:
+#####
+
+###
+#nemo_all_errors
+boot_alle <- boot(nemo_all_errors, param_est, 2000)
+boot_alle_ci <- Confint(boot_alle, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_alle)
+boot_alle_ci
+
+#og lm
+summary(lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors))
+
+plot(boot_alle)
+hist(boot_alle, ci = 'norm', legend = "separate") #CIs look super weird... which type to use???
+
+boot_alle_gg <- data.frame(c(boot_alle$t0[2], boot_alle$t0[3]), boot_alle_ci[2:3, 1:2])
+
+boot_alle_ggp <- rownames_to_column(boot_alle_gg) %>% 
+  mutate(data = "all_E")
+colnames(boot_alle_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+
+
+###
+#nemo_e0_5
+boot_05 <- boot(nemo_e0_5, param_est, 2000)
+boot_05_ci <- Confint(boot_05, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_05)
+boot_05_ci
+
+#og lm
+summary(lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5))
+
+plot(boot_05)
+hist(boot_05, ci = 'norm', legend = "separate") 
+
+boot_05_gg <- data.frame(c(boot_05$t0[2], boot_05$t0[3]), boot_05_ci[2:3, 1:2])
+
+boot_05_ggp <- rownames_to_column(boot_05_gg) %>% 
+  mutate(data = "05km")
+colnames(boot_05_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+
+
+###
+#nemo_e2 - should have identical results each time #Does not make sense to bootstrap this data set.
+
+#boot_02 <- boot(nemo_e2, param_est, 1000)
+#boot.ci(boot_02, index = 2, conf = 0.95, type = 'norm')
+#plot(boot_02) - Same data, no distribution of estimates.
+
+#lm sumamry
+M100Y_02_lm <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
+summary(M100Y_02_lm) 
+#SEs from bootstrap are much much smaller but estimates are identical, as expected
+
+confint(M100Y_02_lm, level = 0.95, type = "norm")
+
+Nboot_02_gg <- data.frame(c(summary(M100Y_02_lm)$coefficient[2], summary(M100Y_02_lm)$coefficient[3]), confint(M100Y_02_lm, level = 0.95, type = "norm")[2:3, 1:2])
+
+Nboot_02_ggp <- rownames_to_column(Nboot_02_gg) %>% 
+  mutate(data = "02")
+colnames(Nboot_02_ggp) <-  c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+
+
+```
+
+
+
+```{r message = FALSE}
+##
+# Comparing & Plotting bootstrapped parameter estimates
+##
+
+# 1 #
+#Plot bootstrapped (except nemo_02) parameter estimates w/ confidence intervals -- *Use 95% CIs, NOT SEs!!!
+
+#Combine different subset boot estimates 
+
+boots_alldata <- rbind(boot_df2_ggp, boot_alle_ggp, boot_05_ggp, Nboot_02_ggp) %>% 
+  mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km")))
+
+
+
+ggplot(data = boots_alldata) +
+  geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
+  geom_point(aes(x = bootEst, y = var), size = 2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_x_continuous(breaks = seq(-10, 10, 1)) +
+  scale_color_brewer(palette = "Dark2") +
+  facet_wrap(~data, ncol = 1) +
+  theme_bw()
+
+
+```
+
+
+
+
+
+
+---  
+
+## Randomly disperesed coordinates (lat/long) by a set error distance  
+
+How would varying point coordinates by different error distances affect pheno-climatic models?  
+
+Steps:  
+1. Assign each record three sets of new coordinates, in a random direction from the original,  
+  - 2 km away  
+  - 5 km away  
+  - 15 km away  
+  - 25 km away  
+2. Obtain climate data for each new dataset (4)  
+3. Compare models of the original data set (all records) with those of the 4 new data sets  
+
+<br>  
+
+Determining new coordinates based on km will depend on the present latitude and longitude of a collection. Use the WGS84  ellipsoid to calculate new decimal degrees based on some km deviation at each record (majority of georeference datum are WGS 84, some NAD83 and NAD27). Calculating Great-circle distances: the 'Haversine' formula is one method that could be reverse-engineered to find the decimal degrees for a new point coordinate some km away from a first coordinate. Another is the Vincenty formula, which is more appropriate for very large distances.  
+
+Potentially helpful packages:  
+- geosphere (distm, distHaversine, distGeo)  
+- GeoRange (deg2rad, gcd_hf/vif)  
+- SpatialEpi (latlong2grid)  
+
+Assign new coordinates  
+```{r}
+library(geosphere)
+nemo_recs <- nemo_df1 %>% 
+  select(specimen_number:mature_5)
+
+
+#NEED: Function(s) to calculate new decimal degrees based on [1] current coords, [2] a set distance, and [3] a (random) bearing 
+
+#destPoint from geosphere package
+destPoint(p = c(-120.0312, 37.47905), b = 45, d = 2000) #default WGS84
+#Seems pretty accurate!!! (Compared start and end points in google maps)
+
+
+
+### Options: apply destPoint to all exisiting lat/long to get new lat/long, each with same random bearing
+# - Function & for loop
+# - tapply/sapply
+
+
+
+#Basic for loop
+  
+  long_n1 <- rep(NA, nrow(nemo_recs))
+  lat_n1 <- rep(NA, nrow(nemo_recs))
+  
+for(i in 1:length(nemo_recs$lat)){
+  
+  
+  latlong_n <- destPoint(p = c(nemo_recs$long[i], nemo_recs$lat[i]), b = sample(0:360, 1), d = 1000)
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+
+
+
+
+
+#Simulations + for loop
+
+sim_list <- list()
+
+for(x in 1:100){
+  
+  long_n1 <- rep(NA,nrow(nemo_recs))
+  lat_n1 <- rep(NA, nrow(nemo_recs))
+  
+for(i in 1:length(nemo_recs$lat)){
+  
+  
+  latlong_n <- destPoint(p = c(nemo_recs$long[i], nemo_recs$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 2000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list[[x]] <- cbind(nemo_recs$specimen_number, long_n1, lat_n1)
+  
+  print(x)
+  
+}
+
+
+#test
+#getLatLong_r(long = c(-120.66, -120), lat = c(34.66, 37), d = 2000)
+#Only getting one row when I should be getting two...
+
+
+#Tadeo's randCoord function
+randCoord(x = c(-120.66, -120), y = c(34.66, 37), d_min = 1.5, d_max = 2.5)
+
+randCoord(x = nemo_recs$long, y = nemo_recs$lat, d_min = 1.5, d_max = 2.5)
+
+
+
+
+
+####
+# apply() functions approach
+####
+
+#destPoint alone
+nemo_ncoords_2km <- nemo_recs %>% 
+  mutate(long_n1 = sapply(X = c(long, lat), FUN = destPoint(long, lat, b = sample(0:360, 1), d = 2000)))
+
+
+#getLatLong_r function
+nemo_ncoords_2km <- nemo_recs %>% 
+  mutate(longlat_n1 = sapply(X = c(long, lat, d = 2000), FUN = getLatLong_r(lat = lat, long = long)))
+
+#destPoint(p = c(long, lat), b = sample(0:360, 1), d = 2000)[,1]) #for loop or tapply
+
+nemo_ncoords_2km <- nemo_recs %>% 
+  mutate(long_n1 = NA, lat_n1 = NA)
+
+
+############### SUBSET by 0-2km (highest certainty records) to simulate randomized coordinates
+
+
+
+#Standardized csv for ClimateNA...
+
+
+```
 
 
 
