@@ -202,20 +202,21 @@ nemo_e2 <- nemo_all_errors %>%
 
 ```{r warning = FALSE, message = FALSE}
 lm1 <- lm(DOY ~ elev_m + year + long, data = nemo_df1) #all years
-lm1.1 <- lm(DOY ~ elev_m + year + long, data = nemo_df2) #>1900
+lm1.1 <- lm(DOY ~ elev_m + year + lat, data = nemo_df2) #>1900
+summary(lm1)
 summary(lm1.1)
-#summary(lm1.1)
 
 visreg(lm1, xvar = "elev_m", xlab = "Elevation (m)", points = list(col = "#404040")) 
 visreg(lm1, "year", xlab = "Year", points = list(col = "#404040"))
-visreg(lm1, "long", xlab = "Longitude", points = list(col = "#404040"))
+visreg(lm1, xvar = "long", xlab = "Longitude", points = list(col = "#404040"))
+visreg(lm1.1, xvar = "lat", xlab = "Latitude", points = list(col = "#404040"))
 
 lm1.2 <- lm(DOY ~ elev_m + year + long + long*elev_m, data = nemo_df2) 
 summary(lm1.2)
 #No interactions with year
 #interact_plot(lm1.2, pred = "long", modx = "elev_m")
 
-#summ(lm1.1, vif = TRUE) #VIF for long, elev, MAP, MAT is high
+#summ(lm1.1, vif = TRUE) #VIF
 
 ```
 **DOY is earlier for lower elevations, lower latitudes, later years.**
@@ -366,24 +367,15 @@ mat_t1 <- lm(MAT_Y ~ year, data = nemo_df2)
 mat_t1.1 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_df2)
 #summary(mat_t1.1)
 
-mat_t1.3 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long, data = nemo_df2)
-#summary(mat_t1.3) #Best model
+mat_t1.3 <- lm(MAT_Y ~ year + MAP_100Y + elev_m + long, data = nemo_df2) #Control for historical MAP
+summary(mat_t1.3) #Best model
+summ(mat_t1.3, vif = TRUE) #check VIF
+visreg(mat_t1.3, xvar = "year", points = list(col = "#404040"))
 
 
-mat_t1.4 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long + MAP_Y*elev_m*long, data = nemo_df2)
-summary(mat_t1.4) #Better R2 - significant interactions, lowest AIC w/ 3-way interaction
-visreg(mat_t1.4, xvar = "year", points = list(col = "#404040"))
-#Too many interactions and this gets crazy...
-
-#Visualize Interactions
-johnson_neyman(mat_t1.4, pred = "MAP_Y", modx = "long")
-johnson_neyman(mat_t1.4, pred = "elev_m", modx = "long")
-johnson_neyman(mat_t1.4, pred = "MAP_Y", modx = "elev_m") 
-interact_plot(mat_t1.4, pred = "MAP_Y", modx = "elev_m")
-interact_plot(mat_t1.4, pred = "elev_m", modx = "long", mod2 = "MAP_Y")
-
-#Compare model estimates
-#plot_summs(mat_t1, mat_t1.1, mat_t1.3, mat_t1.4, scale = TRUE)
+#mat_t1.4 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long + MAP_Y*elev_m*long, data = nemo_df2)
+#summary(mat_t1.4) #Better R2 - significant interactions, lowest AIC w/ 3-way interaction
+#Too many interactions, this gets crazy...
 
 #Change over time: MAT~Year beta = 0.011 [mat_t1.4]
 print("MAT_Y warming (°C) over 120 years")
@@ -406,9 +398,9 @@ Interactions:
 map_t1 <- lm(MAP_Y ~ year + elev_m + long, data = nemo_df2)
 #summary(map_t1)
 
-map_t1.1 <- lm(MAP_Y ~ year + elev_m + long + MAT_Y, data = nemo_df2)
+map_t1.1 <- lm(MAP_Y ~ year + elev_m + long + MAT_100Y, data = nemo_df2)
 summary(map_t1.1)
-visreg(map_t1.1, xvar = "year", line = list(alpha = 0), points = list(col = "#404040"),  band = FALSE) #Not sure how to hide line without gg=TRUE...
+visreg(map_t1.1, xvar = "year", points = list(col = "#404040")) #Not sure how to hide line without gg=TRUE...
 
 ```
 No significant change in average MAP over years of collection  
@@ -434,33 +426,81 @@ visreg(ffd_t1.1, xvar = "year", points = list(col = "#404040"), gg = TRUE) +
 #### Seasonal Variables  
 Note: See Climate_1.Rmd for selection of variables and seasons  
 
+**Tmin_wt**  
+```{r}
+#YoC
+Twt_t1 <- lm(Tmin_wt_Y ~ year + elev_m + long, data = nemo_df2)
+#summary(map_t1)
+
+Twt_t1.1 <- lm(Tmin_wt_Y ~ year + elev_m + long + PPT_wt_100Y, data = nemo_df2)
+summary(Twt_t1.1)
+summ(Twt_t1.1, vif = TRUE)
+visreg(Twt_t1.1, xvar = "year", points = list(col = "#404040"))
+```
 
 
 
-#### Monthly (& custom windows)  
+
+**Tmin_sp**  
+```{r}
+#YoC
+Tsp_t1 <- lm(Tmin_sp_Y ~ year + elev_m + long, data = nemo_df2)
+#summary(map_t1)
+
+Tsp_t1.1 <- lm(Tmin_sp_Y ~ year + elev_m + long + PPT_sp_100Y, data = nemo_df2)
+summary(Tsp_t1.1)
+summ(Tsp_t1.1, vif = TRUE)
+visreg(Tsp_t1.1, xvar = "year", points = list(col = "#404040"))
+```
 
 
 
+**PPT_wt**  
+```{r}
+PPwt_t1 <- lm(PPT_wt_Y ~ year + elev_m + long, data = nemo_df2)
+#summary(map_t1)
+
+PPwt_t1  <- lm(PPT_wt_Y ~ year + elev_m + long + Tmin_wt_100Y, data = nemo_df2)
+summary(PPwt_t1)
+summ(PPwt_t1 , vif = TRUE)
+visreg(PPwt_t1 , xvar = "year", points = list(col = "#404040"), band = FALSE)
+```
+
+**PPT_sp**  
+```{r}
+PPsp_t1 <- lm(PPT_sp_Y ~ year + elev_m + long, data = nemo_df2)
+#summary(map_t1)
+
+PPsp_t1  <- lm(PPT_sp_Y ~ year + elev_m + long + Tmin_sp_100Y, data = nemo_df2)
+summary(PPsp_t1)
+summ(PPsp_t1 , vif = TRUE)
+visreg(PPsp_t1 , xvar = "year", points = list(col = "#404040")) #Likely DRIVING the trend behind MAP over time!
+```
 
 
+*Consider differences across geographic climate regions?*  
 
-Consider differences across geographic climate regions?  
 
-### Change in Anomalies over time  
+### Change in Anomalies over time (And other trends)  
 
 **MAT**
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
 #MAT Anomalies
-mat_t2 <- lm(MAT_A ~ year + elev_m*long*MAT_Y, data = nemo_df2) #No effect of MAP_A, no interaction
+mat_t2 <- lm(MAT_A ~ year + elev_m + long + MAT_Y + MAP_100Y, data = nemo_df2) #No effect of MAP_A, no interaction
 summary(mat_t2)
+summ(mat_t2, vif = TRUE)
 
 visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE, line = list(alpha = 0), band = FALSE) + 
   geom_smooth(method = "gam", col = "red") + 
   theme_bw()
+visreg(mat_t2, xvar = "elev_m")
+visreg(mat_t2, xvar = "long")
+visreg(mat_t2, xvar = "MAP_100Y")
+
 #Maybe a different type of model would be more appropriate (not lm)
 
 
-plot(mat_t2)
+plot(mat_t2) #LM ASSUMPTIONS NOT MET - autocorrelation
 
 #MAT_A is normal, but the residuals are not - autocorrelation?
 durbinWatsonTest(mat_t2)
@@ -476,17 +516,66 @@ Similar interactions explain variation in MAT_A...
 **MAP**  
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 #Anomalies
-map_t2 <- lm(MAP_A ~ year + elev_m + long + MAP_Y + MAT_Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
+map_t2 <- lm(MAP_A ~ year + elev_m + long + MAT_100Y + MAP_Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
 summary(map_t2)
+summ(map_t2, vif = TRUE)
 
-visreg(map_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE, line = list(alpha = 0), band = FALSE) + 
+visreg(map_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + 
   theme_bw()
 
 ```
 
+
+
+
 Slightly significant effect of year becomes ns when controlling for YoC MAP/MAT
 <br>  
 
+
+#### Seasonal Variables  
+
+
+**Tmin_wt**  
+```{r}
+Tmin_a1 <- lm(Tmin_wt_A ~ year + elev_m + long + Tmin_wt_Y + PPT_wt_100Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
+summary(Tmin_a1)
+summ(Tmin_a1, vif = TRUE)
+
+visreg(Tmin_a1, xvar = "year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + 
+  theme_bw()
+
+```
+
+
+
+**Tmin_sp**  
+
+
+
+
+**PPT_wt**  
+```{r}
+PPT_a1 <- lm(PPT_wt_A ~ year + elev_m + long + PPT_wt_Y + Tmin_wt_100Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
+summary(PPT_a1)
+summ(PPT_a1, vif = TRUE)
+
+visreg(PPT_a1, xvar = "year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + 
+  theme_bw()
+
+```
+
+
+**PPT_sp**  
+
+```{r}
+PPT_a2 <- lm(PPT_sp_A ~ year + elev_m + long + PPT_sp_Y + Tmin_sp_100Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
+summary(PPT_a2)
+summ(PPT_a2, vif = TRUE)
+
+visreg(PPT_a2, xvar = "year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + 
+  theme_bw()
+
+```
 
 
 ## EXPLORATORY ANALYSES - See 'Climate_1.Rmd' for more finalized analyses  
@@ -549,8 +638,8 @@ MAT_lm1 <- lm(DOY ~ MAT_100Y , data = nemo_df1)
 summary(MAT_lm1)
 
 ggplot(aes(x = MAT_100Y, y = DOY), data = nemo_df1) +
-  geom_point(aes(color = MAP_100Y), alpha = .8) +
-  labs(color = "log(MAP)") +
+  geom_point(aes(color = exp(MAP_100Y)), alpha = .8) + #exp() to back-transform MAP
+  labs(color = "MAP (mm)") +
   geom_smooth(method = "lm", color = "#454545") +
   scale_color_gradientn(colors = c("#ade2ff", "#001775"), values = c(0, 1)) +
   xlab("MAT (°C)") +
@@ -570,6 +659,28 @@ ggplot(aes(x = MAP_100Y, y = DOY), data = nemo_df1) +
   theme_classic()
 
 #ggsave(here::here("analyses", "figs1", "DOY-MAP_MAT_point.png"), height = 5, width = 8)
+```
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+##PRECIPITATION Plot 2
+#X axis log transformed!
+ggplot(aes(x = exp(MAP_100Y), y = DOY), data = nemo_df1) +
+  geom_point(aes(color = MAP_100Y), alpha = .8) +
+  geom_smooth(method = "lm", color = "#454545") +
+  scale_x_continuous(trans="log10") +
+  scale_color_gradientn(colors = c("#ade2ff", "#001775"), values = c(0, 1)) +
+  xlab("MAP (mm)") +
+  ylab("DOY") +
+  theme_classic() +
+  theme(legend.position = "none")
+  
+
+ggsave(here::here("analyses", "figs1", "DOY-MAP2_point.png"), height = 5, width = 8)
+
+
+
+
 
 ```
 

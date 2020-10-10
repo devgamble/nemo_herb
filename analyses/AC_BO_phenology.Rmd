@@ -1,0 +1,122 @@
+---
+title: "AC & BO DOY ~ Climate"
+output: html_notebook
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(broom)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+#Load in data & establish error distance bins
+nemo_spec <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
+  mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
+                               error_dist_m > 2000 & error_dist_m <= 5000 ~ "2-5 km",
+                               error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
+                               error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
+                               error_dist_m > 15000 ~ ">15 km")) %>% 
+  select(specimen_number:error_dist_m, error_bin, everything()) %>% mutate(error_bin = factor(error_bin, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km"))) #specify factor & levels for error bin
+#1764 total obs. #1240 obs with error distance
+climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
+  rename(year = YoC) #Also 1764 obs
+
+#Transform Precipitation variables to be normal -- Log transforms Monthly and seasonal PPT, MAP, MSP #PAS ignored
+climNA_all1 <- climNA_all %>% 
+  mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
+                 PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
+                 PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+                 PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
+                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+  na_if(y = -Inf)
+#see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
+#Transform anomalies after they are added to ClimNA_nemo_all csv!
+
+#Merge herbarium records and climate data (by specimen number)
+nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1181 total columns
+
+#FILTER YEARS to those after 1901 (start of climate data).
+nemo_df2 <- nemo_df1 %>% 
+  filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
+sum(!is.na(nemo_df2$MAT_L1)) #YoC-1
+sum(!is.na(nemo_df2$MAT_Y)) #YoC
+
+#Subsetting data by error bins
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) #1166 after rm records before 1901
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") #1033 entries
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") #743 obs
+```
+
+
+```{r}
+#Create Subsets for AC & BO
+se <- function(x){
+  sd(x)/sqrt(length(x))
+}
+
+#AC: 39.7184 +- 0.5 lat; -123.6527 +- 0.5 long (correspond to radius of 55.5 km)
+df2_AC <- nemo_df2 %>% 
+  filter(lat <= 40.2184 & lat > 39.2184) %>% 
+  filter(long <= -123.1527 & long > -124.1527)
+
+mean(df2_AC$DOY)
+se(df2_AC$DOY)
+
+#sample 1901-2018 MAT
+df2_AC %>% 
+  filter(specimen_number == "HSC201472") %>% 
+  select(MAT_100Y)
+#MAP
+exp(df2_AC %>% 
+  filter(specimen_number == "HSC201472") %>% 
+  select(MAP_100Y))
+
+
+#BO: 37.3819 +- 0.5 lat; -121.7367 +- 0.5 long (correspond to radius of 55.5 km)
+df2_BO <- nemo_df2 %>% 
+  filter(lat <= 37.8819 & lat > 36.8819) %>% 
+  filter(long <= -121.2367 & long > -122.2367)
+
+mean(df2_BO$DOY)
+se(df2_BO$DOY)
+
+
+#sample 1901-2018 MAT, MAP
+df2_BO %>% 
+  filter(specimen_number == "SJSU1031") %>% 
+  select(MAT_100Y)
+#MAP
+exp(df2_BO %>% 
+  filter(specimen_number == "SJSU1031") %>% 
+  select(MAP_100Y))
+```
+
+
+```{r}
+#Comparison of DOY ~ Climate models ?????
+
+
+```
+
+
+
+
