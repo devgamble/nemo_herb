@@ -31,7 +31,7 @@ library(jtools)
 4.? Sensitivity to long-term (normals) vs anomalies in SAME MODEL (and interaction?)
 
 
-**To-Do**  
+*To-Do*  
 - Fix & clean up models describing sensitivity to different aspects of local climate  
 - Calculate new seasonal windows of climate parameters (and save to csv)  
 - Statistically compare slope estimates of climate parameters on DOY to select the most influential parameters  
@@ -150,7 +150,7 @@ May also consider:
 ann_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
 ann_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m, data = nemo_df2)
 ann_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long, data = nemo_df2)
-ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2)
+ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2) #Best, though adding year doesn't change much
 #No interactions
 
 summary(ann_clim1)
@@ -167,6 +167,9 @@ visreg(ann_clim1, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#40
 
 visreg(ann_clim3, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
 visreg(ann_clim3, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
+
+visreg(ann_clim4, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
+visreg(ann_clim4, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
 
 ```
 
@@ -188,7 +191,7 @@ visreg(nonclim1, "long", xlab = "Longitude", points = list(col = "#404040"))
 ```
 
 
-The relationship b/w DOY and MAT weakens as the model is parameterized,while the estimate of MAP strengthens. MAP appears to be driving variation in DOY. There were no significant interactions between any covariates.  
+The relationship b/w DOY and MAT weakens as the model is parameterized, while the estimate of MAP strengthens. MAP appears to be driving variation in DOY. There were no significant interactions between any covariates.  
 While MAT still appears to advance DOY, controlling for geography seems to explain a good deal of this variation (over a 100-yr avg). Examining seasonal climate and anomalies should shed more light on this.  
 
 
@@ -219,14 +222,21 @@ library(interactions)
 sz_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
 summary(sz_wt1)
 
+sz_wt1c <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
+summary(sz_wt1c)
+
 visreg(sz_wt1, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
 visreg(sz_wt1, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+
+visreg(sz_wt1c, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
+visreg(sz_wt1c, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+
 
 sz_wt1.1 <- lm(DOY ~ Tave_wt_100Y + PPT_wt_100Y, data = nemo_df2)
 #summary(sz_clim1.1) #These have low R2 and high SE, plus estimates are crazy  
 
 
-sz_wt1.2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + PPT_wt_100Y*Tmin_wt_100Y, data = nemo_df2)
+sz_wt1.2 <- lm(DOY ~ PPT_wt_100Y*Tmin_wt_100Y, data = nemo_df2)
 summary(sz_wt1.2) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, removed Tave
 #Interaction more significant when Tave retained
 
@@ -249,16 +259,23 @@ Spring Conditions
 #Spring Conditions
 sz_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_df2)
 summary(sz_sp1)
-sz_sp1.1 <- lm(DOY ~ Tave_sp_100Y +  PPT_sp_100Y, data = nemo_df2)
+sz_sp1.1 <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y, data = nemo_df2)
 summary(sz_sp1)
 
-sz_sp1.2 <- lm(DOY ~ Tmin_sp_100Y +  PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
-summary(sz_sp1.2) #Interaction with Tmin much more significant, higher R2 and estimate
-#Tave does still explain some variation, despite the interaction. Removed
-
+sz_sp1c <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
+summary(sz_sp1c)
 
 visreg(sz_sp1, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
 visreg(sz_sp1, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
+visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+
+
+#Interactions
+sz_sp1.2 <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1.2) #Interaction with Tmin much more significant, higher R2 and estimate
+#Tave does still explain some variation, despite the interaction. Removed
 
 
 johnson_neyman(sz_sp1.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y")
@@ -306,11 +323,28 @@ interact_plot(sz_wt_sp1.1, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y", x.label 
 
 Comparing Models
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-plot_summs(sz_wt1, sz_sp1, model.names = c("Winter", "Spring"), coefs = c("Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, scale = TRUE) +
-  theme_bw()#additive effects
+#Center & Scale Estimates
+plot_summs(ann_clim1, sz_wt1, sz_sp1, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()#only climatic predictors
 
-z
-plot_summs(sz_wt1.2, sz_sp1.2, sz_wt_sp1.1, coefs = c("Winter T*PPT" = "Tmin_wt_100Y:PPT_wt_100Y", "Spring T*PPT" = "Tmin_sp_100Y:PPT_sp_100Y", "Winter PPT * Spring T" = "Tmin_sp_100Y:PPT_wt_100Y"), model.names = c("Winter", "Spring", "Wt x Sp"), scale = TRUE) +
+
+plot_summs(ann_clim4, sz_wt1c, sz_sp1c, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()#including covariates
+
+
+
+#Center only
+plot_summs(ann_clim1, sz_wt1, sz_sp1, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, center = TRUE) +
+  theme_bw()#only climatic predictors
+
+
+plot_summs(ann_clim4, sz_wt1c, sz_sp1c, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, center = TRUE) +
+  theme_bw()#including covariates
+
+
+
+
+plot_summs(sz_wt1.2, sz_sp1.2, sz_wt_sp1.1, model.names = c("Winter", "Spring", "Wt x Sp"), coefs = c("Winter Tmin*PPT" = "Tmin_wt_100Y:PPT_wt_100Y", "Spring Tmin*PPT" = "Tmin_sp_100Y:PPT_sp_100Y", "Winter PPT * Spring Tmin" = "Tmin_sp_100Y:PPT_wt_100Y"), scale = TRUE) +
   theme_bw()#multiplicative effects
 
 ```

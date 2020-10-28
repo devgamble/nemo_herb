@@ -402,6 +402,11 @@ map_t1.1 <- lm(MAP_Y ~ year + elev_m + long + MAT_100Y, data = nemo_df2)
 summary(map_t1.1)
 visreg(map_t1.1, xvar = "year", points = list(col = "#404040")) #Not sure how to hide line without gg=TRUE...
 
+#change over 120 years
+-5.746e-01*120
+
+
+
 ```
 No significant change in average MAP over years of collection  
 
@@ -471,10 +476,14 @@ visreg(PPwt_t1 , xvar = "year", points = list(col = "#404040"), band = FALSE)
 PPsp_t1 <- lm(PPT_sp_Y ~ year + elev_m + long, data = nemo_df2)
 #summary(map_t1)
 
-PPsp_t1  <- lm(PPT_sp_Y ~ year + elev_m + long + Tmin_sp_100Y, data = nemo_df2)
+PPsp_t1  <- lm(exp(PPT_sp_Y) ~ year + elev_m + long + Tmin_sp_100Y, data = nemo_df2)
 summary(PPsp_t1)
 summ(PPsp_t1 , vif = TRUE)
 visreg(PPsp_t1 , xvar = "year", points = list(col = "#404040")) #Likely DRIVING the trend behind MAP over time!
+
+#change over 120 years
+-5.467e-01*120 #is actually not that different from MAP_Y change over time...
+
 ```
 
 
@@ -490,8 +499,8 @@ mat_t2 <- lm(MAT_A ~ year + elev_m + long + MAT_Y + MAP_100Y, data = nemo_df2) #
 summary(mat_t2)
 summ(mat_t2, vif = TRUE)
 
-visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE, line = list(alpha = 0), band = FALSE) + 
-  geom_smooth(method = "gam", col = "red") + 
+visreg(mat_t2, xvar = "year", points = list(col = "#404040"), gg = TRUE,  band = TRUE) + 
+  #geom_smooth(method = "gam", col = "red") + 
   theme_bw()
 visreg(mat_t2, xvar = "elev_m")
 visreg(mat_t2, xvar = "long")
@@ -516,7 +525,7 @@ Similar interactions explain variation in MAT_A...
 **MAP**  
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 #Anomalies
-map_t2 <- lm(MAP_A ~ year + elev_m + long + MAT_100Y + MAP_Y, data = nemo_df2) #YoC & anom correlated (r = .45), include?
+map_t2 <- lm(MAP_A ~ year + elev_m + long + MAT_100Y + MAP_Y, data = nemo_df2) #YoC & anom correlated (r = .45). #No effect of MAT_A
 summary(map_t2)
 summ(map_t2, vif = TRUE)
 
@@ -578,7 +587,7 @@ visreg(PPT_a2, xvar = "year", points = list(col = "#404040"), gg = TRUE, band = 
 ```
 
 
-## EXPLORATORY ANALYSES - See 'Climate_1.Rmd' for more finalized analyses  
+## EXPLORATORY ANALYSES - See *'Climate_1.Rmd'* for more finalized analyses  
 
 ### How does DOY depend on climate?  
 
@@ -783,6 +792,33 @@ summary(MAP_m1)
 summary(MAP_m1.1)
 summary(MAP_m1.2)
 #Long more significant than lat, higher R2
+
+#elev interaction
+MAP_m1.3 <- lm(DOY ~ MAT_100Y + MAP_100Y*elev_m + long + year, data = nemo_df2)
+summary(MAP_m1.3)
+
+MAP_m1.3b <- lm(DOY ~ MAT_100Y + MAP_Y*elev_m + long + year, data = nemo_df2)
+summary(MAP_m1.3b)## SIGNIFICANT INTERACTION
+
+interact_plot(MAP_m1.3b, pred = MAP_Y, modx = elev_m) + theme_bw()
+
+
+
+MAP_m1.3c <- lm(DOY ~ MAT_100Y + MAP_A*elev_m + long + year, data = nemo_df2)
+summary(MAP_m1.3c) #MARGINAL
+
+
+#long interaction
+MAP_m1.4 <- lm(DOY ~ MAT_100Y + MAP_100Y*long + elev_m + year, data = nemo_df2)
+summary(MAP_m1.4)
+
+MAP_m1.4b <- lm(DOY ~ MAT_100Y + MAP_Y*long + elev_m + year, data = nemo_df2)
+summary(MAP_m1.4b)
+
+MAP_m1.4c <- lm(DOY ~ MAT_100Y + MAP_A*long + elev_m + year, data = nemo_df2)
+summary(MAP_m1.4c)
+
+
 
 
 #MSP

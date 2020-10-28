@@ -35,12 +35,7 @@ library(interactions)
 Note: Several code chunks copied over from `EDA2.Rmd` and refined.    
 
 **TO DO**  
-- Effects of error_dist & georef_by to *Anomalies*??  
-- Add Analyses on potential biases  
-- Standardize data and variables used  
-- Explore more complex models?  
-- Include *interactions*  
-- Include *sample sizes*  
+- Decide on final models to report  
 
 <br>  
 
@@ -65,7 +60,7 @@ nemo_all_errors <- nemo_df2 %>%
 nemo_e0_5 <- nemo_all_errors %>% 
   filter(error_bin == "<2 km" | error_bin == "2-5 km") 
 
-#0-4 km`
+#0-4 km
 nemo_e0_4 <-  nemo_all_errors %>% 
   filter(error_dist_m >= 0 & error_dist_m <= 4000) #Do Not include error_bin in models
 
@@ -83,7 +78,7 @@ options(contrasts = c("contr.sum", "contr.poly"))
 Measure the effect of error distance on pheno-climatic models'
 - $R^2$ values  
 - Parameter estimates  
-- significance of climate variables in their effect on DOY  
+  -   significance of and differences b/w climate variables in their effect on DOY  
 
 For 100 year averages for MAT, MAP, Tmin_sp, Tmin_wt, PPT_sp, PPT_wt  
 
@@ -95,7 +90,7 @@ For 100 year averages for MAT, MAP, Tmin_sp, Tmin_wt, PPT_sp, PPT_wt
 ### Subsetting data by error bins
 
 Only significant interactions are shown although interactions among climate variables were tested for each original model.  
-
+#### 100-Y MAT & MAP
 ```{r message = FALSE, warning = FALSE}
 ##
 #MAT & MAP
@@ -128,6 +123,8 @@ summary(M100Y_lm2)
 summary(erc_an0)$r.squared
 summary(erc_an1)$r.squared
 summary(erc_an2)$r.squared
+
+summ(M100Y_lm2, vif = TRUE)
 ```
 
 ```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
@@ -140,16 +137,96 @@ plot(M100Y_lm1)
 
 summ(M100Y_lm1, vifs = TRUE)
 vif(M100Y_lm1)
-shapiro.test(M100Y_lm1$residuals) #graphs suggest model meets assumption, significant results may be a factor of sample size
+shapiro.test(M100Y_lm1$residuals) #graphs suggest model meets assumption, significant (non-normal) results may be a factor of sample size
 durbinWatsonTest(M100Y_lm1) #Address with more covariates or more complex models to improve fit
-
+durbinWatsonTest(M100Y_lm2AL) #slightly better but still S.
 ```
+<br>  
 
+#### MAT & MAP Anomalies   
 
 ```{r message = FALSE, warning = FALSE}
-##
-#Winter
-##
+
+M100Y_lm1A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_df2)
+
+er_an0A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_all_errors)
+er_an1A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e0_5)
+er_an2A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e2)
+
+plot_summs(M100Y_lm1A, er_an0A, er_an1A, er_an2A, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1A.png"), width = 6, height = 4)
+#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
+summary(M100Y_lm1A) # N = 1677
+summary(er_an0A)$r.squared # N = 1166
+summary(er_an1A)$r.squared # N = 1033
+summary(er_an2A)$r.squared # N = 743
+
+
+#Including other covariates
+M100Y_lm2A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_df2)
+
+erc_an0A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_all_errors)
+erc_an1A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_e0_5)
+erc_an2A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_e2)
+
+plot_summs(M100Y_lm2A, erc_an0A, erc_an1A, erc_an2A, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2A.png"), width = 6, height = 4)
+summary(M100Y_lm2A)
+summary(erc_an0A)$r.squared
+summary(erc_an1A)$r.squared
+summary(erc_an2A)$r.squared
+
+summ(M100Y_lm2A, vif = TRUE)
+```
+<br>  
+
+#### Anomalies & long-term climate  
+
+```{r message = FALSE, warning = FALSE}
+
+M100Y_lm1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_df2)
+
+er_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_all_errors)
+er_an1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e0_5)
+er_an2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e2)
+
+plot_summs(M100Y_lm1AL, er_an0AL, er_an1AL, er_an2AL, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1AL.png"), width = 6, height = 4)
+#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
+summary(M100Y_lm1AL) # N = 1677
+summary(er_an0AL)$r.squared # N = 1166
+summary(er_an1AL)$r.squared # N = 1033
+summary(er_an2AL)$r.squared # N = 743
+
+
+#Including other covariates
+M100Y_lm2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_df2)
+
+erc_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_all_errors)
+erc_an1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_e0_5)
+erc_an2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_e2)
+
+plot_summs(M100Y_lm2AL, erc_an0AL, erc_an1AL, erc_an2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2AL.png"), width = 6, height = 4)
+summary(M100Y_lm2AL)
+summary(erc_an0AL)$r.squared
+summary(erc_an1AL)$r.squared
+summary(erc_an2AL)$r.squared
+
+summ(M100Y_lm2AL, vif = TRUE)
+
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year))) #some autocorrelation in T anoms? elev*long corr
+#similar VIFs as in 100Y only models, but these are still pretty low
+```
+*NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model.  
+<br>  
+
+
+#### Seasonal Conditions  
+
+**Winter 100Y MAT/MAP**  
+
+```{r message = FALSE, warning = FALSE}
 
 #Without covariates
 Wt100Y_lm1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
@@ -200,10 +277,82 @@ summary(erc_wt2)$r.squared
 Including finer-scale error distances in 'wt' models with interactions increases the variance and, for 0-2 and 0-5 km, makes parameter estimates non-significant.  
 
 
+**Winter MAT/MAP + Anomalies**    
+
 ```{r message = FALSE, warning = FALSE}
-##
-#Spring
-##
+#Without covariates
+Wt100Y_lm1AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_df2)
+
+er_wt0AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_all_errors)
+er_wt1AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_e0_5)
+er_wt2AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_e2)
+
+plot_summs(Wt100Y_lm1AL, er_wt0AL, er_wt1AL, er_wt2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1AL.png"), width = 6, height = 4)
+summary(Wt100Y_lm1AL)
+summary(er_wt0AL)$r.squared
+summary(er_wt1AL)$r.squared
+summary(er_wt2AL)$r.squared
+
+#
+#With Interactions (without other covariates)
+#NOTE: Interactions among Tmin and PPT anomalies very non-significant (p = .99)
+Wt100Y_lm1iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo_df2)
+
+er_wt0iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo_all_errors)
+er_wt1iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo_e0_5)
+er_wt2iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo_e2)
+
+plot_summs(Wt100Y_lm1iAL, er_wt0iAL, er_wt1iAL, er_wt2iAL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+  theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
+summary(Wt100Y_lm1iAL)
+summary(er_wt0iAL)#$r.squared
+summary(er_wt1iAL)#$r.squared
+summary(er_wt2iAL)#$r.squared
+
+#
+#Interactions V 2
+Wt100Y_lm1iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nemo_df2)
+
+er_wt0iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nemo_all_errors)
+er_wt1iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nemo_e0_5)
+er_wt2iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nemo_e2)
+
+plot_summs(Wt100Y_lm1iAL2, er_wt0iAL2, er_wt1iAL2, er_wt2iAL2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+  theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
+summary(Wt100Y_lm1iAL2)
+summary(er_wt0iAL2)#$r.squared
+summary(er_wt1iAL2)#$r.squared
+summary(er_wt2iAL2)#$r.squared
+
+
+#
+#With Covariates
+Wt100Y_lm2AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
+
+erc_wt0AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_all_errors)
+erc_wt1AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_e0_5)
+erc_wt2AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_e2)
+
+plot_summs(Wt100Y_lm2AL, erc_wt0AL, erc_wt1AL, erc_wt2AL, model.names = c("OG", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Wt2AL.png"), width = 6, height = 4)
+summary(Wt100Y_lm2AL)
+summary(erc_wt0AL)$r.squared
+summary(erc_wt1AL)$r.squared
+summary(erc_wt2AL)$r.squared
+
+
+```
+
+Interactions disappear when accounting for anomalous climate. The effect of year is still significant here (including covs), unlike in MAT/MAP models above.  
+<br>  
+
+
+**Spring 100Y MAT/MAP**  
+
+```{r message = FALSE, warning = FALSE}
 
 #Without covariates
 Sp100Y_lm1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_df2)
@@ -249,6 +398,78 @@ summary(Sp100Y_lm2)
 summary(erc_sp0)#$r.squared
 summary(erc_sp1)#$r.squared
 summary(erc_sp2)#$r.squared
+
+```
+<br>  
+
+
+
+**Spring MAT/MAP + Anomalies**  
+
+```{r message = FALSE, warning = FALSE}
+
+#Without covariates
+Sp100Y_lm1AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = nemo_df2)
+
+er_sp0AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = nemo_all_errors)
+er_sp1AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = nemo_e0_5)
+er_sp2AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = nemo_e2)
+
+plot_summs(Sp100Y_lm1AL, er_sp0AL, er_sp1AL, er_sp2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Sp1.png"), width = 6, height = 4)
+summary(Sp100Y_lm1AL)
+summary(er_sp0AL)$r.squared
+summary(er_sp1AL)$r.squared
+summary(er_sp2AL)$r.squared
+
+#
+#With interactions (without other covariates)
+#NOTE: Interactions among Tmin and PPT anomalies very non-significant (p = .99)
+Sp100Y_lm1iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo_df2)
+
+er_sp0iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo_all_errors)
+er_sp1iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo_e0_5)
+er_sp2iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo_e2)
+
+plot_summs(Sp100Y_lm1iAL, er_sp0iAL, er_sp1iAL, er_sp2iAL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+  theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
+summary(Sp100Y_lm1iAL)
+summary(er_sp0iAL)#$r.squared
+summary(er_sp1iAL)#$r.squared
+summary(er_sp2iAL)#$r.squared
+
+#
+#Interactions V 2
+Sp100Y_lm1iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nemo_df2)
+
+er_sp0iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nemo_all_errors)
+er_sp1iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nemo_e0_5)
+er_sp2iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nemo_e2)
+
+plot_summs(Sp100Y_lm1iAL2, er_sp0iAL2, er_sp1iAL2, er_sp2iAL2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+  theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
+summary(Sp100Y_lm1iAL2)
+summary(er_sp0iAL2)#$r.squared
+summary(er_sp1iAL2)#$r.squared
+summary(er_sp2iAL2)#$r.squared
+
+
+#
+#With Covariates - interaction ns and removed
+Sp100Y_lm2AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
+
+erc_sp0AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_all_errors)
+erc_sp1AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_e0_5)
+erc_sp2AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e2)
+
+plot_summs(Sp100Y_lm2AL, erc_sp0AL, erc_sp1AL, erc_sp2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+#ggsave(here::here("analyses", "figs1", "error_d_subset_Sp2.png"), width = 6, height = 4)
+summary(Sp100Y_lm2AL)
+summary(erc_sp0AL)#$r.squared
+summary(erc_sp1AL)#$r.squared
+summary(erc_sp2AL)#$r.squared
 
 ```
 
