@@ -16,6 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 - Bootstrap resampling for *Error D as covariate*?  
 - Evaluate resampling from full models (all covariates)  
 
+- Will increasing the 'R' value (# replicates) reduce the size of confidence intervals?  
+
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 #Load Packages
 library(car)
@@ -118,8 +120,7 @@ for(i in 1:100){
 
 ```
 
-
-*CI type: Norm or BCa (or other e.g. PERC)??*  
+*t0 values do not reflect original regressions - use originals OR/AND bootMed estimate in addition to original?*  
 
 
 ### Bootstrap Analysis  
@@ -128,18 +129,22 @@ for(i in 1:100){
 Goal: Estimate the sampling distribution of a statistic (regression coefficient). The repeated sampling provides the bootstrap mean and SE of the metric. Mimics the sampling of our data from the population. Obtain sampling distribution of the metric.  
 Default method for lm regression bootstrap is random-x or case resampling. Bias estimates the bias of the statistic relative to the true population value.  
 
-**R** = 5000 resamples  
+**R** = 5000 replicates/resamples (Increase to 10000 did not appear to affect results)  
+**t0** = original statistic (but not equal to summary.lm estimates???)    
 
 Confidence Intervals:  
 - Norm type assumes estimates are normally distributed - looks accurate from histograms (below)  
 - Alternative: BCA confint method - corrects for bias/skewedness in bootstrapped distribution, uses original estimates unlike norm method  
+Note: Using BCa almost always leads to warning "extreme order statistics used as endpoints", so it may not be appropriate.  
 
+**CI type: Norm seems most appropriate**  
+Comparisons of different CI methods was done for different iterations of the bootstrap analysis. Normal, Basic, and BCA methods were highly similar. BCA methods were somewhat more restricted, but often "used extreme quantiles" and may be unstable.  
 
 ```{r message = FALSE}
 library(boot) #Alternative: try Boot() ftn from `car` package
 #Option: Set seed for reproducible result
 set.seed(999)
-#set.seed(683) seed used for 1/ covariates plot
+
 
 #In boot() below, each call of the function is without replacement, but replacement = TRUE over multiple samples
 
@@ -171,6 +176,9 @@ boot_df2 <- boot(nemo_df2, param_est, 5000)
 
 boot_df2_ci <- Confint(boot_df2, level = 0.95, type = "norm") #identical to boot.ci() #above#
 
+#Compare different methods - MAP
+boot.ci(boot_df2, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
+
 
 #Outputs
 summary(boot_df2)
@@ -192,7 +200,7 @@ boot_df2_gg <- data.frame(c(boot_df2$t0[2], boot_df2$t0[3]), boot_df2_ci[2:3, 1:
 
 boot_df2_ggp <- rownames_to_column(boot_df2_gg) %>% 
   mutate(data = "all")
-colnames(boot_df2_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_df2_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 ```
 
@@ -221,7 +229,7 @@ boot_alle_gg <- data.frame(c(boot_alle$t0[2], boot_alle$t0[3]), boot_alle_ci[2:3
 
 boot_alle_ggp <- rownames_to_column(boot_alle_gg) %>% 
   mutate(data = "all_E")
-colnames(boot_alle_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_alle_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 
 ###
@@ -243,7 +251,7 @@ boot_05_gg <- data.frame(c(boot_05$t0[2], boot_05$t0[3]), boot_05_ci[2:3, 1:2])
 
 boot_05_ggp <- rownames_to_column(boot_05_gg) %>% 
   mutate(data = "05km")
-colnames(boot_05_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_05_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 
 ###
@@ -264,7 +272,7 @@ Nboot_02_gg <- data.frame(c(summary(M100Y_02_lm)$coefficient[2], summary(M100Y_0
 
 Nboot_02_ggp <- rownames_to_column(Nboot_02_gg) %>% 
   mutate(data = "02km")
-colnames(Nboot_02_ggp) <-  c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(Nboot_02_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 
 ```
@@ -285,7 +293,7 @@ boots_alldata <- rbind(boot_df2_ggp, boot_alle_ggp, boot_05_ggp, Nboot_02_ggp) %
 
 ggplot(data = boots_alldata) +
   geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
-  geom_point(aes(x = bootEst, y = var), size = 2) + 
+  geom_point(aes(x = coefEst, y = var), size = 2) + 
   geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(breaks = seq(-10, 10, 1)) +
   scale_color_brewer(palette = "Dark2") +
@@ -297,7 +305,6 @@ ggplot(data = boots_alldata) +
 
 
 #### MAT & MAP + Other Covariates  
-*Fix confidence interval type*  
 ```{r message = FALSE}
 #including year, elev_m, and long
 param_estC <- function(df, index){ # df = data, index = # obs to inc [req by boot()]
@@ -327,7 +334,7 @@ boot_df2C_gg <- data.frame(c(boot_df2C$t0[2], boot_df2C$t0[3]), boot_df2C_ci[2:3
 
 boot_df2C_ggp <- rownames_to_column(boot_df2C_gg) %>% 
   mutate(data = "all")
-colnames(boot_df2C_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_df2C_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 
 
@@ -344,13 +351,17 @@ boot_alleC_ci
 summary(lm(DOY ~ MAT_100Y + MAP_100Y + year + elev_m + long, data = nemo_all_errors))
 
 plot(boot_alleC)
-hist(boot_alleC, ci = 'norm', legend = "separate") #CIs look super weird... which type to use???
+hist(boot_alleC, ci = 'norm', legend = "separate") 
+
+#Compare different methods - MAP
+#boot.ci(boot_df2C, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
+
 
 boot_alleC_gg <- data.frame(c(boot_alleC$t0[2], boot_alleC$t0[3]), boot_alleC_ci[2:3, 1:2])
 
 boot_alleC_ggp <- rownames_to_column(boot_alleC_gg) %>% 
   mutate(data = "all_E")
-colnames(boot_alleC_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_alleC_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 
 ###
@@ -372,7 +383,7 @@ boot_05C_gg <- data.frame(c(boot_05C$t0[2], boot_05C$t0[3]), boot_05C_ci[2:3, 1:
 
 boot_05C_ggp <- rownames_to_column(boot_05C_gg) %>% 
   mutate(data = "05km")
-colnames(boot_05C_ggp) <- c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_05C_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 
 
 ###
@@ -388,7 +399,7 @@ Nboot_02C_gg <- data.frame(c(summary(M100Y_02C_lm)$coefficient[2], summary(M100Y
 
 Nboot_02C_ggp <- rownames_to_column(Nboot_02C_gg) %>% 
   mutate(data = "02km")
-colnames(Nboot_02C_ggp) <-  c("var", "bootEst", "ci_2.5", "ci_97.5", "data")
+colnames(Nboot_02C_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 ```
 
 
@@ -402,7 +413,7 @@ boots_alldataC <- rbind(boot_df2C_ggp, boot_alleC_ggp, boot_05C_ggp, Nboot_02C_g
 
 ggplot(data = boots_alldataC) +
   geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
-  geom_point(aes(x = bootEst, y = var), size = 2) + 
+  geom_point(aes(x = coefEst, y = var), size = 2) + 
   geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(breaks = seq(-10, 10, 1)) +
   scale_color_brewer(palette = "Dark2") +
@@ -415,7 +426,245 @@ ggplot(data = boots_alldataC) +
 
 ```
 
+<br>  
 
+
+#### MAT & MAP ANOMALIES + Other Covariates  
+
+##### Anomalies    
+```{r warning = FALSE, message = FALSE}
+param_estA <- function(df, index){ # df = data, index = # obs to inc [req by boot()]
+  
+  df_samp <- sample_n(df, size = 743, replace = FALSE) #boot() recomputes the function for each re-sample
+  lm_a <- lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = df_samp)
+  
+  coef(lm_a)
+}
+
+####
+#ALL DATA
+boot_df2A <- boot(nemo_df2, param_estA, 5000)
+boot_df2A_ci <- Confint(boot_df2A, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_df2A)
+boot_df2A_ci
+#og lm
+summary(lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_df2))
+
+plot(boot_df2A) 
+hist(boot_df2A, ci = 'norm', legend = "separate")
+
+#Save to df for plotting
+boot_df2A_gg <- data.frame(c(boot_df2A$t0[2], boot_df2A$t0[3]), boot_df2A_ci[2:3, 1:2]) #Just estimates for MAT, MAP Anoms
+
+boot_df2A_ggp <- rownames_to_column(boot_df2A_gg) %>% 
+  mutate(data = "all")
+colnames(boot_df2A_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+
+
+###
+# ALL ERRORS
+boot_alleA <- boot(nemo_all_errors, param_estA, 5000)
+boot_alleA_ci <- Confint(boot_alleA, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_alleA)
+boot_alleA_ci
+
+#og lm
+summary(lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_all_errors))
+
+plot(boot_alleA)
+hist(boot_alleA, ci = 'norm', legend = "separate") 
+
+boot_alleA_gg <- data.frame(c(boot_alleA$t0[2], boot_alleA$t0[3]), boot_alleA_ci[2:3, 1:2])
+
+boot_alleA_ggp <- rownames_to_column(boot_alleA_gg) %>% 
+  mutate(data = "all_E")
+colnames(boot_alleA_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+
+###
+# 0-5 KM
+boot_05A <- boot(nemo_e0_5, param_estA, 5000)
+boot_05A_ci <- Confint(boot_05A, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_05A)
+boot_05A_ci
+
+#og lm
+summary(lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_e0_5))
+
+plot(boot_05A)
+hist(boot_05A, ci = 'norm', legend = "separate") 
+
+boot_05A_gg <- data.frame(c(boot_05A$t0[2], boot_05A$t0[3]), boot_05A_ci[2:3, 1:2])
+
+boot_05A_ggp <- rownames_to_column(boot_05A_gg) %>% 
+  mutate(data = "05km")
+colnames(boot_05A_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+
+###
+# 0-2 KM (no bootstrap)
+
+#og lm
+M100Y_02A_lm <- lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_e2)
+summary(M100Y_02A_lm)
+
+confint(M100Y_02A_lm, level = 0.95, type = "norm")
+
+Nboot_02A_gg <- data.frame(c(summary(M100Y_02A_lm)$coefficient[2], summary(M100Y_02A_lm)$coefficient[3]), confint(M100Y_02A_lm, level = 0.95, type = "norm")[2:3, 1:2])
+
+Nboot_02A_ggp <- rownames_to_column(Nboot_02A_gg) %>% 
+  mutate(data = "02km")
+colnames(Nboot_02A_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+```
+
+
+```{r message = FALSE}
+##GGPLOT of Bootstrapped models: Anoms + other covariates
+boots_alldataA <- rbind(boot_df2A_ggp, boot_alleA_ggp, boot_05A_ggp, Nboot_02A_ggp) %>% 
+  mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km")))
+
+
+ggplot(data = boots_alldataA) +
+  geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
+  geom_point(aes(x = coefEst, y = var), size = 2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_x_continuous(breaks = seq(-10, 10, 1)) +
+  scale_color_brewer(palette = "Dark2") +
+  facet_wrap(~data, ncol = 1) +
+  theme_bw()
+
+
+```
+<br>  
+
+
+##### Anomalies + 100Y  
+*Fix extraction of all coefficients!*  
+
+```{r warning = FALSE, message = FALSE}
+param_estAL <- function(df, index){ # df = data, index = # obs to inc [req by boot()]
+  
+  df_samp <- sample_n(df, size = 743, replace = FALSE) #boot() recomputes the function for each re-sample
+  lm_al <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, data = df_samp)
+  
+  coef(lm_al)
+}
+
+####
+#ALL DATA
+boot_df2AL <- boot(nemo_df2, param_estAL, 5000)
+boot_df2AL_ci <- Confint(boot_df2AL, level = 0.95, type = "basic")
+
+#outputs
+summary(boot_df2AL)
+boot_df2AL_ci
+#og lm
+summary(lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, data = nemo_df2))
+
+plot(boot_df2AL) 
+hist(boot_df2AL, ci = 'norm', legend = "separate")
+
+#Save to df for plotting
+boot_df2AL_gg <- data.frame(c(boot_df2AL$t0[2], boot_df2AL$t0[3], boot_df2AL$t0[4], boot_df2AL$t0[5]), boot_df2AL_ci[2:5, 1:2]) #Just estimates for MAT, MAP Anoms
+
+boot_df2AL_ggp <- rownames_to_column(boot_df2AL_gg) %>% 
+  mutate(data = "all")
+colnames(boot_df2AL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+
+
+###
+# ALL ERRORS
+boot_alleAL <- boot(nemo_all_errors, param_estAL, 5000)
+boot_alleAL_ci <- Confint(boot_alleAL, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_alleAL)
+boot_alleAL_ci
+
+#Check different CI types
+boot.ci(boot_alleAL, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
+
+#og lm
+summary(lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, data = nemo_all_errors))
+
+plot(boot_alleAL)
+hist(boot_alleAL, ci = 'norm', legend = "separate") 
+
+boot_alleAL_gg <- data.frame(c(boot_alleAL$t0[2], boot_alleAL$t0[3], boot_alleAL$t0[4], boot_alleAL$t0[5]), boot_alleAL_ci[2:5, 1:2])
+
+boot_alleAL_ggp <- rownames_to_column(boot_alleAL_gg) %>% 
+  mutate(data = "all_E")
+colnames(boot_alleAL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+
+###
+# 0-5 KM
+boot_05AL <- boot(nemo_e0_5, param_estAL, 5000)
+boot_05AL_ci <- Confint(boot_05AL, level = 0.95, type = "norm")
+
+#outputs
+summary(boot_05AL)
+boot_05AL_ci
+
+#og lm
+summary(lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, data = nemo_e0_5))
+
+plot(boot_05AL)
+hist(boot_05AL, ci = 'norm', legend = "separate") 
+
+boot_05AL_gg <- data.frame(c(boot_05AL$t0[2], boot_05AL$t0[3], boot_05AL$t0[4], boot_05AL$t0[5]), boot_05AL_ci[2:5, 1:2])
+
+boot_05AL_ggp <- rownames_to_column(boot_05AL_gg) %>% 
+  mutate(data = "05km")
+colnames(boot_05AL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+
+###
+# 0-2 KM (no bootstrap)
+
+#og lm
+M100Y_02AL_lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, data = nemo_e2)
+summary(M100Y_02AL_lm)
+
+confint(M100Y_02AL_lm, level = 0.95, type = "norm")
+
+Nboot_02AL_gg <- data.frame(c(summary(M100Y_02AL_lm)$coefficient[2], summary(M100Y_02AL_lm)$coefficient[3], summary(M100Y_02AL_lm)$coefficient[4], summary(M100Y_02AL_lm)$coefficient[5]), confint(M100Y_02AL_lm, level = 0.95, type = "norm")[2:5, 1:2])
+
+Nboot_02AL_ggp <- rownames_to_column(Nboot_02AL_gg) %>% 
+  mutate(data = "02km")
+colnames(Nboot_02AL_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+
+```
+
+
+```{r message = FALSE}
+##GGPLOT of Bootstrapped models: Anoms + other covariates
+boots_alldataAL <- rbind(boot_df2AL_ggp, boot_alleAL_ggp, boot_05AL_ggp, Nboot_02AL_ggp) %>% 
+  mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km")))
+
+#Change colors of Anomalies!
+
+ggplot(data = boots_alldataAL) +
+  geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
+  geom_point(aes(x = coefEst, y = var), size = 2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_x_continuous(breaks = seq(-10, 10, 1)) +
+  scale_color_brewer(palette = "Dark2") +
+  facet_wrap(~data, ncol = 1) +
+  theme_bw()
+
+
+```
+It appears like there may be more variation in MAT anomalies compared to MAT_100Y. *Make sure nothing weird is happening with these estimates!*  
 
 ---  
 

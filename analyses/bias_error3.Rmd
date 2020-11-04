@@ -1,0 +1,252 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Simulations of new coordinates (based on error distance) on pheno-climatic models  
+
+
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+library(interactions)
+library(kableExtra)
+library(stringr)
+```
+
+
+#### Load Data  
+```{r message = FALSE, warning = FALSE}
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+Data subset by error distances/bins  
+```{r message = FALSE, warning = FALSE}
+#All errors
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+#1166 after rm records before 1901
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") 
+
+#0-4 km - not used here
+nemo_e0_4 <-  nemo_all_errors %>% 
+  filter(error_dist_m >= 0 & error_dist_m <= 4000) #Do Not include error_bin in models
+
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") 
+
+```
+<br>  
+
+
+
+## Randomly simulated coordinates (lat/long) by a set error distance  
+
+How does varying point coordinates by different error distances affect pheno-climatic models?  
+
+Steps:  
+1. Assign each record (0-2 km set) four sets of new coordinates, each dispersed in a random direction from the original  
+  - 2 km away  
+  - 5 km away  
+  - 15 km away  
+  - 25 km away  
+2. Obtain climate data for each new coordinate set  
+3. Compare models of the original 2 km data set with those of the 4 new data sets  
+4. Replication (5x)  
+
+<br>  
+
+Determining new coordinates based on km will depend on the present latitude and longitude of a collection. Simulations here are based off a subset of the original data for which confidence in specimen collection locations is high (0-2 km) so that deviations in the parameter estimates and $R^2$ values of models from simulated data can be attributed to effects of real differences in collection uncertainty AND locations. Use the WGS84 ellipsoid (the datum used for the majority of records; some NAD83 and NAD27 [*calculate % in 0-2km data*]) to calculate new decimal degrees based on some km deviation at each record. 
+
+"geosphere" package -> `destPoint()` function computes a new coordinate point (WGS84) when given a start point, initial bearing, and distance.  
+
+
+### Assign new coordinates  
+#### SIMULTATIONS ONLY for HIGH-CONFIDENCE COLLECTIONS (0-2 KM ERROR DISTANCE)  
+
+```{r}
+library(geosphere)
+nemo_r_2 <- nemo_e2 %>% 
+  select(specimen_number:mature_5)
+
+#destPoint from geosphere package - e.g.
+destPoint(p = c(-120.0312, 37.47905), b = 45, d = 2000) #default WGS84
+#Seems pretty accurate!!! (Compared start and end points in Google maps)
+
+
+##
+### Goal: apply destPoint() to all existing lat/long to get new lat/long, each with *different* random bearing
+
+#Basic for loop
+  long_n1 <- rep(NA, nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = 1000)
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+
+
+#######
+# 2 km error new coords
+#######
+#Simulations + for loop
+
+  
+sim_list_2ka <- list()
+
+for(x in 1:10){ #10 reps
+  
+  long_n1 <- rep(NA,nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 2000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_2ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_2ka[[x]]) <- c("specimen_number", "long_n2k", "lat_n2k")
+  
+  print(x)
+  
+}
+  
+  
+#Rbind all list elements
+
+  
+#Using bind_rows()
+#sims_all_2ka <- bind_rows(sim_list_2ka[[1:10]])
+
+
+#using reduce() 
+sims_all_2ka <- as.data.frame(reduce(sim_list_2ka, rbind)) %>% 
+  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743),rep("rep5", times = 743),rep("rep6", times = 743),rep("rep7", times = 743), rep("rep8", times = 743), rep("rep9", times = 743), rep("rep10", times = 743))) %>% 
+  mutate(long_n2k = as.numeric(long_n2k), lat_n2k = as.numeric(lat_n2k))
+```
+
+##### Add elevation to records (optional for ClimateNA)  
+**Very time-consuming!!!**  
+```{r message = FALSE, eval = FALSE}
+#Add elevation
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+
+sims_all_2kaE$elev_m_n <- get_elev_point(sims_all_2ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df...
+
+
+sims_all_2kaE2 <- sims_all_2ka %>% 
+  mutate(elev_m_n = sims_all_2kaE[[1]]) 
+
+
+#save as CSV before something fucks up and I have to rerun the 3h elev grab code
+write_csv(sims_all_2kaE2, here::here("analyses", "new_coords", "sims_2ka.csv"))
+
+
+#E.g. 2, 5, 15, 25 km coords all in same csv...?
+```
+
+
+```{r}
+#Read CSV - fix negative elevations to be 0
+```
+
+
+**Standardize & Save CSV for ClimateNA data extraction**  
+Columns: ID1, ID2, lat, long,	el  
+
+```{r message = FALSE, eval = FALSE}
+# 2 km simulated coordinates 
+#Maybe have ID2 = replicate identifier?
+#sims_2ka <- 
+
+
+
+```
+*NOTE*: If extraction fails at first, **clear** all cells below final rows of standardized CSV!  
+
+*Calculate* Difference in (1) elevation, (2) MAT and MAP between original and simulated coordinates  
+- Determine if differences in elev or climate relate to differences in model results!  
+```{r}
+
+```
+
+```{r eval = FALSE, message = FALSE}
+#DEFUNCT/FAILED ANALYSES
+library(elevatr) #must have package rgdal installed!
+#Get elevation for new coords as well
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point() ##MAKE DATUM SPECIFIC TO RECORD???
+
+for(x in 1:length(sim_list_2ka)){
+  
+elev_n1 <- rep(NA, nrow(nemo_r_2))
+
+for(i in 1:length(nemo_r_2$lat)){
+
+elev_n1[i] <- get_elev_point(as.numeric(sim_list_2ka[[x]][,2:3]), prj = prj_dd, src = "epqs")
+
+}
+
+sim_list_2ka_e[[x]] <- cbind(sim_list_2ka, elev_n1)
+
+}
+
+######Unable to apply for loop using get_elev_point to list - too complicated
+
+
+#Tadeo's randCoord function
+#randCoord(x = c(-120.66, -120), y = c(34.66, 37), d_min = 1.5, d_max = 2.5)
+
+#randCoord(x = nemo_r_2$long, y = nemo_r_2$lat, d_min = 1.5, d_max = 2.5)
+
+# apply() functions approach
+
+
+#destPoint alone
+nemo_ncoords_2km <- nemo_r_2 %>% 
+  mutate(long_n1 = sapply(X = c(long, lat), FUN = destPoint(long, lat, b = sample(0:360, 1), d = 2000)))
+
+
+#getLatLong_r function
+nemo_ncoords_2km <- nemo_r_2 %>% 
+  mutate(longlat_n1 = sapply(X = c(long, lat, d = 2000), FUN = getLatLong_r(lat = lat, long = long)))
+
+#destPoint(p = c(long, lat), b = sample(0:360, 1), d = 2000)[,1]) #for loop or tapply
+
+nemo_ncoords_2km <- nemo_r_2 %>% 
+  mutate(long_n1 = NA, lat_n1 = NA)
+
+
+```
+
+
