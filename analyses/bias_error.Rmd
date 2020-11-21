@@ -89,7 +89,7 @@ For 100 year averages for MAT, MAP, Tmin_sp, Tmin_wt, PPT_sp, PPT_wt
 
 ### Subsetting data by error bins
 
-Only significant interactions are shown although interactions among climate variables were tested for each original model.  
+Only significant interactions are shown although interactions among climate variables were tested for each All Records model.  
 #### 100-Y MAT & MAP
 ```{r message = FALSE, warning = FALSE}
 ##
@@ -101,7 +101,7 @@ er_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors)
 er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
 er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
 
-plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
 summary(M100Y_lm1) # N = 1677
@@ -116,13 +116,14 @@ M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df
 erc_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_all_errors)
 erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e0_5)
 erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e2)
+ 
+plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT" =  "MAT_100Y", "MAP" = "MAP_100Y"), legend.title = "Model Data", scale = TRUE) + theme_apa() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9))+ labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "error_summs_MATMAP_100Y.png"), width = 6, height = 4)
 
-plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2.png"), width = 6, height = 4)
 summary(M100Y_lm2)
-summary(erc_an0)$r.squared
-summary(erc_an1)$r.squared
-summary(erc_an2)$r.squared
+summary(erc_an0)
+summary(erc_an1)
+summary(erc_an2)
 
 summ(M100Y_lm2, vif = TRUE)
 ```
@@ -132,8 +133,8 @@ summ(M100Y_lm2, vif = TRUE)
 #V. large sample size may make some tests unreliable - graphical methods more appropraite
 
 #Annual climate model
-M100Y_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
-plot(M100Y_lm1)
+#M100Y_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
+plot(M100Y_lm2)
 
 summ(M100Y_lm1, vifs = TRUE)
 vif(M100Y_lm1)
@@ -153,7 +154,7 @@ er_an0A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_all_errors)
 er_an1A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e0_5)
 er_an2A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e2)
 
-plot_summs(M100Y_lm1A, er_an0A, er_an1A, er_an2A, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1A, er_an0A, er_an1A, er_an2A, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1A.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
 summary(M100Y_lm1A) # N = 1677
@@ -169,15 +170,19 @@ erc_an0A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_all_error
 erc_an1A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_e0_5)
 erc_an2A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_e2)
 
-plot_summs(M100Y_lm2A, erc_an0A, erc_an1A, erc_an2A, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2A.png"), width = 6, height = 4)
+plot_summs(M100Y_lm2A, erc_an0A, erc_an1A, erc_an2A, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT" =  "MAT_A", "MAP" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_apa() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9)) + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "error_summs_MATMAP_A.png"), width = 6, height = 4)
+
 summary(M100Y_lm2A)
-summary(erc_an0A)$r.squared
-summary(erc_an1A)$r.squared
-summary(erc_an2A)$r.squared
+summary(erc_an0A)
+summary(erc_an1A)
+summary(erc_an2A)
 
 summ(M100Y_lm2A, vif = TRUE)
 ```
+
+*Direction of the effect of longitude on DOY SWITCHES b/w long-term climate (positive) and climate anomalies (negative)... WTH? Its effect is normally negative when no climate predictors are included.*  
+
 <br>  
 
 #### Anomalies & long-term climate  
@@ -190,7 +195,7 @@ er_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_all_errors
 er_an1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e0_5)
 er_an2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e2)
 
-plot_summs(M100Y_lm1AL, er_an0AL, er_an1AL, er_an2AL, model.names = c("Original", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1AL, er_an0AL, er_an1AL, er_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1AL.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
 summary(M100Y_lm1AL) # N = 1677
@@ -206,7 +211,7 @@ erc_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year
 erc_an1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_e0_5)
 erc_an2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_e2)
 
-plot_summs(M100Y_lm2AL, erc_an0AL, erc_an1AL, erc_an2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm2AL, erc_an0AL, erc_an1AL, erc_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2AL.png"), width = 6, height = 4)
 summary(M100Y_lm2AL)
 summary(erc_an0AL)$r.squared
@@ -215,11 +220,37 @@ summary(erc_an2AL)$r.squared
 
 summ(M100Y_lm2AL, vif = TRUE)
 
-corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year))) #some autocorrelation in T anoms? elev*long corr
+#Corrplot for supp mat?
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year)), addCoef.col = "black", number.cex = .6,) #some autocorrelation in T anoms? elev*long corr
 #similar VIFs as in 100Y only models, but these are still pretty low
 ```
 *NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model.  
 <br>  
+
+
+#### Some Visualizations  
+
+```{r warning = FALSE, message = FALSE, eval = FALSE}
+#100Y MAT + MAP w/ covariates
+visreg(M100Y_lm2, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
+  theme_apa()
+ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_100.png"), height = 4, width = 6) #Dims: 4x6 clearer than 5x8
+visreg(M100Y_lm2, "MAP_100Y", xlab = "log[MAP] (1901-2000)", points = list(col = "#404040"), gg = TRUE) +  #option: use xtrans = exp 
+  theme_apa()
+ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_100.png"), height = 4, width = 6)
+
+visreg(M100Y_lm2A, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  theme_apa()
+ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_A.png"), height = 4, width = 6)
+visreg(M100Y_lm2A, "MAP_A", xlab = "MAP (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  theme_apa()
+ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_A.png"), height = 4, width = 6)
+#Alternative - use ggplot instead
+
+```
+
 
 
 #### Seasonal Conditions  
@@ -235,7 +266,7 @@ er_wt0 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_all_errors)
 er_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e0_5)
 er_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_e2)
 
-plot_summs(Wt100Y_lm1, er_wt0, er_wt1, er_wt2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm1, er_wt0, er_wt1, er_wt2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1.png"), width = 6, height = 4)
 summary(Wt100Y_lm1)
 summary(er_wt0)$r.squared
@@ -250,7 +281,7 @@ er_wt0i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_all_errors)
 er_wt1i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_e0_5)
 er_wt2i <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y, data = nemo_e2)
 
-plot_summs(Wt100Y_lm1i, er_wt0i, er_wt1i, er_wt2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+plot_summs(Wt100Y_lm1i, er_wt0i, er_wt1i, er_wt2i, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) +
   theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1i.png"), width = 6, height = 4)
 summary(Wt100Y_lm1i)
@@ -267,7 +298,7 @@ erc_wt0 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = ne
 erc_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e0_5)
 erc_wt2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_e2)
 
-plot_summs(Wt100Y_lm2, erc_wt0, erc_wt1, erc_wt2, model.names = c("OG", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm2, erc_wt0, erc_wt1, erc_wt2, model.names = c("OG", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_Wt2.png"), width = 6, height = 4)
 summary(Wt100Y_lm2)
 summary(erc_wt0)$r.squared
@@ -287,7 +318,7 @@ er_wt0AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = n
 er_wt1AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_e0_5)
 er_wt2AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_e2)
 
-plot_summs(Wt100Y_lm1AL, er_wt0AL, er_wt1AL, er_wt2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm1AL, er_wt0AL, er_wt1AL, er_wt2AL, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1AL.png"), width = 6, height = 4)
 summary(Wt100Y_lm1AL)
 summary(er_wt0AL)$r.squared
@@ -303,7 +334,7 @@ er_wt0iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo
 er_wt1iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo_e0_5)
 er_wt2iAL <- lm(DOY ~ Tmin_wt_A*PPT_wt_100Y + Tmin_wt_100Y*PPT_wt_A, data = nemo_e2)
 
-plot_summs(Wt100Y_lm1iAL, er_wt0iAL, er_wt1iAL, er_wt2iAL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+plot_summs(Wt100Y_lm1iAL, er_wt0iAL, er_wt1iAL, er_wt2iAL, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) +
   theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
 summary(Wt100Y_lm1iAL)
@@ -319,7 +350,7 @@ er_wt0iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nem
 er_wt1iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nemo_e0_5)
 er_wt2iAL2 <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y, data = nemo_e2)
 
-plot_summs(Wt100Y_lm1iAL2, er_wt0iAL2, er_wt1iAL2, er_wt2iAL2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+plot_summs(Wt100Y_lm1iAL2, er_wt0iAL2, er_wt1iAL2, er_wt2iAL2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) +
   theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
 summary(Wt100Y_lm1iAL2)
@@ -336,7 +367,7 @@ erc_wt0AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m
 erc_wt1AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_e0_5)
 erc_wt2AL <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_e2)
 
-plot_summs(Wt100Y_lm2AL, erc_wt0AL, erc_wt1AL, erc_wt2AL, model.names = c("OG", "all errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm2AL, erc_wt0AL, erc_wt1AL, erc_wt2AL, model.names = c("OG", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Wt2AL.png"), width = 6, height = 4)
 summary(Wt100Y_lm2AL)
 summary(erc_wt0AL)$r.squared
@@ -361,7 +392,7 @@ er_sp0 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_all_errors)
 er_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_e0_5)
 er_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_e2)
 
-plot_summs(Sp100Y_lm1, er_sp0, er_sp1, er_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm1, er_sp0, er_sp1, er_sp2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_Sp1.png"), width = 6, height = 4)
 summary(Sp100Y_lm1)
 summary(er_sp0)$r.squared
@@ -376,7 +407,7 @@ er_sp0i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_all_errors)
 er_sp1i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e0_5)
 er_sp2i <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_e2)
 
-plot_summs(Sp100Y_lm1i, er_sp0i, er_sp1i, er_sp2i, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm1i, er_sp0i, er_sp1i, er_sp2i, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_Sp1i.png"), width = 6, height = 4)
 summary(Sp100Y_lm1i)
 summary(er_sp0i)$r.squared
@@ -392,7 +423,7 @@ erc_sp0 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = ne
 erc_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e0_5)
 erc_sp2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e2)
 
-plot_summs(Sp100Y_lm2, erc_sp0, erc_sp1, erc_sp2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm2, erc_sp0, erc_sp1, erc_sp2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_d_subset_Sp2.png"), width = 6, height = 4)
 summary(Sp100Y_lm2)
 summary(erc_sp0)#$r.squared
@@ -415,7 +446,7 @@ er_sp0AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = n
 er_sp1AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = nemo_e0_5)
 er_sp2AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A, data = nemo_e2)
 
-plot_summs(Sp100Y_lm1AL, er_sp0AL, er_sp1AL, er_sp2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm1AL, er_sp0AL, er_sp1AL, er_sp2AL, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Sp1.png"), width = 6, height = 4)
 summary(Sp100Y_lm1AL)
 summary(er_sp0AL)$r.squared
@@ -431,7 +462,7 @@ er_sp0iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo
 er_sp1iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo_e0_5)
 er_sp2iAL <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y*PPT_sp_A, data = nemo_e2)
 
-plot_summs(Sp100Y_lm1iAL, er_sp0iAL, er_sp1iAL, er_sp2iAL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+plot_summs(Sp100Y_lm1iAL, er_sp0iAL, er_sp1iAL, er_sp2iAL, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) +
   theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
 summary(Sp100Y_lm1iAL)
@@ -447,7 +478,7 @@ er_sp0iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nem
 er_sp1iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nemo_e0_5)
 er_sp2iAL2 <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y, data = nemo_e2)
 
-plot_summs(Sp100Y_lm1iAL2, er_sp0iAL2, er_sp1iAL2, er_sp2iAL2, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) +
+plot_summs(Sp100Y_lm1iAL2, er_sp0iAL2, er_sp1iAL2, er_sp2iAL2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) +
   theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Wt1ALi.png"), width = 6, height = 4)
 summary(Sp100Y_lm1iAL2)
@@ -464,7 +495,7 @@ erc_sp0AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m
 erc_sp1AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_e0_5)
 erc_sp2AL <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_e2)
 
-plot_summs(Sp100Y_lm2AL, erc_sp0AL, erc_sp1AL, erc_sp2AL, model.names = c("Original", "All errors", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm2AL, erc_sp0AL, erc_sp1AL, erc_sp2AL, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_d_subset_Sp2.png"), width = 6, height = 4)
 summary(Sp100Y_lm2AL)
 summary(erc_sp0AL)#$r.squared
@@ -525,7 +556,7 @@ summary(M100Y_lm3b)
 visreg(M100Y_lm3a)
 visreg(M100Y_lm3b)
 
-plot_summs(M100Y_lm1, M100Y_lm3a, M100Y_lm3b, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1, M100Y_lm3a, M100Y_lm3b, model.names = c("All Records", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_MAT-MAP1.png"), width = 6, height = 4)
 
 
@@ -536,7 +567,7 @@ M100Y_lm3bA <- lm(DOY ~ MAT_A + MAP_A + error_bin, data = nemo_df2)
 summary(M100Y_lm3aA)
 summary(M100Y_lm3bA)
 
-plot_summs(M100Y_lm1A, M100Y_lm3aA, M100Y_lm3bA, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1A, M100Y_lm3aA, M100Y_lm3bA, model.names = c("All Records", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
 #ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_MAT-MAP1.png"), width = 6, height = 4)
 
 
@@ -548,7 +579,7 @@ summary(M100Y_lm4a)
 summary(M100Y_lm4b)
 
 
-plot_summs(M100Y_lm2, M100Y_lm4a, M100Y_lm4b, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm2, M100Y_lm4a, M100Y_lm4b, model.names = c("All Records", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
 
 
 #Other predictors + Anoms
@@ -559,7 +590,7 @@ summary(M100Y_lm4aAL)
 summary(M100Y_lm4bAL)
 
 
-plot_summs(M100Y_lm2AL, M100Y_lm4aAL, M100Y_lm4bAL, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm2AL, M100Y_lm4aAL, M100Y_lm4bAL, model.names = c("All Records", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
 
 
 #AIC Comparison - MAT/MAP
@@ -577,7 +608,7 @@ Wt100Y_lm3b <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + error_bin, data = nemo_df2)
 summary(Wt100Y_lm3a)
 summary(Wt100Y_lm3b)
 
-plot_summs(Wt100Y_lm1, Wt100Y_lm3a, Wt100Y_lm3b, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm1, Wt100Y_lm3a, Wt100Y_lm3b, model.names = c("All Records", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Wt1.png"), width = 6, height = 4)
 
 #With Interactions
@@ -588,7 +619,7 @@ Wt100Y_lm3bi <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y + error_bin, data = nemo_df2)
 summary(Wt100Y_lm3ai)
 summary(Wt100Y_lm3bi)
 
-plot_summs(Wt100Y_lm1i, Wt100Y_lm3ai, Wt100Y_lm3bi, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm1i, Wt100Y_lm3ai, Wt100Y_lm3bi, model.names = c("All Records", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Wt1i.png"), width = 6, height = 4)
 
 #With other predictors
@@ -598,7 +629,7 @@ Wt100Y_lm4b <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year + erro
 summary(Wt100Y_lm4a)
 summary(Wt100Y_lm4b)
 
-plot_summs(Wt100Y_lm2, Wt100Y_lm4a, Wt100Y_lm4b, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
+plot_summs(Wt100Y_lm2, Wt100Y_lm4a, Wt100Y_lm4b, model.names = c("All Records", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
 
 
 #AIC Comparison - Winter
@@ -616,7 +647,7 @@ Sp100Y_lm3b <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + error_bin, data = nemo_df2)
 summary(Sp100Y_lm3a)
 summary(Sp100Y_lm3b)
 
-plot_summs(Sp100Y_lm1, Sp100Y_lm3a, Sp100Y_lm3b, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm1, Sp100Y_lm3a, Sp100Y_lm3b, model.names = c("All Records", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Sp1.png"), width = 6, height = 4)
 
 #With Interactions
@@ -626,7 +657,7 @@ Sp100Y_lm3bi <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y + error_bin, data = nemo_df2)
 summary(Sp100Y_lm3ai)
 summary(Sp100Y_lm3bi)
 
-plot_summs(Sp100Y_lm1i, Sp100Y_lm3ai, Sp100Y_lm3bi, model.names = c("Original", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm1i, Sp100Y_lm3ai, Sp100Y_lm3bi, model.names = c("All Records", "numeric", "factor-bins"), scale = TRUE) + theme_bw()
 ggsave(here::here("analyses", "figs1", "error_covar_plotsumms_Sp1i.png"), width = 6, height = 4)
 
 #With more covariates
@@ -637,7 +668,7 @@ summary(Sp100Y_lm4a)
 summary(Sp100Y_lm4b)
 
 
-plot_summs(Sp100Y_lm2, Sp100Y_lm4a, Sp100Y_lm4b, model.names = c("Original", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
+plot_summs(Sp100Y_lm2, Sp100Y_lm4a, Sp100Y_lm4b, model.names = c("All Records", "numeric", "factor/bin"), scale = TRUE) + theme_bw()
 
 
 #AIC Comparison - Spring
@@ -1339,7 +1370,7 @@ collb_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df
 summary(collb_lm1)
 summary(collb_lm2)
 
-plot_summs(collb_lm1, collb_lm2, model.names = c("Original", "No top collectors"), scale = TRUE) + theme_bw()
+plot_summs(collb_lm1, collb_lm2, model.names = c("All Records", "No top collectors"), scale = TRUE) + theme_bw()
 
 ```
 

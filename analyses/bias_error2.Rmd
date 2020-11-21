@@ -120,7 +120,11 @@ for(i in 1:100){
 
 ```
 
-*t0 values do not reflect original regressions - use originals OR/AND bootMed estimate in addition to original?*  
+*t0 values do not reflect original regressions. - bootMed estimates are close but in some casese fall far outside of constructed confidence intervals. Find a straightforward & parsimonious way to display coefficient estimates and bootstrapped CIs*  
+
+**Components to Investigate**:  
+- Parametric bootstrap (default 'sim' = ordinary, nonparametric)  
+- 
 
 
 ### Bootstrap Analysis  
@@ -177,12 +181,12 @@ boot_df2 <- boot(nemo_df2, param_est, 5000)
 boot_df2_ci <- Confint(boot_df2, level = 0.95, type = "norm") #identical to boot.ci() #above#
 
 #Compare different methods - MAP
-boot.ci(boot_df2, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
+#boot.ci(boot_df2, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
 
 
 #Outputs
 summary(boot_df2)
-boot_df2_ci #confidence intervals do not include bootstrapped estimates...
+boot_df2_ci #confidence intervals are not constructed around bootstrap means/medians
 
 #Compare to SEs in regular summary. #If SEs are similar b/w boot and original lm outputs, method is appropriate
 summary(lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2))
@@ -196,11 +200,12 @@ hist(boot_df2, ci = 'norm', legend = "separate")
 #Observed value of statistic = original estimate (bootMed)
 
 
-boot_df2_gg <- data.frame(c(boot_df2$t0[2], boot_df2$t0[3]), boot_df2_ci[2:3, 1:2]) #save bootstrapped estimates for MAT, MAP 
+boot_df2_gg <- data.frame(c(boot_df2$t0[2], boot_df2$t0[3]), boot_df2_ci[2:3, 1:2], c(mean(boot_df2$t[,2]), mean(boot_df2$t[,3])), c(median(boot_df2$t[,2]), median(boot_df2$t[,3]))) #save bootstrapped estimates for MAT, MAP 
 
 boot_df2_ggp <- rownames_to_column(boot_df2_gg) %>% 
   mutate(data = "all")
-colnames(boot_df2_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_df2_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
+
 
 ```
 
@@ -225,11 +230,11 @@ summary(lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors))
 plot(boot_alle)
 hist(boot_alle, ci = 'norm', legend = "separate") #CIs look super weird... which type to use???
 
-boot_alle_gg <- data.frame(c(boot_alle$t0[2], boot_alle$t0[3]), boot_alle_ci[2:3, 1:2])
+boot_alle_gg <- data.frame(c(boot_alle$t0[2], boot_alle$t0[3]), boot_alle_ci[2:3, 1:2], c(mean(boot_alle$t[,2]), mean(boot_alle$t[,3])), c(median(boot_alle$t[,2]), median(boot_alle$t[,3])))
 
 boot_alle_ggp <- rownames_to_column(boot_alle_gg) %>% 
   mutate(data = "all_E")
-colnames(boot_alle_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_alle_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -247,11 +252,11 @@ summary(lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5))
 plot(boot_05)
 hist(boot_05, ci = 'norm', legend = "separate") 
 
-boot_05_gg <- data.frame(c(boot_05$t0[2], boot_05$t0[3]), boot_05_ci[2:3, 1:2])
+boot_05_gg <- data.frame(c(boot_05$t0[2], boot_05$t0[3]), boot_05_ci[2:3, 1:2], c(mean(boot_05$t[,2]), mean(boot_05$t[,3])), c(median(boot_05$t[,2]), median(boot_05$t[,3])))
 
 boot_05_ggp <- rownames_to_column(boot_05_gg) %>% 
   mutate(data = "05km")
-colnames(boot_05_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_05_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -268,11 +273,11 @@ summary(M100Y_02_lm)
 
 confint(M100Y_02_lm, level = 0.95, type = "norm")
 
-Nboot_02_gg <- data.frame(c(summary(M100Y_02_lm)$coefficient[2], summary(M100Y_02_lm)$coefficient[3]), confint(M100Y_02_lm, level = 0.95, type = "norm")[2:3, 1:2])
+Nboot_02_gg <- data.frame(c(summary(M100Y_02_lm)$coefficient[2], summary(M100Y_02_lm)$coefficient[3]), confint(M100Y_02_lm, level = 0.95, type = "norm")[2:3, 1:2], NA, NA)
 
 Nboot_02_ggp <- rownames_to_column(Nboot_02_gg) %>% 
   mutate(data = "02km")
-colnames(Nboot_02_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(Nboot_02_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ```
@@ -287,18 +292,22 @@ colnames(Nboot_02_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 #Combine different subset boot estimates 
 
 boots_alldata <- rbind(boot_df2_ggp, boot_alle_ggp, boot_05_ggp, Nboot_02_ggp) %>% 
-  mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km")))
+  mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km"))) 
 
 
 
 ggplot(data = boots_alldata) +
   geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
   geom_point(aes(x = coefEst, y = var), size = 2) + 
+  #geom_point(aes(x = bootMean, y = var), size = 2, col = "red") +
   geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(breaks = seq(-10, 10, 1)) +
   scale_color_brewer(palette = "Dark2") +
   facet_wrap(~data, ncol = 1) +
   theme_bw()
+
+
+##MANUAL construction of confidence intervals???
 
 
 ```
@@ -330,11 +339,11 @@ plot(boot_df2C) #can specify index for different predictors (default = intercept
 hist(boot_df2C, ci = 'norm', legend = "separate")
 
 #Save to df for plotting
-boot_df2C_gg <- data.frame(c(boot_df2C$t0[2], boot_df2C$t0[3]), boot_df2C_ci[2:3, 1:2]) #Just estimates for MAT, MAP 
+boot_df2C_gg <- data.frame(c(boot_df2C$t0[2], boot_df2C$t0[3]), boot_df2C_ci[2:3, 1:2], c(mean(boot_df2C$t[,2]), mean(boot_df2C$t[,3])), c(median(boot_df2C$t[,2]), median(boot_df2C$t[,3]))) 
 
 boot_df2C_ggp <- rownames_to_column(boot_df2C_gg) %>% 
   mutate(data = "all")
-colnames(boot_df2C_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_df2C_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 
@@ -357,11 +366,11 @@ hist(boot_alleC, ci = 'norm', legend = "separate")
 #boot.ci(boot_df2C, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
 
 
-boot_alleC_gg <- data.frame(c(boot_alleC$t0[2], boot_alleC$t0[3]), boot_alleC_ci[2:3, 1:2])
+boot_alleC_gg <- data.frame(c(boot_alleC$t0[2], boot_alleC$t0[3]), boot_alleC_ci[2:3, 1:2], c(mean(boot_alleC$t[,2]), mean(boot_alleC$t[,3])), c(median(boot_alleC$t[,2]), median(boot_alleC$t[,3])))
 
 boot_alleC_ggp <- rownames_to_column(boot_alleC_gg) %>% 
   mutate(data = "all_E")
-colnames(boot_alleC_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_alleC_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -379,11 +388,11 @@ summary(lm(DOY ~ MAT_100Y + MAP_100Y + year + elev_m + long, data = nemo_e0_5))
 plot(boot_05C)
 hist(boot_05C, ci = 'norm', legend = "separate") 
 
-boot_05C_gg <- data.frame(c(boot_05C$t0[2], boot_05C$t0[3]), boot_05C_ci[2:3, 1:2])
+boot_05C_gg <- data.frame(c(boot_05C$t0[2], boot_05C$t0[3]), boot_05C_ci[2:3, 1:2], c(mean(boot_05C$t[,2]), mean(boot_05C$t[,3])), c(median(boot_05C$t[,2]), median(boot_05C$t[,3])))
 
 boot_05C_ggp <- rownames_to_column(boot_05C_gg) %>% 
   mutate(data = "05km")
-colnames(boot_05C_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_05C_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -395,11 +404,11 @@ summary(M100Y_02C_lm)
 
 confint(M100Y_02C_lm, level = 0.95, type = "norm")
 
-Nboot_02C_gg <- data.frame(c(summary(M100Y_02C_lm)$coefficient[2], summary(M100Y_02C_lm)$coefficient[3]), confint(M100Y_02C_lm, level = 0.95, type = "norm")[2:3, 1:2])
+Nboot_02C_gg <- data.frame(c(summary(M100Y_02C_lm)$coefficient[2], summary(M100Y_02C_lm)$coefficient[3]), confint(M100Y_02C_lm, level = 0.95, type = "norm")[2:3, 1:2], NA, NA)
 
 Nboot_02C_ggp <- rownames_to_column(Nboot_02C_gg) %>% 
   mutate(data = "02km")
-colnames(Nboot_02C_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(Nboot_02C_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 ```
 
 
@@ -408,19 +417,18 @@ colnames(Nboot_02C_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
 boots_alldataC <- rbind(boot_df2C_ggp, boot_alleC_ggp, boot_05C_ggp, Nboot_02C_ggp) %>% 
   mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km")))
 
-## Plot with SE instead??
-##Show coeffs for year, elev, long??
 
 ggplot(data = boots_alldataC) +
   geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
   geom_point(aes(x = coefEst, y = var), size = 2) + 
+  #geom_point(aes(x = bootMean, y = var), size = 2, col = "red") +
   geom_vline(xintercept = 0, lty = 2) +
-  scale_x_continuous(breaks = seq(-10, 10, 1)) +
+  scale_x_continuous(breaks = seq(-10, 24, 2)) +
   scale_color_brewer(palette = "Dark2") +
   facet_wrap(~data, ncol = 1) +
   theme_bw()
 
-
+ggsave(here::here("analyses", "figs1", "errorD", "errorboots_100Y_t0.png"), width = 6, height = 4)
 
 
 
@@ -455,12 +463,15 @@ summary(lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_df2))
 plot(boot_df2A) 
 hist(boot_df2A, ci = 'norm', legend = "separate")
 
+#Compare different methods - MAP
+boot.ci(boot_df2A, index = 3, conf = 0.95, type = c("basic", "norm", "bca", "perc"))
+
 #Save to df for plotting
-boot_df2A_gg <- data.frame(c(boot_df2A$t0[2], boot_df2A$t0[3]), boot_df2A_ci[2:3, 1:2]) #Just estimates for MAT, MAP Anoms
+boot_df2A_gg <- data.frame(c(boot_df2A$t0[2], boot_df2A$t0[3]), boot_df2A_ci[2:3, 1:2], c(mean(boot_df2A$t[,2]), mean(boot_df2A$t[,3])), c(median(boot_df2A$t[,2]), median(boot_df2A$t[,3]))) #Just estimates for MAT, MAP Anoms
 
 boot_df2A_ggp <- rownames_to_column(boot_df2A_gg) %>% 
   mutate(data = "all")
-colnames(boot_df2A_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_df2A_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 
@@ -479,11 +490,11 @@ summary(lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_all_errors))
 plot(boot_alleA)
 hist(boot_alleA, ci = 'norm', legend = "separate") 
 
-boot_alleA_gg <- data.frame(c(boot_alleA$t0[2], boot_alleA$t0[3]), boot_alleA_ci[2:3, 1:2])
+boot_alleA_gg <- data.frame(c(boot_alleA$t0[2], boot_alleA$t0[3]), boot_alleA_ci[2:3, 1:2], c(mean(boot_alleA$t[,2]), mean(boot_alleA$t[,3])), c(median(boot_alleA$t[,2]), median(boot_alleA$t[,3])))
 
 boot_alleA_ggp <- rownames_to_column(boot_alleA_gg) %>% 
   mutate(data = "all_E")
-colnames(boot_alleA_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_alleA_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -501,11 +512,11 @@ summary(lm(DOY ~ MAT_A + MAP_A + year + elev_m + long, data = nemo_e0_5))
 plot(boot_05A)
 hist(boot_05A, ci = 'norm', legend = "separate") 
 
-boot_05A_gg <- data.frame(c(boot_05A$t0[2], boot_05A$t0[3]), boot_05A_ci[2:3, 1:2])
+boot_05A_gg <- data.frame(c(boot_05A$t0[2], boot_05A$t0[3]), boot_05A_ci[2:3, 1:2], c(mean(boot_05A$t[,2]), mean(boot_05A$t[,3])), c(median(boot_05A$t[,2]), median(boot_05A$t[,3])))
 
 boot_05A_ggp <- rownames_to_column(boot_05A_gg) %>% 
   mutate(data = "05km")
-colnames(boot_05A_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_05A_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -517,11 +528,11 @@ summary(M100Y_02A_lm)
 
 confint(M100Y_02A_lm, level = 0.95, type = "norm")
 
-Nboot_02A_gg <- data.frame(c(summary(M100Y_02A_lm)$coefficient[2], summary(M100Y_02A_lm)$coefficient[3]), confint(M100Y_02A_lm, level = 0.95, type = "norm")[2:3, 1:2])
+Nboot_02A_gg <- data.frame(c(summary(M100Y_02A_lm)$coefficient[2], summary(M100Y_02A_lm)$coefficient[3]), confint(M100Y_02A_lm, level = 0.95, type = "norm")[2:3, 1:2], NA, NA)
 
 Nboot_02A_ggp <- rownames_to_column(Nboot_02A_gg) %>% 
   mutate(data = "02km")
-colnames(Nboot_02A_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(Nboot_02A_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 ```
 
@@ -532,22 +543,25 @@ boots_alldataA <- rbind(boot_df2A_ggp, boot_alleA_ggp, boot_05A_ggp, Nboot_02A_g
   mutate(data = factor(data, levels = c("all", "all_E", "05km", "02km")))
 
 
+#STANDARDIZE VALUES
 ggplot(data = boots_alldataA) +
   geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
   geom_point(aes(x = coefEst, y = var), size = 2) + 
+  #geom_point(aes(x = bootMean, y = var), size = 2, col = "red") +
   geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(breaks = seq(-10, 10, 1)) +
   scale_color_brewer(palette = "Dark2") +
   facet_wrap(~data, ncol = 1) +
   theme_bw()
 
+ggsave(here::here("analyses", "figs1", "errorD", "errorboots_ANOM_t0.png"), width = 6, height = 4)
 
 ```
 <br>  
 
 
 ##### Anomalies + 100Y  
-*Fix extraction of all coefficients!*  
+*EXCLUDE: CIs are VERY STRANGE here!*  
 
 ```{r warning = FALSE, message = FALSE}
 param_estAL <- function(df, index){ # df = data, index = # obs to inc [req by boot()]
@@ -561,7 +575,9 @@ param_estAL <- function(df, index){ # df = data, index = # obs to inc [req by bo
 ####
 #ALL DATA
 boot_df2AL <- boot(nemo_df2, param_estAL, 5000)
-boot_df2AL_ci <- Confint(boot_df2AL, level = 0.95, type = "basic")
+boot_df2AL_ci <- Confint(boot_df2AL, level = 0.95, type = "norm")
+
+boot_df2AL_ci2 <- boot.ci(boot_df2AL, index = 3, conf = 0.95, type = "norm")
 
 #outputs
 summary(boot_df2AL)
@@ -573,11 +589,11 @@ plot(boot_df2AL)
 hist(boot_df2AL, ci = 'norm', legend = "separate")
 
 #Save to df for plotting
-boot_df2AL_gg <- data.frame(c(boot_df2AL$t0[2], boot_df2AL$t0[3], boot_df2AL$t0[4], boot_df2AL$t0[5]), boot_df2AL_ci[2:5, 1:2]) #Just estimates for MAT, MAP Anoms
+boot_df2AL_gg <- data.frame(c(boot_df2AL$t0[2], boot_df2AL$t0[3], boot_df2AL$t0[4], boot_df2AL$t0[5]), boot_df2AL_ci[2:5, 1:2], c(mean(boot_df2AL$t[,2]), mean(boot_df2AL$t[,3]), mean(boot_df2AL$t[,4]), mean(boot_df2AL$t[,5])), c(median(boot_df2AL$t[,2]), median(boot_df2AL$t[,3]), median(boot_df2AL$t[,4]), median(boot_df2AL$t[,5]))) #Just estimates for MAT, MAP Anoms
 
 boot_df2AL_ggp <- rownames_to_column(boot_df2AL_gg) %>% 
   mutate(data = "all")
-colnames(boot_df2AL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_df2AL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 
@@ -599,11 +615,11 @@ summary(lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, dat
 plot(boot_alleAL)
 hist(boot_alleAL, ci = 'norm', legend = "separate") 
 
-boot_alleAL_gg <- data.frame(c(boot_alleAL$t0[2], boot_alleAL$t0[3], boot_alleAL$t0[4], boot_alleAL$t0[5]), boot_alleAL_ci[2:5, 1:2])
+boot_alleAL_gg <- data.frame(c(boot_alleAL$t0[2], boot_alleAL$t0[3], boot_alleAL$t0[4], boot_alleAL$t0[5]), boot_alleAL_ci[2:5, 1:2], c(mean(boot_alleAL$t[,2]), mean(boot_alleAL$t[,3]), mean(boot_alleAL$t[,4]), mean(boot_alleAL$t[,5])), c(median(boot_alleAL$t[,2]), median(boot_alleAL$t[,3]), median(boot_alleAL$t[,4]), median(boot_alleAL$t[,5])))
 
 boot_alleAL_ggp <- rownames_to_column(boot_alleAL_gg) %>% 
   mutate(data = "all_E")
-colnames(boot_alleAL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_alleAL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -621,11 +637,11 @@ summary(lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + year + elev_m + long, dat
 plot(boot_05AL)
 hist(boot_05AL, ci = 'norm', legend = "separate") 
 
-boot_05AL_gg <- data.frame(c(boot_05AL$t0[2], boot_05AL$t0[3], boot_05AL$t0[4], boot_05AL$t0[5]), boot_05AL_ci[2:5, 1:2])
+boot_05AL_gg <- data.frame(c(boot_05AL$t0[2], boot_05AL$t0[3], boot_05AL$t0[4], boot_05AL$t0[5]), boot_05AL_ci[2:5, 1:2], c(mean(boot_05AL$t[,2]), mean(boot_05AL$t[,3]), mean(boot_05AL$t[,4]), mean(boot_05AL$t[,5])), c(median(boot_05AL$t[,2]), median(boot_05AL$t[,3]), median(boot_05AL$t[,4]), median(boot_05AL$t[,5])))
 
 boot_05AL_ggp <- rownames_to_column(boot_05AL_gg) %>% 
   mutate(data = "05km")
-colnames(boot_05AL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(boot_05AL_ggp) <- c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 
 ###
@@ -637,11 +653,11 @@ summary(M100Y_02AL_lm)
 
 confint(M100Y_02AL_lm, level = 0.95, type = "norm")
 
-Nboot_02AL_gg <- data.frame(c(summary(M100Y_02AL_lm)$coefficient[2], summary(M100Y_02AL_lm)$coefficient[3], summary(M100Y_02AL_lm)$coefficient[4], summary(M100Y_02AL_lm)$coefficient[5]), confint(M100Y_02AL_lm, level = 0.95, type = "norm")[2:5, 1:2])
+Nboot_02AL_gg <- data.frame(c(summary(M100Y_02AL_lm)$coefficient[2], summary(M100Y_02AL_lm)$coefficient[3], summary(M100Y_02AL_lm)$coefficient[4], summary(M100Y_02AL_lm)$coefficient[5]), confint(M100Y_02AL_lm, level = 0.95, type = "norm")[2:5, 1:2], NA, NA)
 
 Nboot_02AL_ggp <- rownames_to_column(Nboot_02AL_gg) %>% 
   mutate(data = "02km")
-colnames(Nboot_02AL_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "data")
+colnames(Nboot_02AL_ggp) <-  c("var", "coefEst", "ci_2.5", "ci_97.5", "bootMean", "bootMed", "data")
 
 ```
 
@@ -656,6 +672,7 @@ boots_alldataAL <- rbind(boot_df2AL_ggp, boot_alleAL_ggp, boot_05AL_ggp, Nboot_0
 ggplot(data = boots_alldataAL) +
   geom_errorbarh(aes(y = var, xmin = ci_2.5, xmax = ci_97.5, color = data), size = 1) +
   geom_point(aes(x = coefEst, y = var), size = 2) + 
+  #geom_point(aes(x = bootMean, y = var), size = 2, col = "red") +
   geom_vline(xintercept = 0, lty = 2) +
   scale_x_continuous(breaks = seq(-10, 10, 1)) +
   scale_color_brewer(palette = "Dark2") +
@@ -667,200 +684,6 @@ ggplot(data = boots_alldataAL) +
 It appears like there may be more variation in MAT anomalies compared to MAT_100Y. *Make sure nothing weird is happening with these estimates!*  
 
 ---  
-
-
-
-## Randomly simulated coordinates (lat/long) by a set error distance  
-
-How does varying point coordinates by different error distances affect pheno-climatic models?  
-
-Steps:  
-1. Assign each record (0-2 km set) four sets of new coordinates, each dispersed in a random direction from the original  
-  - 2 km away  
-  - 5 km away  
-  - 15 km away  
-  - 25 km away  
-2. Obtain climate data for each new coordinate set  
-3. Compare models of the original 2 km data set with those of the 4 new data sets  
-4. Replication (5x)  
-
-<br>  
-
-Determining new coordinates based on km will depend on the present latitude and longitude of a collection. Simulations here are based off a subset of the original data for which confidence in specimen collection locations is high (0-2 km) so that deviations in the parameter estimates and $R^2$ values of models from simulated data can be attributed to effects of real differences in collection uncertainty AND locations. Use the WGS84 ellipsoid (the datum used for the majority of records; some NAD83 and NAD27 [*calculate % in 0-2km data*]) to calculate new decimal degrees based on some km deviation at each record. 
-
-"geosphere" package -> `destPoint()` function computes a new coordinate point (WGS84) when given a start point, initial bearing, and distance.  
-
-
-### Assign new coordinates  
-#### SIMULTATIONS ONLY for HIGH-CONFIDENCE COLLECTIONS (0-2 KM ERROR DISTANCE)  
-
-```{r}
-library(geosphere)
-nemo_r_2 <- nemo_e2 %>% 
-  select(specimen_number:mature_5)
-
-#destPoint from geosphere package - e.g.
-destPoint(p = c(-120.0312, 37.47905), b = 45, d = 2000) #default WGS84
-#Seems pretty accurate!!! (Compared start and end points in Google maps)
-
-
-##
-### Goal: apply destPoint() to all existing lat/long to get new lat/long, each with *different* random bearing
-
-#Basic for loop
-  long_n1 <- rep(NA, nrow(nemo_r_2))
-  lat_n1 <- rep(NA, nrow(nemo_r_2))
-  
-for(i in 1:length(nemo_r_2$lat)){
-  
-  
-  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = 1000)
-  
-  long_n1[i] <-  latlong_n[1]
-  lat_n1[i] <-  latlong_n[2]
-   
-}
-
-
-#######
-# 2 km error new coords
-#######
-#Simulations + for loop
-
-  
-sim_list_2ka <- list()
-
-for(x in 1:10){ #10 reps
-  
-  long_n1 <- rep(NA,nrow(nemo_r_2))
-  lat_n1 <- rep(NA, nrow(nemo_r_2))
-
-  
-for(i in 1:length(nemo_r_2$lat)){
-  
-  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 2000))
-  
-  long_n1[i] <-  latlong_n[1]
-  lat_n1[i] <-  latlong_n[2]
-   
-}
-  
-  sim_list_2ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
-  colnames(sim_list_2ka[[x]]) <- c("specimen_number", "long_n2k", "lat_n2k")
-  
-  print(x)
-  
-}
-  
-  
-#Rbind all list elements
-
-  
-#Using bind_rows()
-#sims_all_2ka <- bind_rows(sim_list_2ka[[1:10]])
-
-
-#using reduce() 
-sims_all_2ka <- as.data.frame(reduce(sim_list_2ka, rbind)) %>% 
-  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743),rep("rep5", times = 743),rep("rep6", times = 743),rep("rep7", times = 743), rep("rep8", times = 743), rep("rep9", times = 743), rep("rep10", times = 743))) %>% 
-  mutate(long_n2k = as.numeric(long_n2k), lat_n2k = as.numeric(lat_n2k))
-```
-
-##### Add elevation to records (optional for ClimateNA)  
-**Very time-consuming!!!**  
-```{r message = FALSE, eval = FALSE}
-#Add elevation
-library(elevatr)
-prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
-
-
-sims_all_2kaE$elev_m_n <- get_elev_point(sims_all_2ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df...
-
-
-sims_all_2kaE2 <- sims_all_2ka %>% 
-  mutate(elev_m_n = sims_all_2kaE[[1]]) 
-
-
-#save as CSV before something fucks up and I have to rerun the 3h elev grab code
-write_csv(sims_all_2kaE2, here::here("analyses", "new_coords", "sims_2ka.csv"))
-
-
-#E.g. 2, 5, 15, 25 km coords all in same csv...?
-```
-
-
-```{r}
-#Read CSV - fix negative elevations to be 0
-```
-
-
-**Standardize & Save CSV for ClimateNA data extraction**  
-Columns: ID1, ID2, lat, long,	el  
-
-```{r message = FALSE, eval = FALSE}
-# 2 km simulated coordinates 
-#Maybe have ID2 = replicate identifier?
-#sims_2ka <- 
-
-
-
-```
-*NOTE*: If extraction fails at first, **clear** all cells below final rows of standardized CSV!  
-
-*Calculate* Difference in (1) elevation, (2) MAT and MAP between original and simulated coordinates  
-- Determine if differences in elev or climate relate to differences in model results!  
-```{r}
-
-```
-
-```{r eval = FALSE, message = FALSE}
-#DEFUNCT/FAILED ANALYSES
-library(elevatr) #must have package rgdal installed!
-#Get elevation for new coords as well
-prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point() ##MAKE DATUM SPECIFIC TO RECORD???
-
-for(x in 1:length(sim_list_2ka)){
-  
-elev_n1 <- rep(NA, nrow(nemo_r_2))
-
-for(i in 1:length(nemo_r_2$lat)){
-
-elev_n1[i] <- get_elev_point(as.numeric(sim_list_2ka[[x]][,2:3]), prj = prj_dd, src = "epqs")
-
-}
-
-sim_list_2ka_e[[x]] <- cbind(sim_list_2ka, elev_n1)
-
-}
-
-######Unable to apply for loop using get_elev_point to list - too complicated
-
-
-#Tadeo's randCoord function
-#randCoord(x = c(-120.66, -120), y = c(34.66, 37), d_min = 1.5, d_max = 2.5)
-
-#randCoord(x = nemo_r_2$long, y = nemo_r_2$lat, d_min = 1.5, d_max = 2.5)
-
-# apply() functions approach
-
-
-#destPoint alone
-nemo_ncoords_2km <- nemo_r_2 %>% 
-  mutate(long_n1 = sapply(X = c(long, lat), FUN = destPoint(long, lat, b = sample(0:360, 1), d = 2000)))
-
-
-#getLatLong_r function
-nemo_ncoords_2km <- nemo_r_2 %>% 
-  mutate(longlat_n1 = sapply(X = c(long, lat, d = 2000), FUN = getLatLong_r(lat = lat, long = long)))
-
-#destPoint(p = c(long, lat), b = sample(0:360, 1), d = 2000)[,1]) #for loop or tapply
-
-nemo_ncoords_2km <- nemo_r_2 %>% 
-  mutate(long_n1 = NA, lat_n1 = NA)
-
-
-```
-
 
 
 

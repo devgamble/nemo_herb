@@ -1,0 +1,96 @@
+---
+title: "bias_error3b"
+author: "Devin Gamble"
+date: "11/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Regression Analysis & Comparison of Simulated coordinate data  
+
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+library(stringr)
+```
+
+
+#### Load Data  
+```{r message = FALSE, warning = FALSE}
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+Data subset by error distances/bins  
+```{r message = FALSE, warning = FALSE}
+#All errors
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+#1166 after rm records before 1901
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") 
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") 
+
+nemo_r_2 <- nemo_e2 %>% 
+  select(specimen_number:mature_5) #exclude existing climate data
+
+```
+
+**Simulated Data**  
+```{r message = FALSE}
+# 2km Displacement
+sims_2km <- read_csv(here::here("analyses", "new_coords", "sims_2ka_all.csv")) %>%   
+  mutate_at(vars(PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+  na_if(y = -Inf) #log-transform long-term MAP
+#3709 obs
+
+# 5km Displacement
+sims_5km <- read_csv(here::here("analyses", "new_coords", "sims_5ka_all.csv")) %>%   
+  mutate_at(vars(PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+  na_if(y = -Inf) #log-transform long-term MAP
+#3693 obs
+
+# 15km Displacement
+sims_15km <- read_csv(here::here("analyses", "new_coords", "sims_15ka_all.csv")) %>%   
+  mutate_at(vars(PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+  na_if(y = -Inf) #log-transform long-term MAP
+#3630 obs
+
+# 25km Displacement
+sims_25km <- read_csv(here::here("analyses", "new_coords", "sims_25ka_all.csv")) %>%   
+  mutate_at(vars(PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+  na_if(y = -Inf) #log-transform long-term MAP
+#3609 obs
+
+```
+
+
+
+
+
+
+
+

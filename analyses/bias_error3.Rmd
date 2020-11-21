@@ -63,12 +63,15 @@ nemo_e2 <- nemo_all_errors %>%
 How does varying point coordinates by different error distances affect pheno-climatic models?  
 
 Steps:  
-1. Assign each record (0-2 km set) four sets of new coordinates, each dispersed in a random direction from the original  
+1. Assign each record (of the 0-2 km set) four sets of new coordinates, each dispersed in a random direction from the original  
   - 2 km away  
   - 5 km away  
   - 15 km away  
   - 25 km away  
-2. Obtain climate data for each new coordinate set  
+2. Obtain climate data for each new coordinate set:
+  - MAT_100Y, MAP_100Y  
+  - MAT_A, MAP_A  
+  - (Tmin_wt + sp, PPT_wt + sp)  
 3. Compare models of the original 2 km data set with those of the 4 new data sets  
 4. Replication (5x)  
 
@@ -79,13 +82,16 @@ Determining new coordinates based on km will depend on the present latitude and 
 "geosphere" package -> `destPoint()` function computes a new coordinate point (WGS84) when given a start point, initial bearing, and distance.  
 
 
+*NOTE*: Differences between the WGS84 and NAD83 geodetic datum are minuscule and assumed to not have an impact on the estimation of new coordinates.  
+
 ### Assign new coordinates  
-#### SIMULTATIONS ONLY for HIGH-CONFIDENCE COLLECTIONS (0-2 KM ERROR DISTANCE)  
+
+#### 2 km displacement  
 
 ```{r}
 library(geosphere)
 nemo_r_2 <- nemo_e2 %>% 
-  select(specimen_number:mature_5)
+  select(specimen_number:mature_5) #exclude existing climate data
 
 #destPoint from geosphere package - e.g.
 destPoint(p = c(-120.0312, 37.47905), b = 45, d = 2000) #default WGS84
@@ -118,7 +124,7 @@ for(i in 1:length(nemo_r_2$lat)){
   
 sim_list_2ka <- list()
 
-for(x in 1:10){ #10 reps
+for(x in 1:5){ #5 reps (10 reps was too much for my cpu to handle...)
   
   long_n1 <- rep(NA,nrow(nemo_r_2))
   lat_n1 <- rep(NA, nrow(nemo_r_2))
@@ -150,11 +156,11 @@ for(i in 1:length(nemo_r_2$lat)){
 
 #using reduce() 
 sims_all_2ka <- as.data.frame(reduce(sim_list_2ka, rbind)) %>% 
-  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743),rep("rep5", times = 743),rep("rep6", times = 743),rep("rep7", times = 743), rep("rep8", times = 743), rep("rep9", times = 743), rep("rep10", times = 743))) %>% 
+  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743), rep("rep5", times = 743))) %>% 
   mutate(long_n2k = as.numeric(long_n2k), lat_n2k = as.numeric(lat_n2k))
 ```
 
-##### Add elevation to records (optional for ClimateNA)  
+##### Add elevation to records (optional for ClimateNA) -- **RUN MANUALLY**  
 **Very time-consuming!!!**  
 ```{r message = FALSE, eval = FALSE}
 #Add elevation
@@ -176,11 +182,15 @@ write_csv(sims_all_2kaE2, here::here("analyses", "new_coords", "sims_2ka.csv"))
 #E.g. 2, 5, 15, 25 km coords all in same csv...?
 ```
 
+**Load csv w/ elevation**  
 
-```{r}
-#Read CSV - fix negative elevations to be 0
+```{r message = FALSE}
+sims_2KE <- read_csv(here::here("analyses", "new_coords", "sims_2ka.csv")) %>% 
+  filter(!elev_m_n < 0) %>%  #remove records with negative elevation
+  filter(replicate %in% c("rep1", "rep2", "rep3", "rep4", "rep5")) # Remove replicates 6-10 (previously generated)
 ```
 
+<br>  
 
 **Standardize & Save CSV for ClimateNA data extraction**  
 Columns: ID1, ID2, lat, long,	el  
@@ -188,18 +198,817 @@ Columns: ID1, ID2, lat, long,	el
 ```{r message = FALSE, eval = FALSE}
 # 2 km simulated coordinates 
 #Maybe have ID2 = replicate identifier?
-#sims_2ka <- 
 
+sims_2KE_s <- sims_2KE %>% 
+  select(specimen_number, replicate, lat_n2k, long_n2k, elev_m_n) %>% 
+  rename(ID1 = specimen_number, ID2 = replicate, lat = lat_n2k, long = long_n2k, el = elev_m_n)
+
+#Using replicate as a second ID -- will have to add YoC back in later for calculating anomalies
+
+write_csv(sims_2KE_s, here::here("analyses", "new_coords", "sims_2ka_s.csv"))
 
 
 ```
 *NOTE*: If extraction fails at first, **clear** all cells below final rows of standardized CSV!  
 
-*Calculate* Difference in (1) elevation, (2) MAT and MAP between original and simulated coordinates  
+*Calculate* Difference in elevation (MAT and MAP too?) between original and simulated coordinates  
 - Determine if differences in elev or climate relate to differences in model results!  
-```{r}
+
+
+##### Organize Climate Data  
+
+```{r message = FALSE}
+
+TS_sims_2kE <- read_csv(here::here("analyses", "new_coords", "new_clim", "sims_2ka_s_1901-2019MSY.csv"), na = c("-9999", "-9999.0")) %>%
+  rename(specimen_number = ID1, replicate = ID2, lat_n2k = Latitude, long_n2k = Longitude, elev_m_n = Elevation) %>% 
+  filter(replicate %in% c("rep1", "rep2", "rep3", "rep4", "rep5")) %>%  # Remove replicates 6-10 (previously generated)
+  filter(!is.na(MAT)) %>%  #Filter records (1 rep obs, or 119 rows here) in the ocean
+  select(-c(Rad01:Rad12, Rad_wt:Rad_at, MAR)) #remove these columns
+  
+#Column renaming function
+
+rename_ftn <- function(x, apnd, rang){         
+  names_x <- colnames(x)[rang]
+  print(paste(names_x, apnd, sep = ""))
+} 
+
+#Add in YoC
+nemo_2k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+
+
+TS_sims_2kE_YoC <- merge(TS_sims_2kE, nemo_2k_YoC, all.x = TRUE) #Takes too much memory??
+
+sims_2kE_YoC <- TS_sims_2kE_YoC %>% 
+  filter(YoC == Year) %>%  #Select year-of-collection climate conditions x 5 replicates for each record
+  select(-YoC)
+#3709 observations instead of 3715: some simulated records w/ elevation < 0 --> excluded
+#1 replicate in ocean removed
+
+
+#Append column names
+colnames(sims_2kE_YoC)[7:236] <- rename_ftn(sims_2kE_YoC, apnd = "_Y", rang = 7:236)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_2k_100avg <- TS_sims_2kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(Tmax01:RH), mean)  #It works!
+#NA values returned if any single value is NA - looks like it mostly affects Rad and MAR
+
+  
+colnames(TS_2k_100avg)[2:231] <- rename_ftn(TS_2k_100avg, apnd = "_100Y", rang = 2:231)
+
+## merge YoC & long-term data
+
+sims_2kE_m <- merge(TS_2k_100avg, sims_2kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+
+anoms_2k1 <- sims_2kE_m %>% 
+  select(specimen_number:elev_m_n, Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y, 
+         Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_2k2 <- anoms_2k1 %>% 
+  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y,
+         Tmax02_A = Tmax02_Y - Tmax02_100Y,
+         Tmax03_A = Tmax03_Y - Tmax03_100Y,
+         Tmax04_A = Tmax04_Y - Tmax04_100Y,
+         Tmax05_A = Tmax05_Y - Tmax05_100Y,
+         Tmax06_A = Tmax06_Y - Tmax06_100Y,
+         Tmax07_A = Tmax07_Y - Tmax07_100Y,
+         Tmax08_A = Tmax08_Y - Tmax08_100Y,
+         Tmax09_A = Tmax09_Y - Tmax09_100Y,
+         Tmax10_A = Tmax10_Y - Tmax10_100Y,
+         Tmax11_A = Tmax11_Y - Tmax11_100Y,
+         Tmax12_A = Tmax12_Y - Tmax12_100Y,
+         Tmin01_A = Tmin01_Y - Tmin01_100Y,
+         Tmin02_A = Tmin02_Y - Tmin02_100Y,
+         Tmin03_A = Tmin03_Y - Tmin03_100Y,
+         Tmin04_A = Tmin04_Y - Tmin04_100Y,
+         Tmin05_A = Tmin05_Y - Tmin05_100Y,
+         Tmin06_A = Tmin06_Y - Tmin06_100Y,
+         Tmin07_A = Tmin07_Y - Tmin07_100Y,
+         Tmin08_A = Tmin08_Y - Tmin08_100Y,
+         Tmin09_A = Tmin09_Y - Tmin09_100Y,
+         Tmin10_A = Tmin10_Y - Tmin10_100Y,
+         Tmin11_A = Tmin11_Y - Tmin11_100Y,
+         Tmin12_A = Tmin12_Y - Tmin12_100Y,
+         Tave01_A = Tave01_Y - Tave01_100Y,
+         Tave02_A = Tave02_Y - Tave02_100Y,
+         Tave03_A = Tave03_Y - Tave03_100Y,
+         Tave04_A = Tave04_Y - Tave04_100Y,
+         Tave05_A = Tave05_Y - Tave05_100Y,
+         Tave06_A = Tave06_Y - Tave06_100Y,
+         Tave07_A = Tave07_Y - Tave07_100Y,
+         Tave08_A = Tave08_Y - Tave08_100Y,
+         Tave09_A = Tave09_Y - Tave09_100Y,
+         Tave10_A = Tave10_Y - Tave10_100Y,
+         Tave11_A = Tave11_Y - Tave11_100Y,
+         Tave12_A = Tave12_Y - Tave12_100Y,
+         PPT01_A = PPT01_Y - PPT01_100Y,
+         PPT02_A = PPT02_Y - PPT02_100Y,
+         PPT03_A = PPT03_Y - PPT03_100Y,
+         PPT04_A = PPT04_Y - PPT04_100Y,
+         PPT05_A = PPT05_Y - PPT05_100Y,
+         PPT06_A = PPT06_Y - PPT06_100Y,
+         PPT07_A = PPT07_Y - PPT07_100Y,
+         PPT08_A = PPT08_Y - PPT08_100Y,
+         PPT09_A = PPT09_Y - PPT09_100Y,
+         PPT10_A = PPT10_Y - PPT10_100Y,
+         PPT11_A = PPT11_Y - PPT11_100Y,
+         PPT12_A = PPT12_Y - PPT12_100Y,
+         Tmax_wt_A = Tmax_wt_Y - Tmax_wt_100Y,
+         Tmax_sp_A = Tmax_sp_Y - Tmax_sp_100Y,
+         Tmax_sm_A = Tmax_sm_Y - Tmax_sm_100Y,
+         Tmax_at_A = Tmax_at_Y - Tmax_at_100Y,
+         Tmin_wt_A = Tmin_wt_Y - Tmin_wt_100Y,
+         Tmin_sp_A = Tmin_sp_Y - Tmin_sp_100Y,
+         Tmin_sm_A = Tmin_sm_Y - Tmin_sm_100Y,
+         Tmin_at_A = Tmin_at_Y - Tmin_at_100Y,
+         Tave_wt_A = Tave_wt_Y - Tave_wt_100Y,
+         Tave_sp_A = Tave_sp_Y - Tave_sp_100Y,
+         Tave_sm_A = Tave_sm_Y - Tave_sm_100Y,
+         Tave_at_A = Tave_at_Y - Tave_at_100Y,
+         PPT_wt_A = PPT_wt_Y - PPT_wt_100Y,
+         PPT_sp_A = PPT_sp_Y - PPT_sp_100Y,
+         PPT_sm_A = PPT_sm_Y - PPT_sm_100Y,
+         PPT_at_A = PPT_at_Y - PPT_at_100Y,
+         MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_2k3 <- anoms_2k2 %>% 
+  select(specimen_number:elev_m_n, Tmax01_A:MSP_A)
+
+
+## Combine data frames into one for all 2k simulations climate
+
+sims_2k_all <- merge(sims_2kE_m, anoms_2k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n2k, long_n2k, elev_m_n, everything())
+
+write_csv(sims_2k_all, here::here("analyses", "new_coords", "sims_2ka_all.csv"))
 
 ```
+
+
+
+#### 5 km Displacement  
+
+Create Simulated records
+
+```{r message = FALSE}
+  
+sim_list_5ka <- list()
+
+for(x in 1:5){ #5 reps (10 reps was too much for my cpu to handle...)
+  
+  long_n1 <- rep(NA, nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 5000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_5ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_5ka[[x]]) <- c("specimen_number", "long_n5k", "lat_n5k")
+  
+  print(x)
+  
+}
+  
+  
+#Combine Rows
+#using reduce() 
+sims_all_5ka <- as.data.frame(reduce(sim_list_5ka, rbind))  %>% 
+  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743), rep("rep5", times = 743))) %>% 
+  mutate(long_n5k = as.numeric(long_n5k), lat_n5k = as.numeric(lat_n5k))
+
+```
+
+
+##### Add elevation to records -- **RUN MANUALLY**  
+**Very time-consuming!!!**  
+```{r message = FALSE, eval = FALSE}
+#Add elevation
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+sims_all_5kaE <- sims_all_5ka
+sims_all_5kaE$elev_m_n <- NA
+
+sims_all_5kaE$elev_m_n <- get_elev_point(sims_all_5ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df...
+
+
+#save as CSV before something fucks up and I have to rerun the 3h elev grab code
+write_csv(sims_all_5kaE, here::here("analyses", "new_coords", "sims_5ka.csv"))
+
+
+#E.g. 2, 5, 15, 25 km coords all in same csv...?
+```
+
+
+
+**Standardize csv, fetch & organize ClimateNA Data**  
+
+
+```{r message = FALSE}
+sims_5KE <- read_csv(here::here("analyses", "new_coords", "sims_5ka.csv")) %>% 
+  filter(!elev_m_n < 0)  #remove records with negative elevation
+#3706 records - expect to lose more & more to negative elevation as displacement grows
+
+
+sims_5KE_s <- sims_5KE %>% 
+  select(specimen_number, replicate, lat_n5k, long_n5k, elev_m_n) %>% 
+  rename(ID1 = specimen_number, ID2 = replicate, lat = lat_n5k, long = long_n5k, el = elev_m_n)
+
+#Using replicate as a second ID -- will have to add YoC back in later for calculating anomalies
+
+write_csv(sims_5KE_s, here::here("analyses", "new_coords", "sims_5ka_s.csv"))
+
+
+
+######
+#Organize Climate Data
+TS_sims_5kE <- read_csv(here::here("analyses", "new_coords", "new_clim", "sims_5ka_s_1901-2019MSY.csv"), na = c("-9999", "-9999.0")) %>%
+  rename(specimen_number = ID1, replicate = ID2, lat_n5k = Latitude, long_n5k = Longitude, elev_m_n = Elevation) %>% 
+  filter(!is.na(MAT)) %>% #Filter records (13 rep obs, or 1547 rows here) in the ocean
+  select(-c(Rad01:Rad12, Rad_wt:Rad_at, MAR)) #remove these columns
+
+#Add in YoC
+nemo_5k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+
+TS_sims_5kE_YoC <- merge(TS_sims_5kE, nemo_5k_YoC, all.x = TRUE) 
+
+sims_5kE_YoC <- TS_sims_5kE_YoC %>% 
+  filter(YoC == Year) %>%  
+  select(-YoC)
+#3706 obs (3693 after NA removal):
+# 13 rows all NA - all retrieved coords ARE IN THE OCEAN (elevations also 0) - removed
+
+#Append column names
+colnames(sims_5kE_YoC)[7:236] <- rename_ftn(sims_5kE_YoC, apnd = "_Y", rang = 7:236)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_5k_100avg <- TS_sims_5kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% 
+  group_by(specimen_number) %>% 
+  summarize_at(vars(Tmax01:RH), mean)  
+#NA values returned if any single value is NA - looks like it mostly affects Rad and MAR
+
+colnames(TS_5k_100avg)[2:231] <- rename_ftn(TS_5k_100avg, apnd = "_100Y", rang = 2:231)
+
+## merge YoC & long-term data
+
+sims_5kE_m <- merge(TS_5k_100avg, sims_5kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+
+anoms_5k1 <- sims_5kE_m %>% 
+  select(specimen_number:elev_m_n, Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y, 
+         Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_5k2 <- anoms_5k1 %>% 
+  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y,
+         Tmax02_A = Tmax02_Y - Tmax02_100Y,
+         Tmax03_A = Tmax03_Y - Tmax03_100Y,
+         Tmax04_A = Tmax04_Y - Tmax04_100Y,
+         Tmax05_A = Tmax05_Y - Tmax05_100Y,
+         Tmax06_A = Tmax06_Y - Tmax06_100Y,
+         Tmax07_A = Tmax07_Y - Tmax07_100Y,
+         Tmax08_A = Tmax08_Y - Tmax08_100Y,
+         Tmax09_A = Tmax09_Y - Tmax09_100Y,
+         Tmax10_A = Tmax10_Y - Tmax10_100Y,
+         Tmax11_A = Tmax11_Y - Tmax11_100Y,
+         Tmax12_A = Tmax12_Y - Tmax12_100Y,
+         Tmin01_A = Tmin01_Y - Tmin01_100Y,
+         Tmin02_A = Tmin02_Y - Tmin02_100Y,
+         Tmin03_A = Tmin03_Y - Tmin03_100Y,
+         Tmin04_A = Tmin04_Y - Tmin04_100Y,
+         Tmin05_A = Tmin05_Y - Tmin05_100Y,
+         Tmin06_A = Tmin06_Y - Tmin06_100Y,
+         Tmin07_A = Tmin07_Y - Tmin07_100Y,
+         Tmin08_A = Tmin08_Y - Tmin08_100Y,
+         Tmin09_A = Tmin09_Y - Tmin09_100Y,
+         Tmin10_A = Tmin10_Y - Tmin10_100Y,
+         Tmin11_A = Tmin11_Y - Tmin11_100Y,
+         Tmin12_A = Tmin12_Y - Tmin12_100Y,
+         Tave01_A = Tave01_Y - Tave01_100Y,
+         Tave02_A = Tave02_Y - Tave02_100Y,
+         Tave03_A = Tave03_Y - Tave03_100Y,
+         Tave04_A = Tave04_Y - Tave04_100Y,
+         Tave05_A = Tave05_Y - Tave05_100Y,
+         Tave06_A = Tave06_Y - Tave06_100Y,
+         Tave07_A = Tave07_Y - Tave07_100Y,
+         Tave08_A = Tave08_Y - Tave08_100Y,
+         Tave09_A = Tave09_Y - Tave09_100Y,
+         Tave10_A = Tave10_Y - Tave10_100Y,
+         Tave11_A = Tave11_Y - Tave11_100Y,
+         Tave12_A = Tave12_Y - Tave12_100Y,
+         PPT01_A = PPT01_Y - PPT01_100Y,
+         PPT02_A = PPT02_Y - PPT02_100Y,
+         PPT03_A = PPT03_Y - PPT03_100Y,
+         PPT04_A = PPT04_Y - PPT04_100Y,
+         PPT05_A = PPT05_Y - PPT05_100Y,
+         PPT06_A = PPT06_Y - PPT06_100Y,
+         PPT07_A = PPT07_Y - PPT07_100Y,
+         PPT08_A = PPT08_Y - PPT08_100Y,
+         PPT09_A = PPT09_Y - PPT09_100Y,
+         PPT10_A = PPT10_Y - PPT10_100Y,
+         PPT11_A = PPT11_Y - PPT11_100Y,
+         PPT12_A = PPT12_Y - PPT12_100Y,
+         Tmax_wt_A = Tmax_wt_Y - Tmax_wt_100Y,
+         Tmax_sp_A = Tmax_sp_Y - Tmax_sp_100Y,
+         Tmax_sm_A = Tmax_sm_Y - Tmax_sm_100Y,
+         Tmax_at_A = Tmax_at_Y - Tmax_at_100Y,
+         Tmin_wt_A = Tmin_wt_Y - Tmin_wt_100Y,
+         Tmin_sp_A = Tmin_sp_Y - Tmin_sp_100Y,
+         Tmin_sm_A = Tmin_sm_Y - Tmin_sm_100Y,
+         Tmin_at_A = Tmin_at_Y - Tmin_at_100Y,
+         Tave_wt_A = Tave_wt_Y - Tave_wt_100Y,
+         Tave_sp_A = Tave_sp_Y - Tave_sp_100Y,
+         Tave_sm_A = Tave_sm_Y - Tave_sm_100Y,
+         Tave_at_A = Tave_at_Y - Tave_at_100Y,
+         PPT_wt_A = PPT_wt_Y - PPT_wt_100Y,
+         PPT_sp_A = PPT_sp_Y - PPT_sp_100Y,
+         PPT_sm_A = PPT_sm_Y - PPT_sm_100Y,
+         PPT_at_A = PPT_at_Y - PPT_at_100Y,
+         MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_5k3 <- anoms_5k2 %>% 
+  select(specimen_number:elev_m_n, Tmax01_A:MSP_A)
+
+
+## Combine data frames into one for all 2k simulations climate
+
+sims_5k_all <- merge(sims_5kE_m, anoms_5k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n5k, long_n5k, elev_m_n, everything())
+
+write_csv(sims_5k_all, here::here("analyses", "new_coords", "sims_5ka_all.csv"))
+
+```
+
+
+#### 15 km Displacement  
+
+
+
+Create Simulated records
+
+```{r message = FALSE}
+  
+sim_list_15ka <- list()
+
+for(x in 1:5){ #5 reps (10 reps was too much for my cpu to handle...)
+  
+  long_n1 <- rep(NA, nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 15000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_15ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_15ka[[x]]) <- c("specimen_number", "long_n15k", "lat_n15k")
+  
+  print(x)
+  
+}
+  
+  
+#Combine Rows
+#using reduce() 
+sims_all_15ka <- as.data.frame(reduce(sim_list_15ka, rbind))  %>% 
+  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743), rep("rep5", times = 743))) %>% 
+  mutate(long_n15k = as.numeric(long_n15k), lat_n15k = as.numeric(lat_n15k))
+
+```
+
+
+##### Add elevation to records -- **RUN MANUALLY**  
+```{r message = FALSE, eval = FALSE}
+#Add elevation
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+sims_all_15kaE <- sims_all_15ka
+sims_all_15kaE$elev_m_n <- NA
+
+sims_all_15kaE$elev_m_n <- get_elev_point(sims_all_15ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df...
+
+
+#save as CSV before something fucks up and I have to rerun the 3h elev grab code
+write_csv(sims_all_15kaE, here::here("analyses", "new_coords", "sims_15ka.csv"))
+
+
+#E.g. 2, 5, 15, 25 km coords all in same csv...?
+```
+
+
+
+**Standardize csv, fetch & organize ClimateNA Data**  
+
+
+```{r message = FALSE}
+sims_15KE <- read_csv(here::here("analyses", "new_coords", "sims_15ka.csv")) %>% 
+  filter(!elev_m_n < 0)  #remove records with negative elevation
+#3706 records - expect to lose more & more to negative elevation as displacement grows
+
+
+sims_15KE_s <- sims_15KE %>% 
+  select(specimen_number, replicate, lat_n15k, long_n15k, elev_m_n) %>% 
+  rename(ID1 = specimen_number, ID2 = replicate, lat = lat_n15k, long = long_n15k, el = elev_m_n)
+
+#Using replicate as a second ID -- will have to add YoC back in later for calculating anomalies
+
+write_csv(sims_15KE_s, here::here("analyses", "new_coords", "sims_15ka_s.csv"))
+
+
+
+######
+#Organize Climate Data
+TS_sims_15kE <- read_csv(here::here("analyses", "new_coords", "new_clim", "sims_15ka_s_1901-2019MSY.csv"), na = c("-9999", "-9999.0")) %>%
+  rename(specimen_number = ID1, replicate = ID2, lat_n15k = Latitude, long_n15k = Longitude, elev_m_n = Elevation) %>% 
+  filter(!is.na(MAT)) %>% #Filter records (13 rep obs, or 1547 rows here) in the ocean
+  select(-c(Rad01:Rad12, Rad_wt:Rad_at, MAR)) #remove these columns
+
+
+#Add in YoC
+nemo_15k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+
+TS_sims_15kE_YoC <- merge(TS_sims_15kE, nemo_15k_YoC, all.x = TRUE) 
+
+sims_15kE_YoC <- TS_sims_15kE_YoC %>% 
+  filter(YoC == Year) %>%  
+  select(-YoC)
+#3630 obs
+
+
+#Append column names
+colnames(sims_15kE_YoC)[7:236] <- rename_ftn(sims_15kE_YoC, apnd = "_Y", rang = 7:236)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_15k_100avg <- TS_sims_15kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(Tmax01:RH), mean)  #It works!
+
+colnames(TS_15k_100avg)[2:231] <- rename_ftn(TS_15k_100avg, apnd = "_100Y", rang = 2:231)
+
+## merge YoC & long-term data
+
+sims_15kE_m <- merge(TS_15k_100avg, sims_15kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+
+anoms_15k1 <- sims_15kE_m %>% 
+  select(specimen_number:elev_m_n, Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y, 
+         Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_15k2 <- anoms_15k1 %>% 
+  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y,
+         Tmax02_A = Tmax02_Y - Tmax02_100Y,
+         Tmax03_A = Tmax03_Y - Tmax03_100Y,
+         Tmax04_A = Tmax04_Y - Tmax04_100Y,
+         Tmax05_A = Tmax05_Y - Tmax05_100Y,
+         Tmax06_A = Tmax06_Y - Tmax06_100Y,
+         Tmax07_A = Tmax07_Y - Tmax07_100Y,
+         Tmax08_A = Tmax08_Y - Tmax08_100Y,
+         Tmax09_A = Tmax09_Y - Tmax09_100Y,
+         Tmax10_A = Tmax10_Y - Tmax10_100Y,
+         Tmax11_A = Tmax11_Y - Tmax11_100Y,
+         Tmax12_A = Tmax12_Y - Tmax12_100Y,
+         Tmin01_A = Tmin01_Y - Tmin01_100Y,
+         Tmin02_A = Tmin02_Y - Tmin02_100Y,
+         Tmin03_A = Tmin03_Y - Tmin03_100Y,
+         Tmin04_A = Tmin04_Y - Tmin04_100Y,
+         Tmin05_A = Tmin05_Y - Tmin05_100Y,
+         Tmin06_A = Tmin06_Y - Tmin06_100Y,
+         Tmin07_A = Tmin07_Y - Tmin07_100Y,
+         Tmin08_A = Tmin08_Y - Tmin08_100Y,
+         Tmin09_A = Tmin09_Y - Tmin09_100Y,
+         Tmin10_A = Tmin10_Y - Tmin10_100Y,
+         Tmin11_A = Tmin11_Y - Tmin11_100Y,
+         Tmin12_A = Tmin12_Y - Tmin12_100Y,
+         Tave01_A = Tave01_Y - Tave01_100Y,
+         Tave02_A = Tave02_Y - Tave02_100Y,
+         Tave03_A = Tave03_Y - Tave03_100Y,
+         Tave04_A = Tave04_Y - Tave04_100Y,
+         Tave05_A = Tave05_Y - Tave05_100Y,
+         Tave06_A = Tave06_Y - Tave06_100Y,
+         Tave07_A = Tave07_Y - Tave07_100Y,
+         Tave08_A = Tave08_Y - Tave08_100Y,
+         Tave09_A = Tave09_Y - Tave09_100Y,
+         Tave10_A = Tave10_Y - Tave10_100Y,
+         Tave11_A = Tave11_Y - Tave11_100Y,
+         Tave12_A = Tave12_Y - Tave12_100Y,
+         PPT01_A = PPT01_Y - PPT01_100Y,
+         PPT02_A = PPT02_Y - PPT02_100Y,
+         PPT03_A = PPT03_Y - PPT03_100Y,
+         PPT04_A = PPT04_Y - PPT04_100Y,
+         PPT05_A = PPT05_Y - PPT05_100Y,
+         PPT06_A = PPT06_Y - PPT06_100Y,
+         PPT07_A = PPT07_Y - PPT07_100Y,
+         PPT08_A = PPT08_Y - PPT08_100Y,
+         PPT09_A = PPT09_Y - PPT09_100Y,
+         PPT10_A = PPT10_Y - PPT10_100Y,
+         PPT11_A = PPT11_Y - PPT11_100Y,
+         PPT12_A = PPT12_Y - PPT12_100Y,
+         Tmax_wt_A = Tmax_wt_Y - Tmax_wt_100Y,
+         Tmax_sp_A = Tmax_sp_Y - Tmax_sp_100Y,
+         Tmax_sm_A = Tmax_sm_Y - Tmax_sm_100Y,
+         Tmax_at_A = Tmax_at_Y - Tmax_at_100Y,
+         Tmin_wt_A = Tmin_wt_Y - Tmin_wt_100Y,
+         Tmin_sp_A = Tmin_sp_Y - Tmin_sp_100Y,
+         Tmin_sm_A = Tmin_sm_Y - Tmin_sm_100Y,
+         Tmin_at_A = Tmin_at_Y - Tmin_at_100Y,
+         Tave_wt_A = Tave_wt_Y - Tave_wt_100Y,
+         Tave_sp_A = Tave_sp_Y - Tave_sp_100Y,
+         Tave_sm_A = Tave_sm_Y - Tave_sm_100Y,
+         Tave_at_A = Tave_at_Y - Tave_at_100Y,
+         PPT_wt_A = PPT_wt_Y - PPT_wt_100Y,
+         PPT_sp_A = PPT_sp_Y - PPT_sp_100Y,
+         PPT_sm_A = PPT_sm_Y - PPT_sm_100Y,
+         PPT_at_A = PPT_at_Y - PPT_at_100Y,
+         MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_15k3 <- anoms_15k2 %>% 
+  select(specimen_number:elev_m_n, Tmax01_A:MSP_A)
+
+
+## Combine data frames into one for all 2k simulations climate
+
+sims_15k_all <- merge(sims_15kE_m, anoms_15k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n15k, long_n15k, elev_m_n, everything())
+
+write_csv(sims_15k_all, here::here("analyses", "new_coords", "sims_15ka_all.csv"))
+
+```
+<br>  
+
+
+
+#### 25 km Displacement  
+
+**NOTE**: *Do 30 km displacement instead?*  
+
+
+```{r message = FALSE}
+  
+sim_list_25ka <- list()
+
+for(x in 1:5){ #5 reps (10 reps was too much for my cpu to handle...)
+  
+  long_n1 <- rep(NA, nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 25000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_25ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_25ka[[x]]) <- c("specimen_number", "long_n25k", "lat_n25k")
+  
+  print(x)
+  
+}
+  
+  
+#Combine Rows
+#using reduce() 
+sims_all_25ka <- as.data.frame(reduce(sim_list_25ka, rbind))  %>% 
+  mutate(replicate = c(rep("rep1", times = 743), rep("rep2", times = 743), rep("rep3", times = 743), rep("rep4", times = 743), rep("rep5", times = 743))) %>% 
+  mutate(long_n25k = as.numeric(long_n25k), lat_n25k = as.numeric(lat_n25k))
+
+```
+
+
+##### Add elevation to records -- **RUN MANUALLY**  
+```{r message = FALSE, eval = FALSE}
+#Add elevation
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+sims_all_25kaE <- sims_all_25ka
+sims_all_25kaE$elev_m_n <- NA
+
+sims_all_25kaE$elev_m_n <- get_elev_point(sims_all_25ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df...
+
+
+#save as CSV before something fucks up and I have to rerun the 3h elev grab code
+write_csv(sims_all_25kaE, here::here("analyses", "new_coords", "sims_25ka.csv"))
+
+
+#E.g. 2, 5, 15, 25 km coords all in same csv...?
+```
+
+
+
+**Standardize csv, fetch & organize ClimateNA Data**  
+
+*START HERE*  
+
+```{r message = FALSE}
+sims_25KE <- read_csv(here::here("analyses", "new_coords", "sims_25ka.csv")) %>% 
+  filter(!elev_m_n < 0)  #remove records with negative elevation
+#3672 records - expect to lose more & more to negative elevation as displacement grows
+
+
+sims_25KE_s <- sims_25KE %>% 
+  select(specimen_number, replicate, lat_n25k, long_n25k, elev_m_n) %>% 
+  rename(ID1 = specimen_number, ID2 = replicate, lat = lat_n25k, long = long_n25k, el = elev_m_n)
+
+#Using replicate as a second ID -- will have to add YoC back in later for calculating anomalies
+
+write_csv(sims_25KE_s, here::here("analyses", "new_coords", "sims_25ka_s.csv"))
+
+
+
+######
+#Organize Climate Data
+TS_sims_25kE <- read_csv(here::here("analyses", "new_coords", "new_clim", "sims_25ka_s_1901-2019MSY.csv"), na = c("-9999", "-9999.0")) %>%
+  rename(specimen_number = ID1, replicate = ID2, lat_n25k = Latitude, long_n25k = Longitude, elev_m_n = Elevation) %>% 
+  filter(!is.na(MAT)) %>% #Filter records (13 rep obs, or 1547 rows here) in the ocean
+  select(-c(Rad01:Rad12, Rad_wt:Rad_at, MAR)) #remove these columns
+
+
+#Add in YoC
+nemo_25k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+
+TS_sims_25kE_YoC <- merge(TS_sims_25kE, nemo_25k_YoC, all.x = TRUE) 
+
+sims_25kE_YoC <- TS_sims_25kE_YoC %>% 
+  filter(YoC == Year) %>%  
+  select(-YoC)
+# obs
+
+
+#Append column names
+colnames(sims_25kE_YoC)[7:236] <- rename_ftn(sims_25kE_YoC, apnd = "_Y", rang = 7:236)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_25k_100avg <- TS_sims_25kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% 
+  group_by(specimen_number) %>% 
+  summarize_at(vars(Tmax01:RH), mean)  
+
+colnames(TS_25k_100avg)[2:231] <- rename_ftn(TS_25k_100avg, apnd = "_100Y", rang = 2:231)
+
+## merge YoC & long-term data
+
+sims_25kE_m <- merge(TS_25k_100avg, sims_25kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+
+anoms_25k1 <- sims_25kE_m %>% 
+  select(specimen_number:elev_m_n, Tmax01_100Y:PPT12_100Y, Tmax_wt_100Y:PPT_at_100Y, MAT_100Y:MSP_100Y, 
+         Tmax01_Y:PPT12_Y, Tmax_wt_Y:PPT_at_Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_25k2 <- anoms_25k1 %>% 
+  mutate(Tmax01_A = Tmax01_Y - Tmax01_100Y,
+         Tmax02_A = Tmax02_Y - Tmax02_100Y,
+         Tmax03_A = Tmax03_Y - Tmax03_100Y,
+         Tmax04_A = Tmax04_Y - Tmax04_100Y,
+         Tmax05_A = Tmax05_Y - Tmax05_100Y,
+         Tmax06_A = Tmax06_Y - Tmax06_100Y,
+         Tmax07_A = Tmax07_Y - Tmax07_100Y,
+         Tmax08_A = Tmax08_Y - Tmax08_100Y,
+         Tmax09_A = Tmax09_Y - Tmax09_100Y,
+         Tmax10_A = Tmax10_Y - Tmax10_100Y,
+         Tmax11_A = Tmax11_Y - Tmax11_100Y,
+         Tmax12_A = Tmax12_Y - Tmax12_100Y,
+         Tmin01_A = Tmin01_Y - Tmin01_100Y,
+         Tmin02_A = Tmin02_Y - Tmin02_100Y,
+         Tmin03_A = Tmin03_Y - Tmin03_100Y,
+         Tmin04_A = Tmin04_Y - Tmin04_100Y,
+         Tmin05_A = Tmin05_Y - Tmin05_100Y,
+         Tmin06_A = Tmin06_Y - Tmin06_100Y,
+         Tmin07_A = Tmin07_Y - Tmin07_100Y,
+         Tmin08_A = Tmin08_Y - Tmin08_100Y,
+         Tmin09_A = Tmin09_Y - Tmin09_100Y,
+         Tmin10_A = Tmin10_Y - Tmin10_100Y,
+         Tmin11_A = Tmin11_Y - Tmin11_100Y,
+         Tmin12_A = Tmin12_Y - Tmin12_100Y,
+         Tave01_A = Tave01_Y - Tave01_100Y,
+         Tave02_A = Tave02_Y - Tave02_100Y,
+         Tave03_A = Tave03_Y - Tave03_100Y,
+         Tave04_A = Tave04_Y - Tave04_100Y,
+         Tave05_A = Tave05_Y - Tave05_100Y,
+         Tave06_A = Tave06_Y - Tave06_100Y,
+         Tave07_A = Tave07_Y - Tave07_100Y,
+         Tave08_A = Tave08_Y - Tave08_100Y,
+         Tave09_A = Tave09_Y - Tave09_100Y,
+         Tave10_A = Tave10_Y - Tave10_100Y,
+         Tave11_A = Tave11_Y - Tave11_100Y,
+         Tave12_A = Tave12_Y - Tave12_100Y,
+         PPT01_A = PPT01_Y - PPT01_100Y,
+         PPT02_A = PPT02_Y - PPT02_100Y,
+         PPT03_A = PPT03_Y - PPT03_100Y,
+         PPT04_A = PPT04_Y - PPT04_100Y,
+         PPT05_A = PPT05_Y - PPT05_100Y,
+         PPT06_A = PPT06_Y - PPT06_100Y,
+         PPT07_A = PPT07_Y - PPT07_100Y,
+         PPT08_A = PPT08_Y - PPT08_100Y,
+         PPT09_A = PPT09_Y - PPT09_100Y,
+         PPT10_A = PPT10_Y - PPT10_100Y,
+         PPT11_A = PPT11_Y - PPT11_100Y,
+         PPT12_A = PPT12_Y - PPT12_100Y,
+         Tmax_wt_A = Tmax_wt_Y - Tmax_wt_100Y,
+         Tmax_sp_A = Tmax_sp_Y - Tmax_sp_100Y,
+         Tmax_sm_A = Tmax_sm_Y - Tmax_sm_100Y,
+         Tmax_at_A = Tmax_at_Y - Tmax_at_100Y,
+         Tmin_wt_A = Tmin_wt_Y - Tmin_wt_100Y,
+         Tmin_sp_A = Tmin_sp_Y - Tmin_sp_100Y,
+         Tmin_sm_A = Tmin_sm_Y - Tmin_sm_100Y,
+         Tmin_at_A = Tmin_at_Y - Tmin_at_100Y,
+         Tave_wt_A = Tave_wt_Y - Tave_wt_100Y,
+         Tave_sp_A = Tave_sp_Y - Tave_sp_100Y,
+         Tave_sm_A = Tave_sm_Y - Tave_sm_100Y,
+         Tave_at_A = Tave_at_Y - Tave_at_100Y,
+         PPT_wt_A = PPT_wt_Y - PPT_wt_100Y,
+         PPT_sp_A = PPT_sp_Y - PPT_sp_100Y,
+         PPT_sm_A = PPT_sm_Y - PPT_sm_100Y,
+         PPT_at_A = PPT_at_Y - PPT_at_100Y,
+         MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_25k3 <- anoms_25k2 %>% 
+  select(specimen_number:elev_m_n, Tmax01_A:MSP_A)
+
+
+## Combine data frames into one for all 2k simulations climate
+
+sims_25k_all <- merge(sims_25kE_m, anoms_25k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n25k, long_n25k, elev_m_n, everything())
+
+write_csv(sims_25k_all, here::here("analyses", "new_coords", "sims_25ka_all.csv"))
+
+```
+
+*See next RMD script for analyses of dispersed data!!!*  
+
 
 ```{r eval = FALSE, message = FALSE}
 #DEFUNCT/FAILED ANALYSES
