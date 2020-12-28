@@ -28,76 +28,272 @@ library(jtools)
 - Across space (lat, long, elev)  
 - by climate region  
 
+```{r message = FALSE, warning = FALSE}
+#Load Data
+
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
 
 
-* See 'Climate_1.Rmd' for analyses identifying DOY sensitivity to different climatic variables. Also see 'EDA2.Rmd' for exploration of different models.  
+#Set contrasts
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+## Identify Sensitivity to different climatic variables  
+* See 'EDA2.Rmd' for exploration of different models.
+
+*Copied from old Climate_1.RMD --> CLEAN UP* 
+
+*CLEAN UPPPPPPP*  
+
+
+
+*To-Do*  
+- Fix & clean up models describing sensitivity to different aspects of local climate  
+- Calculate new seasonal windows of climate parameters (and save to csv)  
+- Statistically compare slope estimates of climate parameters on DOY to select the most influential parameters  
+- Add in PI as a covariate in models  
 
 <br>  
 
-```{r echo = FALSE, message = FALSE, warning = FALSE}
-#Load in data & establish error distance bins
-nemo_spec <- read_csv(here::here("data_cleaning", "nemo_all_2.csv")) %>% 
-  mutate(error_bin = case_when(error_dist_m <= 2000 ~ "<2 km",
-                               error_dist_m > 2000 & error_dist_m <= 5000 ~ "2-5 km",
-                               error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
-                               error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
-                               error_dist_m > 15000 ~ ">15 km")) %>% 
-  select(specimen_number:error_dist_m, error_bin, everything()) %>% mutate(error_bin = factor(error_bin, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km"))) #specify factor & levels for error bin
-#1764 total obs. #1240 obs with error distance
-climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")) %>% 
-  rename(year = YoC) #Also 1764 obs
 
-#Transform Precipitation variables to be normal -- Log transforms Monthly and seasonal PPT, MAP, MSP #PAS ignored
-climNA_all1 <- climNA_all %>% 
-  mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
-                 PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
-                 PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
-                 PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
-                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
-  na_if(y = -Inf)
-#see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
-#Transform anomalies after they are added to ClimNA_nemo_all csv!
+**Formulate New Seasonal Windows?**  
 
-#Merge herbarium records and climate data (by specimen number)
-nemo_df1 <- merge(nemo_spec, climNA_all1) #1764 obs and 1181 total columns
+ClimateNA wt = Dec - Feb
+ClimateNA sp = Mar - May
 
-#FILTER YEARS to those after 1901 (start of climate data).
-nemo_df2 <- nemo_df1 %>% 
-  filter(year >= 1901) #narrowed to 1677 obs, Same as YoC - 1
-sum(!is.na(nemo_df2$MAT_L1)) #YoC-1
-sum(!is.na(nemo_df2$MAT_Y)) #YoC
+Create *new* averages for seasons:
 
-#Subsetting data by error bins
-nemo_all_errors <- nemo_df2 %>% 
-  filter(!is.na(error_dist_m)) #1166 after rm records before 1901
-#0-5 km resolution
-nemo_e0_5 <- nemo_all_errors %>% 
-  filter(error_bin == "<2 km" | error_bin == "2-5 km") #1033 entries
-#0-2 km
-nemo_e2 <- nemo_all_errors %>% 
-  filter(error_bin == "<2 km") #743 obs
+_wt2 = Nov-Dec; _wt3 = Nov-Jan
+_sp2 = Feb-Mar; _sp3 = Feb-Apr
+
+
+## Long-term (100Y) Climate Variables  
+
+May also consider:  
+- NFFD, bFFP, CMD, RH, DD5, MCMT (see EDA2)
+
+**Annual Variables**  
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#100Y
+
+ann_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
+ann_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m, data = nemo_df2)
+ann_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long, data = nemo_df2)
+ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2) #Best, though adding year doesn't change much
+#No interactions
+
+summary(ann_clim1)
+summary(ann_clim2)
+summary(ann_clim3)
+summary(ann_clim4)
+#Controlling for elevation severely reduces the effect of MAT (ns)
+#Controlling for elev and long - the effect of temperature returns but is still quite small
+
+summ(ann_clim3, vif = TRUE) #VIF for long, elev, MAP, MAT is high
+
+visreg(ann_clim1, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
+visreg(ann_clim1, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
+
+visreg(ann_clim3, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
+visreg(ann_clim3, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
+
+visreg(ann_clim4, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"))
+visreg(ann_clim4, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
+
+```
+
+
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+#redudant with EDA2 code
+#plots
+#Non-climatic
+#standardized: means = 0 and var = 1
+#Compare relative effect of each variable
+
+nonclim1 <- lm(DOY ~ scale(elev_m) + scale(long) + scale(year), data = nemo_df2)
+summary(nonclim1)
+
+visreg(nonclim1, xvar = "elev_m", xlab = "Elevation (m)", points = list(col = "#404040")) 
+visreg(nonclim1, "year", xlab = "Year", points = list(col = "#404040"))
+#visreg(nonclim1, "lat", xlab = "Latitude", points = list(col = "#404040"))
+visreg(nonclim1, "long", xlab = "Longitude", points = list(col = "#404040"))
+```
+
+
+The relationship b/w DOY and MAT weakens as the model is parameterized, while the estimate of MAP strengthens. MAP appears to be driving variation in DOY. There were no significant interactions between any covariates.  
+While MAT still appears to advance DOY, controlling for geography seems to explain a good deal of this variation (over a 100-yr avg). Examining seasonal climate and anomalies should shed more light on this.  
+
+
+Note: Everything at the annual scale for 100Y averages is strongly correlated (see EDA2.Rmd). Refer to `ann_clim3` model above (controls for elev_m and long).  
+<br>  
+
+**Seasonal Variables**
+
+For Seasonal variables, examine models with:
+- Tmin & Tave (Winter, spring) [No Tmax]  
+- PPT (Winter, Spring, Summer)  
+
+
+May also consider  
+- DD > 5 (spring and winter)   
+- DD > 18 (spring and summer)  
+- CMD (winter, spring, summer)? RH?  
+<br>  
+
+
+From 'EDA2.Rmd', Both Spring temperature and precipitation (from 100Y averages) appeared to be the most influential on DOY. Tave had a higher R2 and Beta than Tmin for spring temps...  
+
+Winter Conditions
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+library(interactions)
+####Seasonal variables
+#Winter Conditions
+sz_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
+summary(sz_wt1)
+
+sz_wt1c <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
+summary(sz_wt1c)
+
+visreg(sz_wt1, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
+visreg(sz_wt1, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+
+visreg(sz_wt1c, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
+visreg(sz_wt1c, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+
+
+sz_wt1.1 <- lm(DOY ~ Tave_wt_100Y + PPT_wt_100Y, data = nemo_df2)
+#summary(sz_clim1.1) #These have low R2 and high SE, plus estimates are crazy  
+
+
+sz_wt1.2 <- lm(DOY ~ PPT_wt_100Y*Tmin_wt_100Y, data = nemo_df2)
+summary(sz_wt1.2) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, removed Tave
+#Interaction more significant when Tave retained
+
+visreg(sz_wt1.2, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
+visreg(sz_wt1.2, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+
+johnson_neyman(sz_wt1.2, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt1.2, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt1.2, pred = "PPT_wt_100Y", modx = "Tmin_wt_100Y") + theme_bw()
+
+
+```
+
+
+Controlling for geographic location (long and elev) [not shown], the interaction between Tmin_wt and PPT_wt disappears. Including year as a covariate slightly improves $R^2$ and Tmin estimate.  
+
+
+Spring Conditions
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+#Spring Conditions
+sz_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1)
+sz_sp1.1 <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1)
+
+sz_sp1c <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
+summary(sz_sp1c)
+
+visreg(sz_sp1, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
+visreg(sz_sp1, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
+visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+
+
+#Interactions
+sz_sp1.2 <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y, data = nemo_df2)
+summary(sz_sp1.2) #Interaction with Tmin much more significant, higher R2 and estimate
+#Tave does still explain some variation, despite the interaction. Removed
+
+
+johnson_neyman(sz_sp1.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y")
+interact_plot(sz_sp1.2, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y", x.label = "Tmin (spring)", legend.main = "PPT (spring)") + theme_bw()
+interact_plot(sz_sp1.2, pred = "PPT_sp_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (spring)", legend.main = "Tmin (spring)") + theme_bw()
+#Swapping Tave for DD>5: similar but much weaker. DD v correlated to Tave
+
 ```
 
 
 
+Interaction term becomes marginally significant. Removing it, we see results similar to the above winter 'standard' model - advancing effect of Tmin (+ year), delaying effect of PPT (+ long, elevation)
 
-## Variation in Phenological Sensitvity  
+Tmin appears to explain more variation than Tave *in its interaction with PPT_sp*. Interaction is stronger with Tmin than Tave and PPT. Better $R^2$ and AIC with Tmin model (no interaction).  
 
-Using the slope of basic regression models (DOY ~ one climate variable)
+[Summer conditions are likely not biologically important in the phenology of N menziesii, patterns due to correlation]
+```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+#Summer Conditions
+sz_clim3 <- lm(DOY ~ Tmin_sm_100Y + PPT_sm_100Y, data = nemo_df2)
+summary(sz_clim3)
+sz_clim3.1 <- lm(DOY ~ Tave_sm_100Y + PPT_sm_100Y, data = nemo_df2)
+summary(sz_clim3.1)
+sz_clim3.2 <- lm(DOY ~ Tmin_sm_100Y +  PPT_sm_100Y + Tmin_sm_100Y*PPT_sm_100Y, data = nemo_df2)
+summary(stepAIC(sz_clim3.2, direction = "both"))
+#Looks like Summer PPT has the largest effect, with Tmin marginally advancing DOY. No interaction
+visreg(sz_clim3.2, xvar = "PPT_sm_100Y", xlab = "PPT (summer)", points = list(col = "#404040"))
+```
 
-### Phenological Sensitivity through time  
+Winter x Spring
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+sz_wt_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y, data = nemo_df2)
+summary(sz_wt_sp1)
 
-Climate Variables - 100Y average:  
-- Tmin_sp  
-- Tave_sp
-- PPT_wt  
-- PPT_sp
+sz_wt_sp1.1 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_100Y*PPT_wt_100Y, data = nemo_df2)
+summary(sz_wt_sp1.1)
+
+johnson_neyman(sz_wt_sp1.1, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt_sp1.1, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y", x.label = "Tmin (spring)", legend.main = "PPT (winter)") + theme_bw()
+johnson_neyman(sz_wt_sp1.1, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y")
+interact_plot(sz_wt_sp1.1, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (winter)", legend.main = "Tmin (spring)") + theme_bw()
+
+
+
+```
+
+Comparing Models
+*Error on 262, fix and remove eval = FALSE*
+
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
+#Center & Scale Estimates
+plot_summs(ann_clim1, sz_wt1, sz_sp1, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()#only climatic predictors
+
+
+plot_summs(ann_clim4, sz_wt1c, sz_sp1c, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()#including covariates
+
+
+
+#Center only
+plot_summs(ann_clim1, sz_wt1, sz_sp1, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, center = TRUE) +
+  theme_bw()#only climatic predictors
+
+
+plot_summs(ann_clim4, sz_wt1c, sz_sp1c, model.names = c("MAT/P", "Winter", "Spring"), coefs = c("MAT" = "MAT_100Y", "MAP" = "MAP_100Y", "Tmin (wt)" = "Tmin_wt_100Y", "Tmin (sp)" = "Tmin_sp_100Y", "PPT (wt)" = "PPT_wt_100Y", "PPT (sp)" = "PPT_sp_100Y"), inner_ci_level = 0.8, center = TRUE) +
+  theme_bw()#including covariates
 
 
 
 
+plot_summs(sz_wt1.2, sz_sp1.2, sz_wt_sp1.1, model.names = c("Winter", "Spring", "Wt x Sp"), coefs = c("Winter Tmin*PPT" = "Tmin_wt_100Y:PPT_wt_100Y", "Spring Tmin*PPT" = "Tmin_sp_100Y:PPT_sp_100Y", "Winter PPT * Spring Tmin" = "Tmin_sp_100Y:PPT_wt_100Y"), scale = TRUE) +
+  theme_bw()#multiplicative effects
+
+```
 
 
+
+<br>  
+
+Year of Collection Models [or Anomaly Models]
+
+```{r message = FALSE, warning = FALSE, results = 'hide'}
+
+```
 
 
 
