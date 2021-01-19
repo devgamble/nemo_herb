@@ -170,7 +170,7 @@ TS_YoC_less1 <- TS_1901_2019 %>%
 
 <br>  
 
-#### Combining Climate Datasets (Prospective)  
+#### Combining Climate Datasets   
 
 Both the Climate Normals and the Time Series should now have the same number of columns. The two timeseries subsets (YoC and YoC - 1) will have slightly fewer rows when combined with the normals, which will show up as NAs.  
 

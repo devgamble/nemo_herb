@@ -1,6 +1,8 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Error Distance Analyses 3a"
+author: "Devin Gamble"
+date: "11/21/2020"
+output: html_document
 ---
 
 # Simulations of new coordinates (based on error distance) on pheno-climatic models  

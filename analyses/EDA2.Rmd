@@ -33,47 +33,6 @@ See 'EDA1.Rmd' for exploration of variables from the georeferrenced herbarium re
 5. Exploratory DOY~Climate models [???700?]  
 
 
-<br>  
-
-#### Notes on Data sets and Organization:  
-
-Through separate rounds of cleaning and duplicate removal, georeferencing, obtaining climate data, and (soon) scoring, there are several different csv files with *Nemophila* specimen data present in this project repository. For clarity, they are listed out her detailing what they contain and how recently they were made.  
-
-**Specimen Records**:  
-These csv files can be found in the 'data_cleaning' folder. They include  
-
-CCH1 Data:  
-- `Nemo_CCH1_02182020.csv` - CCH1 data set standardized by Ivana  
-- `nemo_cch1_cleaned.csv` - cleaned (by DG) CCH1 data set
-- Georeferenced CCH1 splits (folder) - split by herbarium and georeferenced; combined with CCH2 data
-
-
-CCH2 Data:  
-- `occurrences.csv` - the original specimen data downloaded from CCH2  
-- `nemo_cch2_Dec2019.csv` - cleaned up from the occurrences data  
-- `nemo_cch2_cleaned_V2.csv` - further cleaning, removing duplicates. This was then split up into subsets by herbarium for georeferencing & scoring.  
-- Splits for PI folder has most recent cleaned CCH2 splits ("_pi.csv" files are more up to date! Dupes & odd things removed, data re-split by CCH2 herbaria *after* running `combine_cch1_cch2_V2.R` script)
-
-
-Combined CCH1 & CCH2:  
-* See "combine_cch1_cch2_V2.R" for more details.  
-- `cch1&2_combined.csv` - attempt at combination, NOT cleaned  
-- `nemo_all_1.csv` - first updated combination of CCH1 and CCH2 records  
-- `nemo_all_2.csv` - second combination of CCH1 and CCH2 records, added elevation (m) from 'elevatr' package. (Used to make latest PI splits). **Most up-to-date combined specimen data!!**  
-
-
-**Climate Data**:  
-See "get_cna_all.Rmd" for more details. Uses `nemo_all_2.csv` as input to create ClimateNA compatible csv `all_CNA_s.csv`.  
-- First-attempt CCH1 and 2 climate data can be found in their respective folders under "ClimateNA"  
-- ClimateNA downloads are in the "cna_rawfiles" folder, in the "all_CNA" folder under  
-- These were cleaned and combined to get `norms_raw_51_and_81.csv`, `YoC_Y_and_L1.csv`, `100y_avg.csv`  
-- Anomalies calculated in 'get_cna_anoms.Rmd', creates `climNA_anoms.csv`  
-- All the above data sets combined into `climNA_nemo_all.csv` saved in "all_cna" folder **Most up-to-date Climate-only data!!**  
-
-
-**Combined data sets**:  
-In this Rmd, `nemo_all_2.csv`, with added error distance, and `climNA_nemo_all.csv`, with PPT vars log-transformed, are combined and saved to `nemo_full_1901_2019.csv`, filtering for years only from 1901-2019.  **Most up-to-date combined file!!**  
-
 
 <br>  
 

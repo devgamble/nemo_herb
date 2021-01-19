@@ -2,12 +2,15 @@
 title: "ToC & Notes"
 author: "Devin Gamble"
 date: "12/23/2020"
-output: 
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
   html_document:
-    toc: true
+    toc: yes
     toc_depth: 3
     toc_float:
-      collapsed: false
+      collapsed: no
     theme: cerulean
 ---
 
@@ -18,10 +21,9 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
 # Project Overview  
 
-[Description of project] 
+To understand how climate drives variation in reproductive phenology, we are utilizing over 1,700 herbarium records of the widely distributed annual wildflower Nemophila menziesii. By modelling specimen DOY in response to climate and collection location, we can describe climate-driven changes in phenology across space and time. Additionally, including a metric (Phenological Index – PI) to account for the phenophase of digitized specimens will allow for models with greater predictive power and the capacity to investigate shifts in specific phenophases. Finally, understanding variation in phenological sensitivity to climate will aid us in predicting how future climates will impact Nemophila menziesii as well as similar species’ ecology, reproduction, and persistence.  
 
 
-Below: headings for each major analysis (set of analyses) and the associated Rmd files & data.  
 
 <br>  
 
@@ -73,12 +75,13 @@ These csv files can be found in the **data_cleaning** folder (within additional 
 - Direct ClimateNA downloads are in the "cna_rawfiles" folder within the "all_CNA" folder.
 - These were cleaned and combined to get `norms_raw_51_and_81.csv`, `YoC_Y_and_L1.csv`, `100y_avg.csv`  
 - Anomalies calculated in 'get_cna_anoms.Rmd', creates `climNA_anoms.csv`  
-- Most up-to-date: `climNA_nemo_all.csv` - combined all previous climate fiels, saved in "all_cna" folder  
+- Most up-to-date: `climNA_nemo_all.csv` - combined all previous climate files, saved in "all_cna" folder  
 
 <br>  
 
 
-**All-in-one, most up-to-date** csv file: `nemo_full_1901_2019.csv`  
+##### **All-in-one, most up-to-date** csv file:  
+`nemo_full_1901_2019.csv`  
 
 - Combines specimen data from `nemo_all_2.csv` (with error distance) and climate data from `climNA_nemo_all.csv` (with PPT vars log-transformed), filtering for years only from 1901-2019. Use `nemo_full_1861_2019.csv` for full temporal breadth.
 
@@ -87,10 +90,10 @@ These csv files can be found in the **data_cleaning** folder (within additional 
 
 # Project Components  
 
-The following sections describe the different objectives and analyses, listing major R and Rmd files.  
+The following sections describe the different objectives, analyses, and their pertinent Rmd files.  
 <br>  
 
-## Data Cleaning  
+### Data Cleaning  
 Folder: **data_cleaning**  
 
 This folder contains several scripts designed to clean and standardize the raw data downloaded from CCH1 and CCH2, as well as scripts to split up data for georeferencing and PI scoring. It also contains Rmds (`image_dl.Rmd` and `image_dl2.Rmd`) to extract and download images from the CCH2 herbarium records. On a (my) local machine, this folder contains all of these downloaded images. Since these files are not central to the actual analysis of data, they are not described further here.
@@ -98,7 +101,7 @@ This folder contains several scripts designed to clean and standardize the raw d
 <br>  
 
 
-## Climate Data  
+### Climate Data  
 Folder: **climateNA**  
 
 These folders contain markdowns, csvs, and raw data used to organize the variables extracted from ClimateNA. "all_cna" is the main folder. The cch1 and cch2-specific folders were early attempts at climate data extraction.  
@@ -112,25 +115,29 @@ Markdown Files:
 - `get_cna_anoms.Rmd`
   + similar to the above file, this describes the procedure for obtaining climate anomalies.
 
+Contact DG for a combined Rmd that covers the extraction and calculation of all these climate variables.  
+
 <br>  
 
 
 
-## Data Exploration  
+### Data Exploration  
 Folder: **analyses**  
 
 Markdown Files:  
 
 - `EDA1.Rmd`
-  + Text on EDA1
+  + Explores non-climatic trends in the combined herbarium data. Has a few simple visualizations and raster code for a rough distribution map.  
+  
 
 - `EDA2.Rmd`
-  + Text on EDA2
-  + First writing of the complete `nemo_full_1901_2019.csv` and `nemo_full_1861_2019.csv`
+  + More comprehensive exploratory analysis, including: Adding collector information back into combined dataset, creating error-distance subsets, examining variable correlations, creating basic pheno-climatic models, examining temporal change in climate variables, interaction plots, a couple 'nice' figures.
+  + This file is long and not very well-organized. It mainly serves as a sketch pad for analyses that were (or would be) refined later.
+  + First writing of the complete `nemo_full_1901_2019.csv` and `nemo_full_1861_2019.csv`, after log-transforming PPT variables!  
   
 
 - `EDA_climate.Rmd`
-  + Text
+  + Simple plots and distributions of different climate variables. Raster maps.  
 
 
 <br>  
@@ -138,7 +145,7 @@ Markdown Files:
 
 
 
-## Phenological Senseitivity  
+### Phenological Senseitivity  
 Folder: **analyses**  
 
 In addition to some analyses on phenological sensitivity in the EDA markdowns, these files contain more polished and complete analyses on pheno-climatic models.  
@@ -148,25 +155,27 @@ Markdown Files:
 
 - `sensitivity_1`
   + Analysis of pheno-climatic models
-  + Large chunk of code copied over from Climate_1.Rmd (removed)
+  + Large chunk of code copied over from Climate_1.Rmd (since removed)
+
+<br>  
 
 
-## Error Distance  
+### Error Distance  
 Folder: **analyses/error_distance**  
 
 This folder contains Rmds and data for analyzing the effect of coordinate uncertainty on estimates of phenological sensitivity. The folder 'new_coords' contains csvs of simulated climate data for high-confidence records.  
 
 - `bias_error.Rmd`
-  + Text
+  + Exmaines the effect of error distance on pheno-climatic models by (1) comparing models run with different subsets of data and (2) by including error_distance as a covariate. Considers 100Y and anomalous conditions. Also some exploration of other trends (e.g., georeferenced specimens, collector bias).
 
 - `bias_error2.Rmd`
-  + Text
+  + Bootstrap resampling analyses to emphasize confidence in the previous analyses (split by data subsets). Compare bootstrapped estimates among 100Y and anomalous climate conditions
 
 - `bias_error3.Rmd`
-  + Text
+  + Simulated Data for new lat/long + elevation, dispersed by one of five distances from original coordinates. Format new climate data into combined csv files.
   
 - `bias_error3b.Rmd`
-  + continuation of the previous file with comparison of the preivously simulated data and pheno-climatic models
+  + Regression analysis & comparison of simulated coordinate data -- continuation of the previous file.
 
 
 <br>  

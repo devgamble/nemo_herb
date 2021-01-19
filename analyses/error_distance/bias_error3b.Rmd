@@ -1,5 +1,5 @@
 ---
-title: "bias_error3b"
+title: "Error Distance Analyses 3b"
 author: "Devin Gamble"
 date: "11/21/2020"
 output: html_document

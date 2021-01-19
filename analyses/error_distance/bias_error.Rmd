@@ -1,5 +1,5 @@
 ---
-title: "Bias and Error in Herbarium data"
+title: "Bias and Error in Herbarium data: Error Distance Analyses"
 author: "Devin Gamble"
 date: "7/28/2020"
 output: html_document
