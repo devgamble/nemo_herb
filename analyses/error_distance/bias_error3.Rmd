@@ -79,7 +79,7 @@ Steps:
 
 <br>  
 
-Determining new coordinates based on km will depend on the present latitude and longitude of a collection. Simulations here are based off a subset of the original data for which confidence in specimen collection locations is high (0-2 km) so that deviations in the parameter estimates and $R^2$ values of models from simulated data can be attributed to effects of real differences in collection uncertainty AND locations. Use the WGS84 ellipsoid (the datum used for the majority of records; some NAD83 and NAD27 [*calculate % in 0-2km data*]) to calculate new decimal degrees based on some km deviation at each record. 
+Determining new coordinates based on km will depend on the present latitude and longitude of a collection. Simulations here are based off a subset of the original data for which confidence in specimen collection locations is high (0-2 km) so that deviations in the parameter estimates and $R^2$ values of models from simulated data can be attributed to effects of real differences in collection uncertainty AND locations. Use the WGS84 ellipsoid (the datum used for the majority of records; some NAD83 and NAD27 [*calculate % in 0-2km data - specify WGS4 or NAD83/27 method?*]) to calculate new decimal degrees based on some km deviation at each record. 
 
 "geosphere" package -> `destPoint()` function computes a new coordinate point (WGS84) when given a start point, initial bearing, and distance.  
 
@@ -1012,7 +1012,7 @@ write_csv(sims_25k_all, here::here("analyses", "new_coords", "sims_25ka_all.csv"
 *See next RMD script for analyses of dispersed data!!!*  
 
 
-```{r eval = FALSE, message = FALSE}
+```{r DEFUNCT, eval = FALSE, message = FALSE}
 #DEFUNCT/FAILED ANALYSES
 library(elevatr) #must have package rgdal installed!
 #Get elevation for new coords as well

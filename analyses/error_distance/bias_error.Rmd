@@ -1,5 +1,5 @@
 ---
-title: "Bias and Error in Herbarium data: Error Distance Analyses"
+title: "Bias in Herbarium data: Error Distance Analyses"
 author: "Devin Gamble"
 date: "7/28/2020"
 output: html_document
@@ -21,17 +21,9 @@ library(jtools)
 library(interactions)
 ```
 
-# Examining the effect of error distance and other potential biases in herbarium data  
+Examining the effect of error distance (and other potential biases) in herbarium data  
 
-## Objective: Deteremine how records' error distance and other collection information might bias pheno-climatic models in *N. menziesii*  
-
-### Table of Contents    
-- Error distance  
-    - By Data subsets  
-    - As a covariate   
-- Georeferrencing  
-- Collection patterns & Trends    
-
+Objective: Determine how records' error distance and other collection information might bias pheno-climatic models in *N. menziesii*  
 Note: Several code chunks copied over from `EDA2.Rmd` and refined.    
 
 **TO DO**  
@@ -39,14 +31,19 @@ Note: Several code chunks copied over from `EDA2.Rmd` and refined.
 
 <br>  
 
-#### Load Data  
-```{r message = FALSE, warning = FALSE}
+```{r message = FALSE, warning = FALSE, echo = FALSE}
+#Load Data 
+
 nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
   mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
 #1677 obs, 1251 columns
 
 nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
 #1764 obs, 1251 columns
+
+
+#Set contrasts to sums
+options(contrasts = c("contr.sum", "contr.poly"))
 ```
 
 Data subset by error distances/bins  
@@ -68,30 +65,34 @@ nemo_e0_4 <-  nemo_all_errors %>%
 nemo_e2 <- nemo_all_errors %>% 
   filter(error_bin == "<2 km") 
 
-#Set contrasts to sums
-options(contrasts = c("contr.sum", "contr.poly"))
 ```
 
 
-## Effect of Error Distance on DOY ~ Climate models  
+# Effect of Error Distance on Pheno-climatic models  
 
 Measure the effect of error distance on pheno-climatic models'
-- $R^2$ values  
 - Parameter estimates  
-  -   significance of and differences b/w climate variables in their effect on DOY  
+- $R^2$ values  
+- Significance of and differences b/w climate variables in their effect on DOY  
 
-For 100 year averages for MAT, MAP, Tmin_sp, Tmin_wt, PPT_sp, PPT_wt  
+For 100 year averages and Anomalies, focus on MAT and MAP (Tmin_sp, Tmin_wt, PPT_sp, PPT_wt analyzed below)  
 
-*Note*: Rationale for using nemo_df2: error distance estiamtes are likely more accurate  after 1900.  
+*Note*: Rationale for using nemo_df2: Climate data only available from 1901 onward. Locality data and error distance *may* be more accurate for records collected after 1900 as well...  
 
 <br>  
 
 
-### Subsetting data by error bins
+## Subsetting data by error bins  
 
-Only significant interactions are shown although interactions among climate variables were tested for each All Records model.  
-#### 100-Y MAT & MAP
-```{r message = FALSE, warning = FALSE}
+Details: Construct four models, one for each set of the data corresponding to levels of uncertainty. Include Temperature and Precipitation in the same model for *either* annual OR seasonal conditions, not both in the same model. One set of models with and without non-climatic predictors (elevation, longitude, year...). Interactions among variables were tested (for 'All Records' models) but, for the most part, are not included due to a lack of significant effects.  
+- **Scale** parameter estimates to make them directly comparable 
+
+
+**Evaluate Differences**: Compare parameter estimates visually using 95% confidence intervals (Find another [parametric] test to compare estimates?). Compare $R^2$ values qualitatively.  
+
+
+100-Y MAT & MAP
+```{r 100-Y MAT and MAP, message = FALSE, warning = FALSE}
 ##
 #MAT & MAP
 ##
@@ -101,36 +102,46 @@ er_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_all_errors)
 er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
 er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
 
-plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 10))
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(M100Y_lm1) # N = 1677
+
+summary(M100Y_lm1)$r.squared # N = 1677
 summary(er_an0)$r.squared # N = 1166
 summary(er_an1)$r.squared # N = 1033
 summary(er_an2)$r.squared # N = 743
 
 
-#Including other covariates
+##
+#MAT & MAP + other covariates
+## 
 M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2)
 
 erc_an0 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_all_errors)
 erc_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e0_5)
 erc_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_e2)
- 
-plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT" =  "MAT_100Y", "MAP" = "MAP_100Y"), legend.title = "Model Data", scale = TRUE) + theme_apa() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9))+ labs(y = "Predictor")
+
+
+#Just Climate
+plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT" =  "MAT_100Y", "MAP" = "MAP_100Y"), legend.title = "Model Data", scale = TRUE) + theme_bw() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9))+ labs(y = "Predictor") + scale_x_continuous(limits = c(-10, 15))
 ggsave(here::here("analyses", "figs1", "errorD", "error_summs_MATMAP_100Y.png"), width = 6, height = 4)
 
-summary(M100Y_lm2)
-summary(erc_an0)
-summary(erc_an1)
-summary(erc_an2)
+#Climate & Covariates
+plot_summs(M100Y_lm2, erc_an0, erc_an1, erc_an2, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT" =  "MAT_100Y", "MAP" = "MAP_100Y", "Elevation" = "elev_m", "Longitude" = "long", "Year" = "year"), legend.title = "Model Data", scale = TRUE) + theme_bw() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9))+ labs(y = "Predictor") + scale_x_continuous(limits = c(-10, 15))
+
+
+summary(M100Y_lm2)$r.squared
+summary(erc_an0)$r.squared
+summary(erc_an1)$r.squared
+summary(erc_an2)$r.squared
 
 summ(M100Y_lm2, vif = TRUE)
+#Ensure VIF values are < 4
 ```
 
-```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
+```{r Diagnostics!, message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
 ## DIAGNOSTICS ##
-#V. large sample size may make some tests unreliable - graphical methods more appropraite
+#V. large sample size may make some tests unreliable - graphical methods more appropriate
 
 #Annual climate model
 #M100Y_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
@@ -144,9 +155,10 @@ durbinWatsonTest(M100Y_lm2AL) #slightly better but still S.
 ```
 <br>  
 
-#### MAT & MAP Anomalies   
 
-```{r message = FALSE, warning = FALSE}
+
+MAT and MAP Anomalies   
+```{r MAT and MAP Anomalies, message = FALSE, warning = FALSE}
 
 M100Y_lm1A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_df2)
 
@@ -154,10 +166,10 @@ er_an0A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_all_errors)
 er_an1A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e0_5)
 er_an2A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e2)
 
-plot_summs(M100Y_lm1A, er_an0A, er_an1A, er_an2A, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1A, er_an0A, er_an1A, er_an2A, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-10, 5))
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1A.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(M100Y_lm1A) # N = 1677
+summary(M100Y_lm1A)$r.squared # N = 1677
 summary(er_an0A)$r.squared # N = 1166
 summary(er_an1A)$r.squared # N = 1033
 summary(er_an2A)$r.squared # N = 743
@@ -170,35 +182,39 @@ erc_an0A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_all_error
 erc_an1A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_e0_5)
 erc_an2A <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_e2)
 
-plot_summs(M100Y_lm2A, erc_an0A, erc_an1A, erc_an2A, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT" =  "MAT_A", "MAP" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_apa() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9)) + labs(y = "Predictor")
+#Just Climate
+plot_summs(M100Y_lm2A, erc_an0A, erc_an1A, erc_an2A, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_A" =  "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9)) + labs(y = "Predictor") + scale_x_continuous(limits = c(-10, 5))
 ggsave(here::here("analyses", "figs1", "errorD", "error_summs_MATMAP_A.png"), width = 6, height = 4)
 
-summary(M100Y_lm2A)
-summary(erc_an0A)
-summary(erc_an1A)
-summary(erc_an2A)
+#Climate + Covariates
+plot_summs(M100Y_lm2A, erc_an0A, erc_an1A, erc_an2A, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_A" =  "MAT_A", "MAP_A" = "MAP_A", "Elevation" = "elev_m", "Longitude" = "long", "Year" = "year"), legend.title = "Model Data", scale = TRUE) + theme_bw() + theme(legend.title = element_text("Model Data", size = 10), legend.text = element_text(size = 9)) + labs(y = "Predictor") + scale_x_continuous(limits = c(-10, 20))
+
+
+summary(M100Y_lm2A)$r.squared
+summary(erc_an0A)$r.squared
+summary(erc_an1A)$r.squared
+summary(erc_an2A)$r.squared
 
 summ(M100Y_lm2A, vif = TRUE)
 ```
 
-*Direction of the effect of longitude on DOY SWITCHES b/w long-term climate (positive) and climate anomalies (negative)... WTH? Its effect is normally negative when no climate predictors are included.*  
+*Direction of the effect of longitude on DOY* **SWITCHES** *b/w long-term climate (positive) and climate anomalies (negative)... WTH? Its effect is normally negative when no climate predictors are included.*  
 
 <br>  
 
-#### Anomalies & long-term climate  
+Anomalies & Long-term Climate
 
-```{r message = FALSE, warning = FALSE}
-
+```{r Anomalies & Long-term Climate, message = FALSE, warning = FALSE}
 M100Y_lm1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_df2)
 
 er_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_all_errors)
 er_an1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e0_5)
 er_an2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e2)
 
-plot_summs(M100Y_lm1AL, er_an0AL, er_an1AL, er_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
+plot_summs(M100Y_lm1AL, er_an0AL, er_an1AL, er_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
 ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1AL.png"), width = 6, height = 4)
-#scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
-summary(M100Y_lm1AL) # N = 1677
+
+summary(M100Y_lm1AL)$r.squared # N = 1677
 summary(er_an0AL)$r.squared # N = 1166
 summary(er_an1AL)$r.squared # N = 1033
 summary(er_an2AL)$r.squared # N = 743
@@ -211,26 +227,38 @@ erc_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year
 erc_an1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_e0_5)
 erc_an2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_e2)
 
-plot_summs(M100Y_lm2AL, erc_an0AL, erc_an1AL, erc_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw()
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP2AL.png"), width = 6, height = 4)
-summary(M100Y_lm2AL)
+#Just Climate
+plot_summs(M100Y_lm2AL, erc_an0AL, erc_an1AL, erc_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
+
+
+
+#Climate & Covariates
+plot_summs(M100Y_lm2AL, erc_an0AL, erc_an1AL, erc_an2AL, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A", "Elevation" = "elev_m", "Longitude" = "long", "Year" = "year"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
+
+
+summary(M100Y_lm2AL)$r.squared
 summary(erc_an0AL)$r.squared
 summary(erc_an1AL)$r.squared
 summary(erc_an2AL)$r.squared
 
 summ(M100Y_lm2AL, vif = TRUE)
+```
+*NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model. Makes sense.  
 
+
+
+```{r Corr-plot, message = FALSE, warning = FALSE}
 #Corrplot for supp mat?
-corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year)), addCoef.col = "black", number.cex = .6,) #some autocorrelation in T anoms? elev*long corr
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year)), method = "color", addCoef.col = "black", number.cex = .6,) #some autocorrelation in T anoms? elev*long corr
 #similar VIFs as in 100Y only models, but these are still pretty low
 ```
-*NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model.  
+
 <br>  
 
 
-#### Some Visualizations  
+#### Visualizations  
 
-```{r warning = FALSE, message = FALSE, eval = FALSE}
+```{r Partial-reg plots, warning = FALSE, message = FALSE, eval = FALSE}
 #100Y MAT + MAP w/ covariates
 visreg(M100Y_lm2, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
   theme_apa()
@@ -253,7 +281,9 @@ ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_A.png"), height = 4, w
 
 
 
-#### Seasonal Conditions  
+### Seasonal Conditions  
+
+These have not been updated due to the decision to include only MAT/MAP for error distance analyses.  
 
 **Winter 100Y MAT/MAP**  
 

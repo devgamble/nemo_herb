@@ -14,7 +14,7 @@ on the effect of coordinate uncertainty (error distance) on pheno-climatic model
 
 *TO-DO*  
 - Fix and validate bootstrap confidence intervals  
-- Standardize and coefficient estimates (and CIs) for comparison among long-term climate and anomalies (be consistent)  
+- **Standardize (Scale)** coefficient estimates (and CIs) for comparison among long-term climate and anomalies (be consistent)  
 - Take a Bayesian approach instead...?  
 
 Will increasing the 'R' value (# replicates) reduce the size of confidence intervals?  
