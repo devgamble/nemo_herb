@@ -595,17 +595,22 @@ ggplot(data = climNA_all, aes(x = Tmin_wt_100Y)) +
 
 ## Looking at climates of collection across California  
 
+Spatial visualization of collections using `sf`  
+
 
 ```{r message = FALSE, warning = FALSE, echo = FALSE}
 library(sf)
 ca_border <- read_sf(here::here("analyses", "ca_state_border"), layer = "CA_State_TIGER2016") # imports all files with prefix
+ca_counties <- read_sf(here::here("analyses", "ca_counties_border"), layer = "CA_Counties_TIGER2016")
+
 
 nemo_sf <- st_as_sf(nemo_all1, crs = 4326, coords = c("long", "lat"))
 clim_dfsf <- st_as_sf(climNA_all, crs = 4326, coords = c("long","lat"))
 
 
+
 ggplot() +
-  geom_sf(data = ca_border, fill = "#dfffd1") +
+  geom_sf(data = ca_counties, fill = "#dfffd1") +
   geom_sf(data = clim_dfsf, aes(color = MAT_100Y), alpha = 0.8, size = 2, show.legend = TRUE) +
   labs(color = "MAT (°C)") +
   scale_color_gradientn(colors = c("#fdff91", "#e30000"), values = c(0, 1)) +
@@ -620,6 +625,33 @@ ggplot() +
   scale_color_gradientn(colors = c("#ade2ff", "#004063"), values = c(0, 1)) +
   theme_minimal()
 ggsave(here::here("analyses", "figs1", "MAP_100Y_raster.png"))
+
+
+##COMBINED MAP & MAT
+
+#Check out tmap for better mapping?
+
+ggplot() +
+  geom_sf(data = ca_counties, fill = "#dfffd1") +
+  geom_sf(data = clim_dfsf, aes(fill = MAT_100Y, size = MAP_100Y/10), pch = 21, alpha = 1, show.legend = TRUE) +
+  scale_size_continuous(range = c(1, 5)) +
+  labs(size = "MAP (cm)") +
+  labs(fill = "MAT (°C)") +
+  scale_fill_gradientn(colors = c("#63c8ff", "#cc0000"), values = c(0, 1)) +
+  theme_minimal() + 
+  theme(legend.key.size = unit(5, "mm"), legend.position = c(0.9, 0.7))
+ggsave(here::here("analyses", "figs1", "MAP-MAT-combo_100Y_raster.png"))
+
+
+##Heat-Moisture Index
+
+ggplot() +
+  geom_sf(data = ca_border, fill = "#dfffd1") +
+  geom_sf(data = clim_dfsf, aes(color = AHM_100Y), alpha = 0.8, size = 2, show.legend = TRUE) +
+  labs(color = "SHM") +
+  scale_color_gradientn(colors = c("#ade2ff", "#e30000"), values = c(0, 1)) +
+  theme_minimal()
+#ggsave(here::here("analyses", "figs1", "MAP_100Y_raster.png"))
 
 
 ```

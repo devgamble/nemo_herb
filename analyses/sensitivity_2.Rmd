@@ -1,0 +1,57 @@
+---
+title: "sensitivity_2"
+author: "Devin Gamble"
+date: "4/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(broom)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+```
+
+
+## Objective:  
+#### Determine how sensitivity to different climate variables, for different seasons/months, and for long-term vs anomalouse climate varies  
+- through time  
+- Across space (lat, long, elev)  
+- by climate region  
+
+```{r message = FALSE, warning = FALSE}
+#Load Data
+
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+
+
+#Set contrasts
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+
+# Finer-grain analyses of Phenological Sensitivity
+**Analyze month-of and months-prior sensitivity to climate**
+
+* See 'EDA2.Rmd' for exploration of different models.
+
+
+
+
+
+
+
+

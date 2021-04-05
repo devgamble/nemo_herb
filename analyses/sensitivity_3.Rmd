@@ -1,0 +1,207 @@
+---
+title: "sensitivity_3"
+author: "Devin Gamble"
+date: "4/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Investigating variation in phenological sensitivity  
+
+A. Through time
+B. Across regions
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(broom)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+```
+
+
+
+```{r message = FALSE, warning = FALSE}
+#Load Data
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+
+#Set contrasts
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+
+
+
+
+## Temporal variation in Phenological Sensitivity  
+
+Investigate whether phenological sensitivity (slope/regression coefficient of climate parameter with DOY) to long-term & anomalous climate  *varies* through time.
+
+### Categorical Comparison: Bin by years  
+
+```{r}
+#New data subsets for year
+
+## 20 year bins
+nemo_1901_20 <- nemo_df2 %>% filter(year >= 1901, year <= 1920)
+nemo_1921_40 <- nemo_df2 %>% filter(year >= 1921, year <= 1940)
+nemo_1941_60 <- nemo_df2 %>% filter(year >= 1941, year <= 1960)
+nemo_1961_80 <- nemo_df2 %>% filter(year >= 1961, year <= 1980)
+nemo_1981_00 <- nemo_df2 %>% filter(year >= 1981, year <= 2000)
+nemo_2001_19 <- nemo_df2 %>% filter(year >= 2001, year <= 2019)
+
+#30 year bins - larger sample sizes
+nemo_1901_30 <- nemo_df2 %>% filter(year >= 1901, year <= 1930)
+nemo_1931_60 <- nemo_df2 %>% filter(year >= 1931, year <= 1960)
+nemo_1961_90 <- nemo_df2 %>% filter(year >= 1961, year <= 1990)
+nemo_1991_19 <- nemo_df2 %>% filter(year >= 1991, year <= 2019)
+
+```
+
+
+**MAT/MAP**
+```{r}
+MA_20_1lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1901_20)
+MA_20_2lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1921_40)
+MA_20_3lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1941_60)
+MA_20_4lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1961_80)
+MA_20_5lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1981_00)
+MA_20_6lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1901_20)
+
+
+MA_30_1lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1901_30)
+MA_30_2lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1931_60)
+MA_30_3lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1961_90)
+MA_30_4lm <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_1991_19)
+
+lapply(list(MA_30_1lm, MA_30_2lm, MA_30_3lm, MA_30_4lm), summ, vif = TRUE, scale = TRUE)
+##ATTN!!!### VIF > 4, but for longitude only (not interested in coefficient...)
+```
+
+
+Plots:
+```{r}
+#Bins = 20, long-term
+plot_summs(MA_20_1lm, MA_20_2lm, MA_20_3lm, MA_20_4lm, MA_20_5lm, MA_20_6lm, model.names = c("1", "2", "3", "4", "5", "6"), coefs = c("MAT_100Y", "MAP_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()
+
+
+#Bins = 20, anomalies
+plot_summs(MA_20_1lm, MA_20_2lm, MA_20_3lm, MA_20_4lm, MA_20_5lm, MA_20_6lm, model.names = c("1", "2", "3", "4", "5", "6"), coefs = c("MAT_A", "MAP_A"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()
+
+
+#Bins = 30, long-term
+plot_summs(MA_30_1lm, MA_30_2lm, MA_30_3lm, MA_30_4lm, model.names = c("1901-1930", "1931-1960", "1961-1990", "1990-2019"), coefs = c("MAT_100Y", "MAP_100Y"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "temp_sens_100Y_30.png"), height = 4, width = 6)
+
+
+#Bins = 30, anomalies
+plot_summs(MA_30_1lm, MA_30_2lm, MA_30_3lm, MA_30_4lm, model.names = c("1901-1930", "1931-1960", "1961-1990", "1990-2019"), coefs = c("MAT_A", "MAP_A"), inner_ci_level = 0.8, scale = TRUE) +
+  theme_bw()
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "temp_sens_Anom_30.png"), height = 4, width = 6)
+
+```
+
+30 year bins seem more appropriate at a glance--larger sample sizes, clearer trends. The sensitivity to anomalies increases most apparently with MAT in these models (final plot).  
+
+Differences in sensitivity to spatial (long-term) variation in climate across periods due to sampling effects?
+
+*Examine*: Distributions of DOYs across periods!!!
+
+
+
+
+### Quantitative Analysis: Interaction with year
+
+
+```{r}
+year_int_lm1 <- lm(DOY ~ MAT_100Y*year + MAP_100Y*year + elev_m + long + year, data = nemo_df2)
+summary(year_int_lm1)
+year_int_lm2 <- lm(DOY ~ MAT_A*year + MAP_A*year + elev_m + long + year, data = nemo_df2)
+summary(year_int_lm2)
+
+```
+
+
+
+
+
+
+
+## Geographic/Climatic Variation in Phenological Sensitivity
+
+#### Does Sensitivity to MAT/MAP anomalies depend on chronic climate?  
+
+
+
+
+```{r}
+sens_int_lm1 <- lm(DOY ~ MAT_A*MAT_100Y + MAT_A*MAP_100Y + elev_m + long + year, data = nemo_df2)
+summary(sens_int_lm1)
+
+
+sens_int_lm2 <- lm(DOY ~ MAP_A*MAT_100Y + MAP_A*MAP_100Y + elev_m + long + year, data = nemo_df2)
+summary(sens_int_lm2)
+
+lapply(list(sens_int_lm1, sens_int_lm2), summ, scale = TRUE, vif = TRUE)
+
+```
+
+
+```{r}
+#MAT_A
+johnson_neyman(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y")
+#This J-N plot is super weird... possibly has a tighter CI than linear regression output????
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAT1.png"), height = 4, width = 5)
+
+interact_plot(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT1.png"), height = 4, width = 6)
+
+#MAP_A
+johnson_neyman(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAP1.png"), height = 4, width = 5)
+interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP1.png"), height = 4, width = 6)
+
+johnson_neyman(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAP2.png"), height = 4, width = 5)
+interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAP (anomaly)", legend.main = "MAP (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP2.png"), height = 4, width = 6)
+```
+
+
+
+
+
+
+
+#### Are certain regions more sensitive?  
+
+Examine sensitivity by lat and long. 
+
+If plants at lower latitudes flower earlier, are these early bloomers also more sensitive to climate???
+
+
+
+
+
+
+
+
+
+
+
+

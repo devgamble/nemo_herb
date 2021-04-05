@@ -26,8 +26,9 @@ Examining the effect of error distance (and other potential biases) in herbarium
 Objective: Determine how records' error distance and other collection information might bias pheno-climatic models in *N. menziesii*  
 Note: Several code chunks copied over from `EDA2.Rmd` and refined.    
 
-**TO DO**  
+*TO DO*  
 - Decide on final models to report  
+- Re-do Analyses (long-term climate) w/ 1961-1990 Data; supposedly the most fine-grained? Also pre-climate change...
 
 <br>  
 

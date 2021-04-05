@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 For each one of five replicates, we compare pheno-climatic models of the original data (0-2 km error only) with those from simulated data where coordinates are dispersed by 2, 5, 15, and 25 km. These comparisons include:  
 
-1. Model regression coefficients for long-term and anomalouse MAT and MAP  
+1. Model regression coefficients for long-term and anomalous MAT and MAP  
 2. Model $R^2$ values  
 3. Correlations b/w elevation change and climatic change in simulated deviations  
 
@@ -184,7 +184,7 @@ M100Y_15klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = filter(sims_15kma, replica
 M100Y_25klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = filter(sims_25kma, replicate == "rep1"))
 
 plot_summs(M100Y_lm1, M100Y_2klmR1, M100Y_5klmR1, M100Y_15klmR1, M100Y_25klmR1, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+#ggsave(here::here("analyses", "figs1", "errorD", "_.png"), width = 6, height = 4)
 
 
 
@@ -213,12 +213,12 @@ sapply(mod.list, adjrsq)
 
 #Climate only diplayed
 plot_summs(M100Y_lm1c, M100Y_2klmR1c, M100Y_5klmR1c, M100Y_15klmR1c, M100Y_25klmR1c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_100Y_r1.png"), width = 6, height = 4)
 
 
 #All covariates
-plot_summs(M100Y_lm1c, M100Y_2klmR1c, M100Y_5klmR1c, M100Y_15klmR1c, M100Y_25klmR1c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+plot_summs(M100Y_lm1c, M100Y_2klmR1c, M100Y_5klmR1c, M100Y_15klmR1c, M100Y_25klmR1c, model.names = c("Original (0-2 km error)", "2 km sims", "5 km sims", "15 km sims", "25 km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_100Y_r1c.png"), width = 6, height = 4)
 ```
 
 
@@ -227,10 +227,10 @@ plot_summs(M100Y_lm1c, M100Y_2klmR1c, M100Y_5klmR1c, M100Y_15klmR1c, M100Y_25klm
 
 MA_lm1 <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e2)
 
-MA_2klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = filter(sims_2kma, replicate == "rep1"))
-MA_5klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAT_A + MAP_A, data = filter(sims_5kma, replicate == "rep1"))
-MA_15klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAT_A + MAP_A, data = filter(sims_15kma, replicate == "rep1"))
-MA_25klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A +MAT_A + MAP_A, data = filter(sims_25kma, replicate == "rep1"))
+MA_2klmR1 <- lm(DOY ~ MAT_A + MAP_A, data = filter(sims_2kma, replicate == "rep1"))
+MA_5klmR1 <- lm(DOY ~ MAT_A + MAT_A + MAP_A, data = filter(sims_5kma, replicate == "rep1"))
+MA_15klmR1 <- lm(DOY ~ MAT_A + MAT_A + MAP_A, data = filter(sims_15kma, replicate == "rep1"))
+MA_25klmR1 <- lm(DOY ~ MAT_A +MAT_A + MAP_A, data = filter(sims_25kma, replicate == "rep1"))
 
 plot_summs(MA_lm1, MA_2klmR1, MA_5klmR1, MA_15klmR1, MA_25klmR1, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
 #ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
@@ -251,12 +251,12 @@ sapply(mod.list, adjrsq)
 
 #Climate only diplayed
 plot_summs(MA_lm1c, MA_2klmR1c, MA_5klmR1c, MA_15klmR1c, MA_25klmR1c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_A_r1.png"), width = 6, height = 4)
 
 
 #All covariates
 plot_summs(MA_lm1c, MA_2klmR1c, MA_5klmR1c, MA_15klmR1c, MA_25klmR1c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_A_r1c.png"), width = 6, height = 4)
 ```
 
 
@@ -623,23 +623,116 @@ Trends in slope estimates of anomalies potentially tied to reduced effects of el
 
 
 
-### AVERAGE among replicates  
+### Averages among replicates  
 
-```{r}
-#Average long-term and anomalous MAT, MAP by Replicate 
+**NOTE**: NOT A GOOD IDEA for showing effect on anomalies. Averaged values for Anomalies will be inaccurate - lots of variations among replicates (even in 2 km sims) in anomalous conditions. In addition, averaged simulated coordinates may not accurately reflect deviations from the original point...    
 
-nemo_2ksim_avg <- group_by(nemo_2kmsims, specimen_number) %>% 
-  summarize
+```{r message = FALSE}
+#Average long-term and anomalous MAT, MAP by Replicate (single values for each specimen number)
 
+nemo_2ksim_avg <- sims_2kma %>% group_by(specimen_number) %>% 
+  select(-replicate) %>% 
+  summarize(across(everything(), mean))
 
+nemo_5ksim_avg <- sims_5kma %>% group_by(specimen_number) %>% 
+  select(-replicate) %>% 
+  summarize(across(everything(), mean))
+
+nemo_15ksim_avg <- sims_15kma %>% group_by(specimen_number) %>% 
+  select(-replicate) %>% 
+  summarize(across(everything(), mean))
+
+nemo_25ksim_avg <- sims_25kma %>% group_by(specimen_number) %>% 
+  select(-replicate) %>% 
+  summarize(across(everything(), mean))
 
 ```
 
+```{r AVG1, message = FALSE, eval = FALSE}
+## Long-term Climate
+
+#With Covariates
+M100Y_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + long + year, data = nemo_e2)
+
+M100Y_2klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_2ksim_avg)
+M100Y_5klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_5ksim_avg)
+M100Y_15klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_15ksim_avg)
+M100Y_25klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_25ksim_avg)
+
+#Adj Rsq
+mod.list <- list(M100Y_lm1c, M100Y_2klmRAVGc, M100Y_5klmRAVGc, M100Y_15klmRAVGc, M100Y_25klmRAVGc)
+sapply(mod.list, adjrsq)
+
+#Climate only diplayed
+plot_summs(M100Y_lm1c, M100Y_2klmRAVGc, M100Y_5klmRAVGc, M100Y_15klmRAVGc, M100Y_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 
 
+#All covariates
+plot_summs(M100Y_lm1c, M100Y_2klmRAVGc, M100Y_5klmRAVGc, M100Y_15klmRAVGc, M100Y_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+```
+
+```{r AVG2, message = FALSE, eval = FALSE}
+##Anomalies
+
+MA_lm1c <- lm(DOY ~ MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+
+MA_2klmRAVGc <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_2ksim_avg)
+MA_5klmRAVGc <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_5ksim_avg)
+MA_15klmRAVGc <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_15ksim_avg)
+MA_25klmRAVGc <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = nemo_25ksim_avg)
+
+#Adj Rsq
+mod.list <- list(MA_lm1c, MA_2klmRAVGc, MA_5klmRAVGc, MA_15klmRAVGc, MA_25klmRAVGc)
+sapply(mod.list, adjrsq)
+
+#Climate only diplayed
+plot_summs(MA_lm1c, MA_2klmRAVGc, MA_5klmRAVGc, MA_15klmRAVGc, MA_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+
+
+#All covariates
+plot_summs(MA_lm1c, MA_2klmRAVGc, MA_5klmRAVGc, MA_15klmRAVGc, MA_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+```
+
+```{r AVG3, message = FALSE}
+### 
+# Long-term & Anomalies 
+###
+
+
+#With Covariates
+MLA_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+#summ(MLA_lm1c, vifs = TRUE)
+
+MLA_2klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_2ksim_avg)
+MLA_5klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_5ksim_avg)
+MLA_15klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_15ksim_avg)
+MLA_25klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_25ksim_avg)
+
+#Adj Rsq
+mod.list <- list(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc)
+sapply(mod.list, adjrsq)
+
+#Climate only diplayed
+plot_summs(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+
+
+#All covariates
+plot_summs(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
+#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+```
+
+<br>  
 
 
 ### Differences among replicates, within simulation groups  
+
+### Include sim distance as a covariate?!?!?  NO.
+
 
 
 ## Change in Elevation & Climate  

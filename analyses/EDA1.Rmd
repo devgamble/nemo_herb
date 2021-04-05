@@ -171,12 +171,15 @@ ggplot(data = nemo_all1, aes(x = error_dist_m)) +
   
 
 ggplot(data = nemo_all1, aes(x = error_bin)) +
-  geom_bar(fill = "blue", color = "black") +
+  geom_bar(aes(fill = error_bin), color = "black") +
   theme_classic() +
   scale_y_continuous(expand = c(0,0), limits = c(0,800)) +
+  scale_fill_manual(values = c("#405DAF", "#4470D8", "#6F699C", "#8AABF0",  "#E1DECD")) +
   ylab("Count") + 
-  xlab("Error distance (binned)")
-  
+  xlab("Error Distance (binned)") +
+  theme(legend.position = "none")
+ggsave(here::here("analyses", "figs1", "errorD", "error_bins_hist.png"), height = 4, width = 6)
+
 #BREAK DOWN to compare source
 
 ggplot(data = nemo_all1, aes(x = error_bin, by = source)) +

@@ -165,10 +165,14 @@ lm1.1 <- lm(DOY ~ elev_m + year + lat, data = nemo_df2) #>1900
 summary(lm1)
 summary(lm1.1)
 
-visreg(lm1, xvar = "elev_m", xlab = "Elevation (m)", points = list(col = "#404040")) 
-visreg(lm1, "year", xlab = "Year", points = list(col = "#404040"))
-visreg(lm1, xvar = "long", xlab = "Longitude", points = list(col = "#404040"))
-visreg(lm1.1, xvar = "lat", xlab = "Latitude", points = list(col = "#404040"))
+visreg(lm1, xvar = "elev_m", xlab = "Elevation (m)", points = list(col = "#404040"), gg = TRUE, band = FALSE) + theme_apa() 
+ggsave(here::here("analyses", "figs1", "DOY_elev1.png"), height = 4, width = 6)
+visreg(lm1, "year", xlab = "Year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "DOY_year1.png"), height = 4, width = 6)
+visreg(lm1, xvar = "long", xlab = "Longitude", points = list(col = "#404040"), gg = TRUE, band = FALSE) + theme_apa() 
+ggsave(here::here("analyses", "figs1", "DOY_long1.png"), height = 4, width = 6)
+visreg(lm1.1, xvar = "lat", xlab = "Latitude", points = list(col = "#404040"), gg = TRUE, band = FALSE) + theme_apa() 
+ggsave(here::here("analyses", "figs1", "DOY_lat1.png"), height = 4, width = 6)
 
 lm1.2 <- lm(DOY ~ elev_m + year + long + long*elev_m, data = nemo_df2) 
 summary(lm1.2)
@@ -187,40 +191,48 @@ summary(lm1.2)
 Which geographical and climate variables are correlated with one another?  
 (And how could these make future analyses difficult?)  
 
-```{r warning = FALSE, message = FALSE, echo = FALSE}
+```{r corplots, warning = FALSE, message = FALSE, echo = FALSE}
 #check correlated climate variables for subset of whole df - 100 year averages
 library(corrplot)
-nemo_corrcheck_an <- nemo_df1 %>% 
-  select(MAT_100Y:MCMT_100Y, MAP_100Y:DD5_100Y, NFFD_100Y, PAS_100Y, CMD_100Y, RH_100Y, lat, long, elev_m, year)
 
-cor_an <- cor(nemo_corrcheck_an)
-corrplot(cor_an, type = "upper", method = "square", addCoef.col = "black", number.cex = .6, diag = F)
+library(ggcorrplot) #to save with ggsave
 
-#seasonal variables
+#Corrplot1
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year, DOY)), method = "color", addCoef.col = "black", type = "upper", number.cex = .7,)
 
-nemo_corrcheck_sz <- nemo_df1 %>% 
-  select(Tmin_wt_100Y:PPT_sp_100Y, DD5_wt_100Y:DD5_at_100Y, lat, long, elev_m, year)
+ggcorrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year, DOY)), type = "upper", outline.col = "gray", lab = TRUE, lab_size = 3, colors = c("#002c85", "white", "#ab0000"), ggtheme = ggplot2::theme_light, show.diag = FALSE)
+ggsave(here::here("analyses", "figs1", "corrplot_1.png"), height = 4, width = 5)
+#Eventually add in PI to the above plot (check corr w/ DOY!)
+
+
+#Normals, YoC, Anomalies - Annual
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_Y, MAP_Y, MAT_A, MAP_A, elev_m, long, lat, year)), method = "color", addCoef.col = "black", type = "upper", number.cex = .7,)
+
+ggcorrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_Y, MAP_Y, MAT_A, MAP_A, elev_m, long, lat, year)), type = "upper", outline.col = "gray", lab = TRUE, lab_size = 3, colors = c("#002c85", "white", "#ab0000"), ggtheme = ggplot2::theme_light, show.diag = FALSE)
+ggsave(here::here("analyses", "figs1", "corrplot_2.png"), height = 4, width = 5)
+#YoC weakly correlated to anoms for MAP
+
+
+#Seasonal variables
+corrplot(cor(nemo_df2 %>% select(Tmin_wt_100Y:PPT_sp_100Y, DD5_wt_100Y:DD5_at_100Y)), type = "upper", method = "color", addCoef.col = "black", number.cex = .7)
 #Humidty, NFFD, and CMD exlcuded: CMD_sp_100Y, CMD_sm_100Y, RH_wt_100Y:RH_at_100Y, NFFD_wt_100Y:NFFD_at_100Y
 #PPT_sm_100Y all NAs, not included
 
-cor_sz <- cor(nemo_corrcheck_sz)
-corrplot(cor_sz, type = "upper", method = "square", addCoef.col = "black", number.cex = .5, diag = F)
+
+#Normals & Anomalies - Seasonal
+corrplot(cor(nemo_df2 %>% select(Tmin_wt_100Y, Tmax_wt_100Y, Tmin_sp_100Y, Tmax_sp_100Y, PPT_wt_100Y, PPT_sp_100Y, Tmin_wt_A, Tmax_wt_A, Tmin_sp_A, Tmax_sp_A, PPT_wt_A, PPT_sp_A)), method = "color", addCoef.col = "black", type = "upper", number.cex = .7,)
 
 
-##Correlations among YoC, Normals, and anomalies...   
-nemo_cor_norms <- nemo_df2 %>% 
-  filter(year >= 1901, year <= 2017) %>% 
-  select(MAT_100Y, MAT_N51, MAT_N81, MAP_100Y, MAP_N51, MAP_N81, Tave_sp_100Y, Tave_sp_N81, MAT_Y, MAP_Y, Tave_sp_Y)
-cor_norm <- cor(nemo_cor_norms)
-corrplot(cor_norm, method = "square", addCoef.col = "black", number.cex = .8, diag = F, type = "upper", na.label = "o")
+
+#100Y other clim var.s
+corrplot(cor(nemo_df2 %>% select(MAT_100Y:MCMT_100Y, MAP_100Y:DD5_100Y, NFFD_100Y, PAS_100Y, CMD_100Y, RH_100Y)), type = "upper", method = "color", addCoef.col = "black", number.cex = .7)
+
+
+##Correlations among 100Y & 30-year norms 
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAT_N51, MAT_N81, MAP_100Y, MAP_N51, MAP_N81, Tave_sp_100Y, Tave_sp_N81, MAT_Y, MAP_Y, Tave_sp_Y)), type = "upper", method = "color", addCoef.col = "black", number.cex = .7)
+
 #Unsurprising, all normals extremely well correlated, choice of which not too important
 
-#Anomalies
-nemo_cor4 <- nemo_df2 %>% 
-  filter(year >= 1901, year <= 2017) %>% 
-  select(MAT_100Y, MAP_100Y, Tmin_sp_100Y, PPT_wt_100Y, MAT_Y, MAP_Y, Tmin_sp_Y, PPT_wt_Y, MAT_A, MAP_A, Tmin_sp_A, PPT_wt_A)
-cor4 <- cor(nemo_cor4)
-corrplot(cor4, method = "square", addCoef.col = "black", number.cex = .6, diag = F, type = "upper", na.label = "o")
 
 
 #Significance test of correlations
@@ -329,7 +341,8 @@ mat_t1.1 <- lm(MAT_Y ~ year + elev_m + long, data = nemo_df2)
 mat_t1.3 <- lm(MAT_Y ~ year + MAP_100Y + elev_m + long, data = nemo_df2) #Control for historical MAP
 summary(mat_t1.3) #Best model
 summ(mat_t1.3, vif = TRUE) #check VIF
-visreg(mat_t1.3, xvar = "year", points = list(col = "#404040"))
+visreg(mat_t1.3, xvar = "year", xlab = "Year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "MAT_Y_year.png"), height = 4, width = 6)
 
 
 #mat_t1.4 <- lm(MAT_Y ~ year + MAP_Y + elev_m + long + MAP_Y*elev_m*long, data = nemo_df2)
@@ -359,15 +372,15 @@ map_t1 <- lm(MAP_Y ~ year + elev_m + long, data = nemo_df2)
 
 map_t1.1 <- lm(MAP_Y ~ year + elev_m + long + MAT_100Y, data = nemo_df2)
 summary(map_t1.1)
-visreg(map_t1.1, xvar = "year", points = list(col = "#404040")) #Not sure how to hide line without gg=TRUE...
-
+visreg(map_t1.1, xvar = "year", xlab = "Year", points = list(col = "#404040"), gg = TRUE, band = FALSE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "MAP_Y_year.png"), height = 4, width = 6)
 #change over 120 years
 -5.746e-01*120
 
 
 
 ```
-No significant change in average MAP over years of collection  
+Small significant change in average MAP over years of collection  
 
 
 **Frost Free Days**  
@@ -446,7 +459,7 @@ visreg(PPsp_t1 , xvar = "year", points = list(col = "#404040")) #Likely DRIVING 
 ```
 
 
-*Consider differences across geographic climate regions?*  
+*Consider differences across geographic climate regions...*  
 
 
 ### Change in Anomalies over time (And other trends)  

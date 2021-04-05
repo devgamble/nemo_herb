@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
 # Project Overview  
 
-To understand how climate drives variation in reproductive phenology, we are utilizing over 1,700 herbarium records of the widely distributed annual wildflower Nemophila menziesii. By modelling specimen DOY in response to climate and collection location, we can describe climate-driven changes in phenology across space and time. Additionally, including a metric (Phenological Index – PI) to account for the phenophase of digitized specimens will allow for models with greater predictive power and the capacity to investigate shifts in specific phenophases. Finally, understanding variation in phenological sensitivity to climate will aid us in predicting how future climates will impact Nemophila menziesii as well as similar species’ ecology, reproduction, and persistence.  
+To understand how climate drives variation in reproductive phenology, we are utilizing over 1,700 herbarium records of the widely distributed annual wildflower *Nemophila menziesii*. By modelling specimen DOY in response to climate and collection location, we can describe climate-driven changes in phenology across space and time. Additionally, including a metric (Phenological Index – PI) to account for the phenophase of digitized specimens will allow for models with greater predictive power and the capacity to investigate shifts in specific phenophases. Finally, understanding variation in phenological sensitivity to climate will aid us in predicting how future climates will impact *N. menziesii* as well as similar species’ ecology, reproduction, and persistence.  
 
 
 
