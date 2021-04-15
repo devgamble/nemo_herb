@@ -1,0 +1,308 @@
+---
+title: "bias_error2b"
+author: "Devin Gamble"
+date: "4/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+```
+
+
+
+# Bootstrap Resampling Analysis  
+(Second iteration)
+
+
+
+B: Bayesian Approach
+
+*Notes:*  
+- Fix and validate bootstrap confidence intervals  
+- **Standardize (Scale)** coefficient estimates (and CIs) for comparison among long-term climate and anomalies (be consistent)  
+
+
+Load Data  
+```{r message = FALSE, warning = FALSE}
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) #Should this be ordered? #Combined specimen & climate data from 1901-2019
+#1677 obs, 1251 columns
+
+nemo_df1 <- read_csv(here::here("data_cleaning", "nemo_full_1861_2019.csv")) #Combined data for all years
+#1764 obs, 1251 columns
+
+options(contrasts = c("contr.sum", "contr.poly"))
+```
+
+Data subset by error distances/bins  
+```{r message = FALSE, warning = FALSE}
+#All errors
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+#1166 after rm records before 1901
+
+#0-5 km resolution
+nemo_e0_5 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km" | error_bin == "2-5 km") 
+
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") 
+
+```
+
+*Bins*  
+- Original Data set  
+- Error Distance present  
+- 0-5 km error  
+- 0-2 km error  
+
+
+## Bayesian PCMs
+
+Construct simple linear models (PCMs) and compare estimates among error distance subsets (as done in `bias_error.Rmd`), but now use a Bayesian method instead.
+
+
+```{r warning = FALSE}
+#Bayesian Packages
+#library("rstan")
+#options: 
+
+library(rethinking)
+library(bayesplot)
+options(mc.cores = parallel::detectCores()) #faster model computation
+#rstan_options(auto_write = TRUE) #bypass re-compiling
+
+source("../error_distance/helper.R") #functions by Stephen Proulx for improving the ease of use of 'rethinking' functions
+
+```
+
+Use 'ulam()' for HMCMC 
+
+### Annual Climate models  
+Long-term conditions  
+
+*Select Data* for use in ulam models
+
+```{r}
+nemo_bd <- nemo_df2 %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  rename(lons = long) %>% #long reserved, use 'lons' instead
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A)) #center/standardize variables (DOY only centered)
+
+```
+
+```{r eval = FALSE}
+#Base model, regular regression
+base_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lons + year, data = nemo_bd)
+summary(base_lm1)
+
+base_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lons + year, data = nemo_bd)
+summary(base_lm2)
+summ(base_lm2, vif = TRUE)
+
+```
+
+#### All Records
+
+```{r}
+set.seed(100)
+
+ann_clim_b1 <- ulam(alist(
+  
+    DOY ~ dnorm(mu, sigma), #DOY is normally distributed
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
+    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(6, 2),
+    bTA ~ dnorm(-3, 2),
+    bPA ~ dnorm(1, 2),
+    bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bL ~ dnorm(0, 2),
+    bY ~ dnorm(0, 1),
+    sigma ~ dexp(1)), #best prior for sigma...?
+  
+  data = select(nemo_bd, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+#add loglik = TRUE to make AIC comparisons
+
+precis(ann_clim_b1)
+#Looks pretty good
+
+
+```
+
+Inspect Posterior
+```{r}
+#Additional diagnostic checks
+
+plot(ann_clim_b1)
+traceplot(ann_clim_b1)
+
+#Coeffs Post
+post_ann_clim_b1 <- extract.samples(ann_clim_b1@stanfit) %>% 
+  as_tibble() %>% mutate(dset = "All") #samples 10,000 obs from the posterior
+
+bayesplot::mcmc_intervals(select(post_ann_clim_b1, bTL, bPL, bTA, bPA))
+
+```
+
+#### All Error records
+
+```{r}
+nemo_bdE <- nemo_all_errors %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  rename(lons = long) %>% #long reserved, use 'lons' instead
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
+
+ann_clim_b1E <- ulam(alist(
+  
+    DOY ~ dnorm(mu, sigma), #DOY is normally distributed
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
+    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(6, 2),
+    bTA ~ dnorm(-3, 2),
+    bPA ~ dnorm(1, 2),
+    bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bL ~ dnorm(0, 2),
+    bY ~ dnorm(0, 1),
+    sigma ~ dexp(1)), #best prior for sigma...?
+  
+  data = select(nemo_bdE, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+
+
+precis(ann_clim_b1E)
+
+
+```
+
+#### 0-5 km records
+
+```{r}
+nemo_bd5k <- nemo_e0_5 %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  rename(lons = long) %>% #long reserved, use 'lons' instead
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
+
+ann_clim_b15 <- ulam(alist(
+  
+    DOY ~ dnorm(mu, sigma), #DOY is normally distributed
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
+    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(6, 2),
+    bTA ~ dnorm(-3, 2),
+    bPA ~ dnorm(1, 2),
+    bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bL ~ dnorm(0, 2),
+    bY ~ dnorm(0, 1),
+    sigma ~ dexp(1)), #best prior for sigma...?
+  
+  data = select(nemo_bd5k, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+
+
+precis(ann_clim_b15)
+
+
+```
+
+#### 0-2 km records
+
+```{r}
+nemo_bd2k <- nemo_e2 %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  rename(lons = long) %>% #long reserved, use 'lons' instead
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
+
+ann_clim_b12 <- ulam(alist(
+  
+    DOY ~ dnorm(mu, sigma), #DOY is normally distributed
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
+    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(6, 2),
+    bTA ~ dnorm(-3, 2),
+    bPA ~ dnorm(1, 2),
+    bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bL ~ dnorm(0, 2),
+    bY ~ dnorm(0, 1),
+    sigma ~ dexp(1)), #best prior for sigma...?
+  
+  data = select(nemo_bd2k, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+
+
+precis(ann_clim_b12)
+
+
+```
+
+**Examine Posteriors**:
+
+```{r}
+post_ann_clim_b1E <- extract.samples(ann_clim_b1E@stanfit) %>% 
+  as_tibble() %>% mutate(dset = "Error")
+post_ann_clim_b15 <- extract.samples(ann_clim_b15@stanfit) %>% 
+  as_tibble() %>% mutate(dset = "0-5 km")
+post_ann_clim_b12 <- extract.samples(ann_clim_b12@stanfit) %>% 
+  as_tibble()  %>% mutate(dset = "0-2 km")
+
+
+
+bayesplot::mcmc_areas(select(post_ann_clim_b1, bTL, bPL, bTA, bPA), point_est = "mean", prob = 0.95) #95% Outer Probability Mass (default = 1)
+bayesplot::mcmc_areas(select(post_ann_clim_b1E, bTL, bPL, bTA, bPA), point_est = "mean", prob = 0.95)
+bayesplot::mcmc_areas(select(post_ann_clim_b15, bTL, bPL, bTA, bPA), point_est = "mean", prob = 0.95)
+bayesplot::mcmc_areas(select(post_ann_clim_b12, bTL, bPL, bTA, bPA), point_est = "mean", prob = 0.95)
+#Interior HDPI/HDR = 50%
+```
+
+
+
+Combine model outputs in coeff plots
+```{r}
+library(reshape2)
+library(stringr)
+
+summ_table <- rbind(post_ann_clim_b1, post_ann_clim_b1E, post_ann_clim_b15, post_ann_clim_b12) %>% 
+  melt(id.vars = c("dset"), measure.vars = c("bTL", "bPL", "bTA", "bPA"), variable.name = "Parameter", value.name = "coeff")
+
+summ_table1 <- group_by(summ_table, dset, Parameter) %>% 
+  summarize(mean.coeff = mean(coeff),
+            low.coeff = quantile(coeff, 0.025),
+            high.coeff = quantile(coeff, 0.975)) %>% 
+  ungroup() %>% 
+  mutate(dset = factor(dset, levels = c("All", "Error", "0-5 km", "0-2 km"))) %>%  
+  mutate(Parameter = recode_factor(Parameter, bTL = "MAT_100Y", bTA= "MAT_A", bPL= "MAP_100Y", bPA = "MAP_A", .ordered = TRUE))
+
+
+ggplot(data = summ_table1) + 
+  geom_errorbarh(aes(y = Parameter, xmin = low.coeff, xmax = high.coeff, color = dset), size = 1) +
+  geom_point(aes(x = mean.coeff, y = Parameter), size = 2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  facet_wrap(~dset, ncol = 1) +
+  labs(color = "Data set", x = "Estimate (standardized)") +
+  theme_bw()
+
+ggsave(here::here("analyses", "figs1", "errorD", "Bayes_error_comp1.png"), width = 6, height = 4)
+
+```
+
+
+
+**Objective**  
+1. Re-sample from the three larger data sets (OG, All errors, 0-5 km) at N = 743 (size of 0-2 km)  
+2. For each resample, fit a pheno-climatic linear model (for each data set)  
+3. Compare the parameter estimates (for climate variables) and confidence intervals based on xxxx samples  
+4. Compute significance of differences between estimates among each data set  
+

@@ -146,11 +146,11 @@ summary(anom_clim1)
 summary(anom_clim2)
 summary(anom_clim3)
 summary(anom_clim4)
-summ(anom_clim4, scale = TRUE, vif = TRUE)
+summ(anom_clim4, scale = FALSE, vif = TRUE)
 #Controlling for elevation severely reduces the effect of MAT (ns)
 #Controlling for elev and long - the effect of temperature returns but is still quite small
 
-summ(anom_clim3, vif = TRUE) #VIF for long, elev, MAP, MAT is high
+#summ(anom_clim3, vif = TRUE) #VIF for long, elev, MAP, MAT is high
 
 visreg(anom_clim1, "MAT_A", xlab = "MAT (anomaly)", points = list(col = "#404040"))
 visreg(anom_clim1, "MAP_A", xlab = "MAP (anomaly)", points = list(col = "#404040"))
