@@ -21,12 +21,13 @@ library(jtools)
 library(interactions)
 ```
 
+
 Examining the effect of error distance (and other potential biases) in herbarium data  
 
 Objective: Determine how records' error distance and other collection information might bias pheno-climatic models in *N. menziesii*  
 Note: Several code chunks copied over from `EDA2.Rmd` and refined.    
 
-**Focal results before line 300**
+**Main Results** Lines 220sih to _____.
 
 *TO DO*  
 - Decide on final models to report  
@@ -106,7 +107,7 @@ er_an1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e0_5)
 er_an2 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
 
 plot_summs(M100Y_lm1, er_an0, er_an1, er_an2, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 10))
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+#ggsave(here::here("analyses", "figs1", "errorD", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
 
 summary(M100Y_lm1)$r.squared # N = 1677
@@ -170,7 +171,7 @@ er_an1A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e0_5)
 er_an2A <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e2)
 
 plot_summs(M100Y_lm1A, er_an0A, er_an1A, er_an2A, model.names = c("All Records", "With error", "0-5 km", "0-2 km"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-10, 5))
-ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1A.png"), width = 6, height = 4)
+#ggsave(here::here("analyses", "figs1", "errorD", "error_d_subset_MAT-MAP1A.png"), width = 6, height = 4)
 #scale = TRUE refits model to mean-center & standardize the predictors but not the response. Use 'center = TRUE' to only mean center variables
 summary(M100Y_lm1A)$r.squared # N = 1677
 summary(er_an0A)$r.squared # N = 1166
@@ -203,11 +204,14 @@ summ(M100Y_lm2A, vif = TRUE)
 
 *Direction of the effect of longitude on DOY* **SWITCHES** *b/w long-term climate (positive) and climate anomalies (negative)... WTH? Its effect is normally negative when no climate predictors are included.*  
 
+*UPDATE*: Same trend appears with latitude (lat), but VIF values in more complex models are much lower when using lat instead. However, effect of MAT_100Y becomes non-significant. Coefficient estimates and R2 values appear to change little.
+
 <br>  
 
 Anomalies & Long-term Climate
 
-```{r Anomalies & Long-term Climate, message = FALSE, warning = FALSE}
+```{r Anomalies & Long-term Climate, message = FALSE, warning = FALSE, eval = FALSE}
+#Base models, not geography/year covariates
 M100Y_lm1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_df2)
 
 er_an0AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_all_errors)
@@ -221,7 +225,11 @@ summary(M100Y_lm1AL)$r.squared # N = 1677
 summary(er_an0AL)$r.squared # N = 1166
 summary(er_an1AL)$r.squared # N = 1033
 summary(er_an2AL)$r.squared # N = 743
+```
 
+
+```{r Anomalies & Long-term Climate v1.5, message = FALSE, warning = FALSE}
+#Longitude instead of Latitude
 
 #Including other covariates
 M100Y_lm2AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_df2)
@@ -244,17 +252,90 @@ summary(erc_an0AL)$r.squared
 summary(erc_an1AL)$r.squared
 summary(erc_an2AL)$r.squared
 
-summ(M100Y_lm2AL, vif = TRUE)
+summ(M100Y_lm2AL, scale = TRUE, vif = TRUE)
 ```
-*NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model. Makes sense.  
 
+
+Coefficient estimates actually **larger/stronger** than for individual long-term and anomaly models!!!
+
+
+
+```{r Anomalies & Long-term Climate v2, message = FALSE, warning = FALSE}
+#Latitude instead of Longitude
+
+M100Y_lm2ALa <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + year, data = nemo_df2)
+
+erc_an0ALa <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + year, data = nemo_all_errors)
+erc_an1ALa <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + year, data = nemo_e0_5)
+erc_an2ALa <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + year, data = nemo_e2)
+
+#Just Climate
+plot_summs(M100Y_lm2ALa, erc_an0ALa, erc_an1ALa, erc_an2ALa, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
+
+
+#Climate & Covariates
+plot_summs(M100Y_lm2ALa, erc_an0ALa, erc_an1ALa, erc_an2ALa, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A", "Elevation" = "elev_m", "Latitude" = "lat", "Year" = "year"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
+
+
+summary(M100Y_lm2ALa)$r.squared
+summary(erc_an0ALa)$r.squared
+summary(erc_an1ALa)$r.squared
+summary(erc_an2ALa)$r.squared
+
+summ(M100Y_lm2ALa, scale = TRUE, vif = TRUE)
+
+lapply(list(M100Y_lm2ALa, erc_an0ALa ,erc_an1ALa, erc_an2ALa), summ, vif = TRUE, scale = TRUE)
+
+```
+
+*NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model. Makes sense.  
+```{r wrning = FALSE}
+#Latitude &&& Longitude
+
+M100Y_lm2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_df2)
+
+erc_an0ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_all_errors)
+erc_an1ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e0_5)
+erc_an2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e2)
+
+#Just Climate
+plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "MAP (Anom.)" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-8, 11)) + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 6, height = 4)
+
+
+#Climate & Covariates
+plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A", "Elevation" = "elev_m", "Latitude" = "lat", "Longitude" = "long", "Year" = "year"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
+
+#More precise Adj. R2s
+adjrsq <- function(x){
+  rsq = getElement(summary.lm(x), "adj.r.squared")
+  print(as.numeric(rsq))}
+mod.list <- list(M100Y_lm2ALb, erc_an0ALb ,erc_an1ALb, erc_an2ALb)
+sapply(mod.list, adjrsq)
+
+
+summ(M100Y_lm2ALb, scale = TRUE, vif = TRUE)
+#Full summary tables for all models
+lapply(list(M100Y_lm2ALb, erc_an0ALb ,erc_an1ALb, erc_an2ALb), summ, vif = TRUE, scale = TRUE)
+
+```
+
+Crazy VIFs, as expected. But better R2 values. Coefficient estimates seem largely unaffected--very similar to long-long model (except for lat/long). VIF for elevation is slightly higher here than in long-only model. High multicollinearity among control variables, but not the climate variables of interest. Use this model???
 
 
 ```{r Corr-plot, message = FALSE, warning = FALSE}
+#png(filename = "corrplot_modelparams.png", units = "in", width = 5, height = 5, res = 300)
+
 #Corrplot for supp mat?
-corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year)), method = "color", addCoef.col = "black", number.cex = .6,) #some autocorrelation in T anoms? elev*long corr
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year)), method = "color", addCoef.col = "black", number.cex = .6, outline = TRUE) #some autocorrelation in T anoms? elev*long corr
 #similar VIFs as in 100Y only models, but these are still pretty low
+
+#dev.off()
+
 ```
+
+**Notes**: Lat & long are similarly correlated to 100Y MAT/MAP. Long is more correlated to elevation than Lat (0.51 vs -.41). This and the reduction in VIFs may be the only benefit of using lat over long. Additionally, MAT_100Y becomes *non-significant* when lat is used in the model instead of long.
+
 
 <br>  
 
@@ -263,18 +344,24 @@ corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long,
 
 ```{r Partial-reg plots, warning = FALSE, message = FALSE, eval = FALSE}
 #100Y MAT + MAP w/ covariates
-visreg(M100Y_lm2, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
+
+#Latitude instead of longitude
+#Report scaled coefficients
+
+visreg(M100Y_lm2AL, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_100.png"), height = 4, width = 6) #Dims: 4x6 clearer than 5x8
-visreg(M100Y_lm2, "MAP_100Y", xlab = "log[MAP] (1901-2000)", points = list(col = "#404040"), gg = TRUE) +  #option: use xtrans = exp 
+
+visreg(M100Y_lm2AL, "MAP_100Y", xlab = "log[MAP] (1901-2000)", points = list(col = "#404040"), gg = TRUE) +  #option: use xtrans = exp 
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_100.png"), height = 4, width = 6)
 
-visreg(M100Y_lm2A, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
+visreg(M100Y_lm2AL, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
   geom_vline(xintercept = 0, lty = 2) +
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_A.png"), height = 4, width = 6)
-visreg(M100Y_lm2A, "MAP_A", xlab = "MAP (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
+
+visreg(M100Y_lm2AL, "MAP_A", xlab = "MAP (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
   geom_vline(xintercept = 0, lty = 2) +
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_A.png"), height = 4, width = 6)

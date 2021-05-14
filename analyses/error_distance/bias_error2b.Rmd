@@ -28,9 +28,7 @@ library(jtools)
 
 B: Bayesian Approach
 
-*Notes:*  
-- Fix and validate bootstrap confidence intervals  
-- **Standardize (Scale)** coefficient estimates (and CIs) for comparison among long-term climate and anomalies (be consistent)  
+
 
 
 Load Data  
@@ -98,18 +96,18 @@ Long-term conditions
 
 ```{r}
 nemo_bd <- nemo_df2 %>% 
-  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year) %>% 
   rename(lons = long) %>% #long reserved, use 'lons' instead
-  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A)) #center/standardize variables (DOY only centered)
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lat = scale(lat), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A)) #center/standardize variables (DOY only centered)
 
 ```
 
 ```{r eval = FALSE}
 #Base model, regular regression
-base_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lons + year, data = nemo_bd)
+base_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + lons + year, data = nemo_bd)
 summary(base_lm1)
 
-base_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lons + year, data = nemo_bd)
+base_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + lons + year, data = nemo_bd)
 summary(base_lm2)
 summ(base_lm2, vif = TRUE)
 
@@ -123,18 +121,19 @@ set.seed(100)
 ann_clim_b1 <- ulam(alist(
   
     DOY ~ dnorm(mu, sigma), #DOY is normally distributed
-    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bT*lat + bL*lons + bY*year,
     alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
-    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
-    bPL ~ dnorm(6, 2),
-    bTA ~ dnorm(-3, 2),
-    bPA ~ dnorm(1, 2),
+    bTL ~ dnorm(0, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(0, 2),
+    bTA ~ dnorm(0, 2),
+    bPA ~ dnorm(0, 2),
     bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bT ~ dnorm(0, 2),
     bL ~ dnorm(0, 2),
     bY ~ dnorm(0, 1),
     sigma ~ dexp(1)), #best prior for sigma...?
   
-  data = select(nemo_bd, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+  data = select(nemo_bd, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, lons, year), chains = 2, iter = 5000)
 #add loglik = TRUE to make AIC comparisons
 
 precis(ann_clim_b1)
@@ -162,25 +161,26 @@ bayesplot::mcmc_intervals(select(post_ann_clim_b1, bTL, bPL, bTA, bPA))
 
 ```{r}
 nemo_bdE <- nemo_all_errors %>% 
-  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year) %>% 
   rename(lons = long) %>% #long reserved, use 'lons' instead
-  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lat = scale(lat), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
 
 ann_clim_b1E <- ulam(alist(
   
     DOY ~ dnorm(mu, sigma), #DOY is normally distributed
-    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bT*lat + bL*lons + bY*year,
     alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
-    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
-    bPL ~ dnorm(6, 2),
-    bTA ~ dnorm(-3, 2),
-    bPA ~ dnorm(1, 2),
+    bTL ~ dnorm(0, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(0, 2),
+    bTA ~ dnorm(0, 2),
+    bPA ~ dnorm(0, 2),
     bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bT ~ dnorm(0, 2),
     bL ~ dnorm(0, 2),
     bY ~ dnorm(0, 1),
     sigma ~ dexp(1)), #best prior for sigma...?
   
-  data = select(nemo_bdE, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+  data = select(nemo_bdE, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, lons, year), chains = 2, iter = 5000)
 
 
 precis(ann_clim_b1E)
@@ -192,25 +192,26 @@ precis(ann_clim_b1E)
 
 ```{r}
 nemo_bd5k <- nemo_e0_5 %>% 
-  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year) %>% 
   rename(lons = long) %>% #long reserved, use 'lons' instead
-  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lat = scale(lat), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
 
 ann_clim_b15 <- ulam(alist(
   
     DOY ~ dnorm(mu, sigma), #DOY is normally distributed
-    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bT*lat + bL*lons + bY*year,
     alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
-    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
-    bPL ~ dnorm(6, 2),
-    bTA ~ dnorm(-3, 2),
-    bPA ~ dnorm(1, 2),
+    bTL ~ dnorm(0, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(0, 2),
+    bTA ~ dnorm(0, 2),
+    bPA ~ dnorm(0, 2),
     bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bT ~ dnorm(0, 2),
     bL ~ dnorm(0, 2),
     bY ~ dnorm(0, 1),
     sigma ~ dexp(1)), #best prior for sigma...?
   
-  data = select(nemo_bd5k, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+  data = select(nemo_bd5k, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, lons, year), chains = 2, iter = 5000)
 
 
 precis(ann_clim_b15)
@@ -222,25 +223,26 @@ precis(ann_clim_b15)
 
 ```{r}
 nemo_bd2k <- nemo_e2 %>% 
-  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, year) %>% 
+  select(DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year) %>% 
   rename(lons = long) %>% #long reserved, use 'lons' instead
-  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
+  mutate(DOY = scale(DOY, scale = FALSE), elev_m = scale(elev_m), lat = scale(lat), lons = scale(lons), year = scale(year), MAT_100Y = scale(MAT_100Y), MAP_100Y = scale(MAP_100Y), MAT_A = scale(MAT_A), MAP_A = scale(MAP_A))
 
 ann_clim_b12 <- ulam(alist(
   
     DOY ~ dnorm(mu, sigma), #DOY is normally distributed
-    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bL*lons + bY*year,
+    mu <- alpha + bTL*MAT_100Y + bPL*MAP_100Y + bTA*MAT_A + bPA*MAP_A + bE*elev_m + bT*lat + bL*lons + bY*year,
     alpha ~ dnorm(0, 1), #prior sigmas for coeffs = 2
-    bTL ~ dnorm(-2, 2), #priors chosen based coeffs from OLS regression
-    bPL ~ dnorm(6, 2),
-    bTA ~ dnorm(-3, 2),
-    bPA ~ dnorm(1, 2),
+    bTL ~ dnorm(0, 2), #priors chosen based coeffs from OLS regression
+    bPL ~ dnorm(0, 2),
+    bTA ~ dnorm(0, 2),
+    bPA ~ dnorm(0, 2),
     bE ~ dnorm(0, 2), #nonclimatic var.s mean = 0 prior
+    bT ~ dnorm(0, 2),
     bL ~ dnorm(0, 2),
     bY ~ dnorm(0, 1),
     sigma ~ dexp(1)), #best prior for sigma...?
   
-  data = select(nemo_bd2k, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lons, year), chains = 2, iter = 5000)
+  data = select(nemo_bd2k, DOY, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, lons, year), chains = 2, iter = 5000)
 
 
 precis(ann_clim_b12)
@@ -269,7 +271,7 @@ bayesplot::mcmc_areas(select(post_ann_clim_b12, bTL, bPL, bTA, bPA), point_est =
 
 
 
-Combine model outputs in coeff plots
+Combine model outputs in coeff plots 
 ```{r}
 library(reshape2)
 library(stringr)
@@ -294,9 +296,12 @@ ggplot(data = summ_table1) +
   labs(color = "Data set", x = "Estimate (standardized)") +
   theme_bw()
 
-ggsave(here::here("analyses", "figs1", "errorD", "Bayes_error_comp1.png"), width = 6, height = 4)
+ggsave(here::here("analyses", "figs1", "errorD", "Bayes_error_comp1c.png"), width = 6, height = 4)
 
 ```
+
+Very similar results for weakly informative priors (estimates = 0) and more informative priors (estimates = -2, 6, -3, 1). 0-2 km MAP_A is non-significant for weakly informative priors (0), but all other estimates appear unchanged.  
+This may be better since the original comparisons found MAP_A to be NS for the 0-2km records.  
 
 
 

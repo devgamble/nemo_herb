@@ -23,6 +23,10 @@ library(jtools)
 library(interactions)
 ```
 
+*To-Do*
+- Clean up below chunks
+- See Tadeo's code from the Poppy paper (Madrono)
+
 
 ## Objective:  
 #### Determine how sensitivity to different climate variables, for different seasons/months, and for long-term vs anomalouse climate varies  
