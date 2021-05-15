@@ -24,7 +24,7 @@ library(interactions)
 ```
 
 *To-Do*
-- Clean up code
+- Clean up code chunks
 - See Tadeo's code from the Poppy paper (Madrono)
 
 
