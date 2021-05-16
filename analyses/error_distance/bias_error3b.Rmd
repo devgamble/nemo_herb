@@ -174,8 +174,9 @@ sims_25kma <- left_join(x = sims_25km, y = nemo_e2_select, by = "specimen_number
 
 ### Replicate 1  
  
+Set to only evaluate chunks (reps) w/ full model (100Y and anomalies)
 
-```{r REP 1a, message = FALSE}
+```{r REP 1a, message = FALSE, eval = FALSE}
 ## Long-term Climate
 M100Y_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_e2)
 
@@ -201,12 +202,12 @@ sapply(mod.list, adjrsq)
 
 
 #With Covariates
-M100Y_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + long + year, data = nemo_e2)
+M100Y_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + lat + long + year, data = nemo_e2)
 
-M100Y_2klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_2kma, replicate == "rep1"))
-M100Y_5klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_5kma, replicate == "rep1"))
-M100Y_15klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_15kma, replicate == "rep1"))
-M100Y_25klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_25kma, replicate == "rep1"))
+M100Y_2klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep1"))
+M100Y_5klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep1"))
+M100Y_15klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep1"))
+M100Y_25klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep1"))
 
 #Adj Rsq
 mod.list <- list(M100Y_lm1c, M100Y_2klmR1c, M100Y_5klmR1c, M100Y_15klmR1c, M100Y_25klmR1c)
@@ -223,7 +224,7 @@ ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_100Y_r1c.png"), wi
 ```
 
 
-```{r REP 1b, message = FALSE}
+```{r REP 1b, message = FALSE, eval = FALSE}
 ##Anomalies
 
 MA_lm1 <- lm(DOY ~ MAT_A + MAP_A, data = nemo_e2)
@@ -239,12 +240,12 @@ plot_summs(MA_lm1, MA_2klmR1, MA_5klmR1, MA_15klmR1, MA_25klmR1, model.names = c
 
 
 #With Covariates
-MA_lm1c <- lm(DOY ~ MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MA_lm1c <- lm(DOY ~ MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 
-MA_2klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep1"))
-MA_5klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep1"))
-MA_15klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep1"))
-MA_25klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep1"))
+MA_2klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep1"))
+MA_5klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep1"))
+MA_15klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep1"))
+MA_25klmR1c <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep1"))
 
 #Adj Rsq
 mod.list <- list(MA_lm1c, MA_2klmR1c, MA_5klmR1c, MA_15klmR1c, MA_25klmR1c)
@@ -279,13 +280,13 @@ plot_summs(MLA_lm1, MLA_2klmR1, MLA_5klmR1, MLA_15klmR1, MLA_25klmR1, model.name
 
 
 #With Covariates
-MLA_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MLA_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 #summ(MLA_lm1c, vifs = TRUE)
 
-MLA_2klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep1"))
-MLA_5klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep1"))
-MLA_15klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep1"))
-MLA_25klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep1"))
+MLA_2klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep1"))
+MLA_5klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep1"))
+MLA_15klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep1"))
+MLA_25klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep1"))
 
 #Adj Rsq
 mod.list <- list(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c)
@@ -356,15 +357,15 @@ Conclusion: From these comparisons, it seems best to use the model with **BOTH**
 
 ### Replicate 2  
 
-```{r REP 2a, message = FALSE}
+```{r REP 2a, message = FALSE, eval = FALSE}
 ## Long-term Climate
 
-M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + long + year, data = nemo_e2)
+M100Y_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + lat + long + year, data = nemo_e2)
 
-M100Y_2klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_2kma, replicate == "rep2"))
-M100Y_5klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_5kma, replicate == "rep2"))
-M100Y_15klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_15kma, replicate == "rep2"))
-M100Y_25klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_25kma, replicate == "rep2"))
+M100Y_2klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep2"))
+M100Y_5klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep2"))
+M100Y_15klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep2"))
+M100Y_25klmR2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep2"))
 
 #Adj Rsq
 mod.list <- list(M100Y_lm2, M100Y_2klmR2, M100Y_5klmR2, M100Y_15klmR2, M100Y_25klmR2)
@@ -381,15 +382,15 @@ plot_summs(M100Y_lm2, M100Y_2klmR2, M100Y_5klmR2, M100Y_15klmR2, M100Y_25klmR2, 
 
 ```
 
-```{r REP 2b, message = FALSE}
+```{r REP 2b, message = FALSE, eval = FALSE}
 #Anomalies
 
-MA_lm2 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MA_lm2 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 
-MA_2klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep2"))
-MA_5klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep2"))
-MA_15klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep2"))
-MA_25klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep2"))
+MA_2klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep2"))
+MA_5klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep2"))
+MA_15klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep2"))
+MA_25klmR2 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep2"))
 
 #Adj Rsq
 mod.list <- list(MA_lm2, MA_2klmR2, MA_5klmR2, MA_15klmR2, MA_25klmR2)
@@ -411,13 +412,13 @@ plot_summs(MA_lm2, MA_2klmR2, MA_5klmR2, MA_15klmR2, MA_25klmR2, model.names = c
 # Long-term & Anomalies
 
 #With Covariates
-MLA_lm2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MLA_lm2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 #summ(MLA_lm1c, vifs = TRUE)
 
-MLA_2klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep2"))
-MLA_5klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep2"))
-MLA_15klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep2"))
-MLA_25klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep2"))
+MLA_2klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep2"))
+MLA_5klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep2"))
+MLA_15klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep2"))
+MLA_25klmR2c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep2"))
 
 #Adj Rsq
 mod.list <- list(MLA_lm2c, MLA_2klmR2c, MLA_5klmR2c, MLA_15klmR2c, MLA_25klmR2c)
@@ -432,15 +433,15 @@ plot_summs(MLA_lm2c, MLA_2klmR2c, MLA_5klmR2c, MLA_15klmR2c, MLA_25klmR2c, model
 
 ### Replicate 3  
 
-```{r REP 3a, message = FALSE}
+```{r REP 3a, message = FALSE, eval = FALSE}
 ## Long-term Climate
 
-M100Y_lm3 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + long + year, data = nemo_e2)
+M100Y_lm3 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + lat + long + year, data = nemo_e2)
 
-M100Y_2klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_2kma, replicate == "rep3"))
-M100Y_5klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_5kma, replicate == "rep3"))
-M100Y_15klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_15kma, replicate == "rep3"))
-M100Y_25klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_25kma, replicate == "rep3"))
+M100Y_2klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep3"))
+M100Y_5klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep3"))
+M100Y_15klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep3"))
+M100Y_25klmR3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep3"))
 
 #Adj Rsq
 mod.list <- list(M100Y_lm3, M100Y_2klmR3, M100Y_5klmR3, M100Y_15klmR3, M100Y_25klmR3)
@@ -457,15 +458,15 @@ plot_summs(M100Y_lm3, M100Y_2klmR3, M100Y_5klmR3, M100Y_15klmR3, M100Y_25klmR3, 
 
 ```
 
-```{r REP 3b, message = FALSE}
+```{r REP 3b, message = FALSE, eval = FALSE}
 #Anomalies
 
-MA_lm3 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MA_lm3 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 
-MA_2klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep3"))
-MA_5klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep3"))
-MA_15klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep3"))
-MA_25klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep3"))
+MA_2klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep3"))
+MA_5klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep3"))
+MA_15klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep3"))
+MA_25klmR3 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep3"))
 
 #Adj Rsq
 mod.list <- list(MA_lm3, MA_2klmR3, MA_5klmR3, MA_15klmR3, MA_25klmR3)
@@ -487,13 +488,13 @@ plot_summs(MA_lm3, MA_2klmR3, MA_5klmR3, MA_15klmR3, MA_25klmR3, model.names = c
 # Long-term & Anomalies
 
 #With Covariates
-MLA_lm3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MLA_lm3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 #summ(MLA_lm1c, vifs = TRUE)
 
-MLA_2klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep3"))
-MLA_5klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep3"))
-MLA_15klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep3"))
-MLA_25klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep3"))
+MLA_2klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep3"))
+MLA_5klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep3"))
+MLA_15klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep3"))
+MLA_25klmR3c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep3"))
 
 #Adj Rsq
 mod.list <- list(MLA_lm3c, MLA_2klmR3c, MLA_5klmR3c, MLA_15klmR3c, MLA_25klmR3c)
@@ -508,15 +509,15 @@ plot_summs(MLA_lm3c, MLA_2klmR3c, MLA_5klmR3c, MLA_15klmR3c, MLA_25klmR3c, model
 
 ### Replicate 4  
 
-```{r REP 4a, message = FALSE}
+```{r REP 4a, message = FALSE, eval = FALSE}
 ## Long-term Climate
 
-M100Y_lm4 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + long + year, data = nemo_e2)
+M100Y_lm4 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + lat + long + year, data = nemo_e2)
 
-M100Y_2klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_2kma, replicate == "rep4"))
-M100Y_5klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_5kma, replicate == "rep4"))
-M100Y_15klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_15kma, replicate == "rep4"))
-M100Y_25klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_25kma, replicate == "rep4"))
+M100Y_2klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep4"))
+M100Y_5klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep4"))
+M100Y_15klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep4"))
+M100Y_25klmR4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep4"))
 
 #Adj Rsq
 mod.list <- list(M100Y_lm4, M100Y_2klmR4, M100Y_5klmR4, M100Y_15klmR4, M100Y_25klmR4)
@@ -533,15 +534,15 @@ plot_summs(M100Y_lm4, M100Y_2klmR4, M100Y_5klmR4, M100Y_15klmR4, M100Y_25klmR4, 
 
 ```
 
-```{r REP 4b, message = FALSE}
+```{r REP 4b, message = FALSE, eval = FALSE}
 #Anomalies
 
-MA_lm4 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MA_lm4 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 
-MA_2klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep4"))
-MA_5klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep4"))
-MA_15klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep4"))
-MA_25klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep4"))
+MA_2klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep4"))
+MA_5klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep4"))
+MA_15klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep4"))
+MA_25klmR4 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep4"))
 
 #Adj Rsq
 mod.list <- list(MA_lm4, MA_2klmR4, MA_5klmR4, MA_15klmR4, MA_25klmR4)
@@ -563,13 +564,13 @@ plot_summs(MA_lm4, MA_2klmR4, MA_5klmR4, MA_15klmR4, MA_25klmR4, model.names = c
 # Long-term & Anomalies
 
 #With Covariates
-MLA_lm4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MLA_lm4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 #summ(MLA_lm1c, vifs = TRUE)
 
-MLA_2klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep4"))
-MLA_5klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep4"))
-MLA_15klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep4"))
-MLA_25klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep4"))
+MLA_2klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep4"))
+MLA_5klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep4"))
+MLA_15klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep4"))
+MLA_25klmR4c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep4"))
 
 #Adj Rsq
 mod.list <- list(MLA_lm4c, MLA_2klmR4c, MLA_5klmR4c, MLA_15klmR4c, MLA_25klmR4c)
@@ -585,15 +586,15 @@ plot_summs(MLA_lm4c, MLA_2klmR4c, MLA_5klmR4c, MLA_15klmR4c, MLA_25klmR4c, model
 
 ### Replicate 5  
 
-```{r REP 5a, message = FALSE}
+```{r REP 5a, message = FALSE, eval = FALSE}
 ## Long-term Climate
 
-M100Y_lm5 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + long + year, data = nemo_e2)
+M100Y_lm5 <- lm(DOY ~ MAT_100Y + MAP_100Y  + elev_m + lat + long + year, data = nemo_e2)
 
-M100Y_2klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_2kma, replicate == "rep5"))
-M100Y_5klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_5kma, replicate == "rep5"))
-M100Y_15klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_15kma, replicate == "rep5"))
-M100Y_25klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = filter(sims_25kma, replicate == "rep5"))
+M100Y_2klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep5"))
+M100Y_5klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep5"))
+M100Y_15klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep5"))
+M100Y_25klmR5 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep5"))
 
 #Adj Rsq
 mod.list <- list(M100Y_lm5, M100Y_2klmR5, M100Y_5klmR5, M100Y_15klmR5, M100Y_25klmR5)
@@ -610,15 +611,15 @@ plot_summs(M100Y_lm5, M100Y_2klmR5, M100Y_5klmR5, M100Y_15klmR5, M100Y_25klmR5, 
 
 ```
 
-```{r REP 5b, message = FALSE}
+```{r REP 5b, message = FALSE, eval = FALSE}
 #Anomalies
 
-MA_lm5 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MA_lm5 <- lm(DOY ~ MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 
-MA_2klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep5"))
-MA_5klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep5"))
-MA_15klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep5"))
-MA_25klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep5"))
+MA_2klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep5"))
+MA_5klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep5"))
+MA_15klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep5"))
+MA_25klmR5 <- lm(DOY ~ MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep5"))
 
 #Adj Rsq
 mod.list <- list(MA_lm5, MA_2klmR5, MA_5klmR5, MA_15klmR5, MA_25klmR5)
@@ -640,13 +641,13 @@ plot_summs(MA_lm5, MA_2klmR5, MA_5klmR5, MA_15klmR5, MA_25klmR5, model.names = c
 # Long-term & Anomalies
 
 #With Covariates
-MLA_lm5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MLA_lm5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 #summ(MLA_lm1c, vifs = TRUE)
 
-MLA_2klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_2kma, replicate == "rep5"))
-MLA_5klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_5kma, replicate == "rep5"))
-MLA_15klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_15kma, replicate == "rep5"))
-MLA_25klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = filter(sims_25kma, replicate == "rep5"))
+MLA_2klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_2kma, replicate == "rep5"))
+MLA_5klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_5kma, replicate == "rep5"))
+MLA_15klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_15kma, replicate == "rep5"))
+MLA_25klmR5c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = filter(sims_25kma, replicate == "rep5"))
 
 #Adj Rsq
 mod.list <- list(MLA_lm5c, MLA_2klmR5c, MLA_5klmR5c, MLA_15klmR5c, MLA_25klmR5c)
@@ -656,9 +657,11 @@ sapply(mod.list, adjrsq)
 plot_summs(MLA_lm5c, MLA_2klmR5c, MLA_5klmR5c, MLA_15klmR5c, MLA_25klmR5c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
 #ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 
-
-
 ```
+
+Overall, the results of the five replicates appear very similar. 
+Models (replicates): [MLA_lm1c, MLA_lm2c, MLA_lm3c, MLA_lm4c, MLA_lm5c]
+
 
 Trends in slope estimates of anomalies potentially tied to reduced effects of elevation (or long)?  
 <br>  
@@ -667,6 +670,79 @@ Trends in slope estimates of anomalies potentially tied to reduced effects of el
 
 ### Differences among replicates, within simulation groups  
 - Calculate differences in estimates, SEs, in differences b/w sim estimates for *each* replicate
+
+
+
+
+
+
+**Change in Estimates (means & variance) among replicates**  
+```{r}
+#Differences b/w parameter estimates among simulated records (mean-centered and scaled)
+
+#Table for summarizing changes
+param_change <- data.frame()
+param_change[1:16,1] <- c(rep("MAT_100Y", 4), rep("MAP_100Y", 4), rep("MAT_A", 4), rep("MAP_A", 4))
+param_change[1:16,2] <- rep(c("2k", "5k", "15k", "25k"), 4)
+
+
+#MAT_100Y
+param_change[1,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[2,1:2] - summ(MLA_2klmR1c, scale = TRUE)$coeftable[2,1:2] #OG - 2k sims
+param_change[2,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[2,1:2] - summ(MLA_5klmR1c, scale = TRUE)$coeftable[2,1:2] #OG - 5k sims
+param_change[3,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[2,1:2] - summ(MLA_15klmR1c, scale = TRUE)$coeftable[2,1:2] #OG - 15k sims
+param_change[4,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[2,1:2] - summ(MLA_25klmR1c, scale = TRUE)$coeftable[2,1:2] #OG - 25k sims
+
+colnames(param_change) <- c("param", "contrast", "coef_dif", "SE_dif")
+#colnames(param_change) <- c("coef_dif_2", "SE_dif_2", "coef_dif_5", "SE_dif_5", "coef_dif_15", "SE_dif_15", "coef_dif_25", "SE_dif_25")
+
+#MAP_100Y
+param_change[5,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[3,1:2] - summ(MLA_2klmR1c, scale = TRUE)$coeftable[3,1:2] #OG - 2k sims
+param_change[6,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[3,1:2] - summ(MLA_5klmR1c, scale = TRUE)$coeftable[3,1:2] #OG - 5k sims
+param_change[7,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[3,1:2] - summ(MLA_15klmR1c, scale = TRUE)$coeftable[3,1:2] #OG - 15k sims
+param_change[8,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[3,1:2] - summ(MLA_25klmR1c, scale = TRUE)$coeftable[3,1:2] #OG - 25k sims
+
+#MAT_A
+param_change[9,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[4,1:2] - summ(MLA_2klmR1c, scale = TRUE)$coeftable[4,1:2] #OG - 2k sims
+param_change[10,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[4,1:2] - summ(MLA_5klmR1c, scale = TRUE)$coeftable[4,1:2] #OG - 5k sims
+param_change[11,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[4,1:2] - summ(MLA_15klmR1c, scale = TRUE)$coeftable[4,1:2] #OG - 15k sims
+param_change[12,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[4,1:2] - summ(MLA_25klmR1c, scale = TRUE)$coeftable[4,1:2] #OG - 25k sims
+
+#MAP_A
+param_change[13,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[5,1:2] - summ(MLA_2klmR1c, scale = TRUE)$coeftable[5,1:2] #OG - 2k sims
+param_change[14,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[5,1:2] - summ(MLA_5klmR1c, scale = TRUE)$coeftable[5,1:2] #OG - 5k sims
+param_change[15,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[5,1:2] - summ(MLA_15klmR1c, scale = TRUE)$coeftable[5,1:2] #OG - 15k sims
+param_change[16,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[5,1:2] - summ(MLA_25klmR1c, scale = TRUE)$coeftable[5,1:2] #OG - 25k sims
+
+
+param_change$abs_coef_dif <- abs(param_change$coef_dif)
+param_change$abs_SE_dif <- abs(param_change$SE_dif)
+param_change$param <- factor(param_change$param, levels = c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), ordered = TRUE)
+param_change$contrast <- factor(param_change$contrast, levels = c("2k", "5k", "15k", "25k"), ordered = TRUE)
+
+#Add changes in R2 values
+
+param_change$R2_dif <- rep(c(adjrsq(MLA_lm1c) - adjrsq(MLA_2klmR1c), adjrsq(MLA_lm1c) - adjrsq(MLA_5klmR1c), adjrsq(MLA_lm1c) - adjrsq(MLA_15klmR1c), adjrsq(MLA_lm1c) - adjrsq(MLA_25klmR1c)), 4)
+
+
+
+ggplot(data = param_change) + 
+  geom_col(aes(x = param, y = coef_dif, fill = contrast)) + 
+  geom_hline(yintercept = 0, lty = 2) + #for non-abs values
+  facet_wrap(~contrast) +
+  theme_bw()
+
+ggplot(data = param_change) + 
+  geom_col(aes(x = param, y = abs_SE_dif, fill = contrast)) +
+  #geom_hline(yintercept = 0, lty = 2) +
+  facet_wrap(~contrast) +
+  theme_bw()
+
+ggplot(data = param_change) + 
+  geom_col(aes(x = contrast, y = R2_dif)) +
+  theme_bw()
+#Positive values, indicating how much the R2 value decreased
+
+```
 
 
 
@@ -863,37 +939,37 @@ Examine differences in MAT_A and MAP_A coefficients, which in earlier comparison
 #Use elev_change as a proxy for long-term change (exclude MAT/MAP_100Y_change)
 
 #Just elev change
-lmsim_change_1a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change, data = filter(sims_2kma, replicate == "rep1"))
+lmsim_change_1a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_2kma, replicate == "rep1"))
 summ(lmsim_change_1a, scale = TRUE, vif = TRUE)
 
 #Followed by elev_change & MAT/P_A_change
-lmsim_change_1b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_2kma, replicate == "rep1"))
+lmsim_change_1b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_2kma, replicate == "rep1"))
 summ(lmsim_change_1b, scale = TRUE, vif = TRUE) #collinearity with long may be problematic
 
 
 #5km
-lmsim_change_2a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change, data = filter(sims_5kma, replicate == "rep1"))
+lmsim_change_2a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_5kma, replicate == "rep1"))
 summ(lmsim_change_2a, scale = TRUE, vif = TRUE)
 
-lmsim_change_2b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_5kma, replicate == "rep1"))
+lmsim_change_2b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_5kma, replicate == "rep1"))
 summ(lmsim_change_2b, scale = TRUE, vif = TRUE) 
 
 
 #15km
-lmsim_change_3a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change, data = filter(sims_15kma, replicate == "rep1"))
+lmsim_change_3a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_15kma, replicate == "rep1"))
 summ(lmsim_change_3a, scale = TRUE, vif = TRUE)
 
-lmsim_change_3b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_15kma, replicate == "rep1"))
+lmsim_change_3b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_15kma, replicate == "rep1"))
 summ(lmsim_change_3b, scale = TRUE, vif = TRUE) #c
 
 
 
 
 #25km 
-lmsim_change_4a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change, data = filter(sims_25kma, replicate == "rep1"))
+lmsim_change_4a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_25kma, replicate == "rep1"))
 summ(lmsim_change_4a, scale = TRUE, vif = TRUE)
 
-lmsim_change_4b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_25kma, replicate == "rep1"))
+lmsim_change_4b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_25kma, replicate == "rep1"))
 summ(lmsim_change_4b, scale = TRUE, vif = TRUE) 
 
 
@@ -976,13 +1052,13 @@ nemo_25ksim_avg <- sims_25kma %>% group_by(specimen_number) %>%
 ###
 
 #With Covariates
-MLA_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + long + year, data = nemo_e2)
+MLA_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
 #summ(MLA_lm1c, vifs = TRUE)
 
-MLA_2klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_2ksim_avg)
-MLA_5klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_5ksim_avg)
-MLA_15klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_15ksim_avg)
-MLA_25klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + long + year, data = nemo_25ksim_avg)
+MLA_2klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_2ksim_avg)
+MLA_5klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_5ksim_avg)
+MLA_15klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_15ksim_avg)
+MLA_25klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_25ksim_avg)
 
 #Adj Rsq
 mod.list <- list(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc)
