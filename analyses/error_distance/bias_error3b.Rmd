@@ -166,6 +166,11 @@ sims_25kma <- left_join(x = sims_25km, y = nemo_e2_select, by = "specimen_number
          long = long_n25k,
          lat = lat_n25k)
 
+#vectoriz-able function for adjRsqs
+adjrsq <- function(x){
+  rsq = getElement(summary.lm(x), "adj.r.squared")
+  print(as.numeric(rsq))
+}
 
 ```
 
@@ -191,11 +196,6 @@ plot_summs(M100Y_lm1, M100Y_2klmR1, M100Y_5klmR1, M100Y_15klmR1, M100Y_25klmR1, 
 
 
 #Check out the Adjusted R-squared values
-adjrsq <- function(x){
-  rsq = getElement(summary.lm(x), "adj.r.squared")
-  print(as.numeric(rsq))
-}
-
 mod.list <- list(M100Y_lm1, M100Y_2klmR1, M100Y_5klmR1, M100Y_15klmR1, M100Y_25klmR1)
 sapply(mod.list, adjrsq)
 #Large declines in Rsq after 5km displacement!!!
@@ -668,13 +668,8 @@ Trends in slope estimates of anomalies potentially tied to reduced effects of el
 
 
 
-### Differences among replicates, within simulation groups  
-- Calculate differences in estimates, SEs, in differences b/w sim estimates for *each* replicate
-
-
-
-
-
+### Changes in coefficient estimates, R2 values among simulated coordinate groups
+- Calculate differences in estimates, SEs, in differences b/w sim estimates (for *each* replicate?)
 
 **Change in Estimates (means & variance) among replicates**  
 ```{r}
@@ -683,7 +678,7 @@ Trends in slope estimates of anomalies potentially tied to reduced effects of el
 #Table for summarizing changes
 param_change <- data.frame()
 param_change[1:16,1] <- c(rep("MAT_100Y", 4), rep("MAP_100Y", 4), rep("MAT_A", 4), rep("MAP_A", 4))
-param_change[1:16,2] <- rep(c("2k", "5k", "15k", "25k"), 4)
+param_change[1:16,2] <- rep(c("2 km", "5 km", "15 km", "25 km"), 4)
 
 
 #MAT_100Y
@@ -717,28 +712,39 @@ param_change[16,3:4] <-  summ(MLA_lm1c, scale = TRUE)$coeftable[5,1:2] - summ(ML
 param_change$abs_coef_dif <- abs(param_change$coef_dif)
 param_change$abs_SE_dif <- abs(param_change$SE_dif)
 param_change$param <- factor(param_change$param, levels = c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), ordered = TRUE)
-param_change$contrast <- factor(param_change$contrast, levels = c("2k", "5k", "15k", "25k"), ordered = TRUE)
+param_change$contrast <- factor(param_change$contrast, levels = c("2 km", "5 km", "15 km", "25 km"), ordered = TRUE)
 
 #Add changes in R2 values
-
 param_change$R2_dif <- rep(c(adjrsq(MLA_lm1c) - adjrsq(MLA_2klmR1c), adjrsq(MLA_lm1c) - adjrsq(MLA_5klmR1c), adjrsq(MLA_lm1c) - adjrsq(MLA_15klmR1c), adjrsq(MLA_lm1c) - adjrsq(MLA_25klmR1c)), 4)
 
 
 
+
+#Visualizing changes
+#Use same colors as in coeff plot!!!
+
 ggplot(data = param_change) + 
-  geom_col(aes(x = param, y = coef_dif, fill = contrast)) + 
+  geom_col(aes(x = param, y = coef_dif, fill = contrast), col = "black") + 
   geom_hline(yintercept = 0, lty = 2) + #for non-abs values
+  scale_x_discrete(labels = c("MAT-100", "MAP-100", "MAT-A", "MAP-A")) +
   facet_wrap(~contrast) +
   theme_bw()
 
 ggplot(data = param_change) + 
-  geom_col(aes(x = param, y = abs_SE_dif, fill = contrast)) +
+  geom_col(aes(x = param, y = abs_SE_dif, fill = contrast), col = "black") +
+  scale_x_discrete(labels = c("MAT-100", "MAP-100", "MAT-A", "MAP-A")) +
   #geom_hline(yintercept = 0, lty = 2) +
   facet_wrap(~contrast) +
+  labs(fill = "Simulated Displacement") +
   theme_bw()
 
-ggplot(data = param_change) + 
-  geom_col(aes(x = contrast, y = R2_dif)) +
+param_R2change <- param_change %>% 
+  group_by(contrast) %>% 
+  summarize(R2_dif = mean(R2_dif))
+
+ggplot(data = param_R2change) + 
+  geom_col(aes(x = contrast, y = R2_dif, fill = contrast), col = "black") +
+  labs(y = "R2 Change") +
   theme_bw()
 #Positive values, indicating how much the R2 value decreased
 
@@ -761,140 +767,76 @@ Change variables reflect difference between original and simulated values:
 Compare differences in magnitude of change (esp. climate) b/w norms and anomalies.  
 
 **EDA**
-```{r message = FALSE, eval = FALSE}
+```{r message = FALSE, eval = FALSE, warning = FALSE}
 #Rep 1
+#Note: The scales of SD among parameters greatly differ... comparisons among variables will not be reliable, but comparisons within variables will be
 
-lapply((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+#Histograms for change in each of the above variables - all centered around 0, as expected
+#lapply((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+#lapply((sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+#lapply((sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+#lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+
+
+#Table for combining change values
+enviro_change <- tibble(.rows = 20, contrast = rep(factor(c("2 km", "5 km", "15 km", "25 km"), levels = c("2 km", "5 km", "15 km", "25 km"), ordered = TRUE), 5), param = c(rep("elev", 4), rep("MAT_100Y", 4), rep("MAP_100Y", 4), rep("MAT_A", 4), rep("MAP_A", 4)), var_sd = NA)
 
 
 #Variance
 lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = var)
 #Variance in change variables increases with farther simulated distances
-#Use other measure of variance???
 
 #SD
-lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = sd)
+enviro_change$var_sd[1:4] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = sd))
 
 
-coeff_var <- function(x){
-  X = as.numeric(x)
-  cv = 100*(sd(X)/mean(X))
-  cv
-}
+#coeff_var <- function(x){
+#  X = as.numeric(x)
+#  cv = 100*(sd(X)/mean(X))
+#  cv}
 
 #lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = coeff_var) #coefficient of variation
+#coeff_var gives weird estimates that don't follow the trend of variance or sd...
 
 
-#Rep 2
-lapply((sims_2kma %>% filter(replicate == "rep2") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_5kma %>% filter(replicate == "rep2") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_15kma %>% filter(replicate == "rep2") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_25kma %>% filter(replicate == "rep2") %>% select(elev_change:MAP_A_change)), FUN = hist)
+#Other Change variables
 
+#MAT_100Y SD
+enviro_change$var_sd[5:8] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change))), FUN = sd))
 
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep2") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep2") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep2") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep2") %>% select(elev_change))), FUN = var)
+#MAP_100Y SD
+enviro_change$var_sd[9:12] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_100Y)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_100Y)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_100Y)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_100Y))), FUN = sd))
 
+#MAT_A SD
+enviro_change$var_sd[13:16] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_A)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAT_A)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_A)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_A))), FUN = sd))
 
-#SD
-lapply(X = c((sims_2kma %>% filter(replicate == "rep2") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep2") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep2") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep2") %>% select(elev_change))), FUN = sd)
-
-
-
-#Rep 3
-lapply((sims_2kma %>% filter(replicate == "rep3") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_5kma %>% filter(replicate == "rep3") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_15kma %>% filter(replicate == "rep3") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_25kma %>% filter(replicate == "rep3") %>% select(elev_change:MAP_A_change)), FUN = hist)
-
-
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep3") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep3") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep3") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep3") %>% select(elev_change))), FUN = var)
-
-
-#SD
-lapply(X = c((sims_2kma %>% filter(replicate == "rep3") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep3") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep3") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep3") %>% select(elev_change))), FUN = sd)
+#MAP_A SD
+enviro_change$var_sd[17:20] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_A))), FUN = sd))
 
 
 
-#Rep 4
-lapply((sims_2kma %>% filter(replicate == "rep4") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_5kma %>% filter(replicate == "rep4") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_15kma %>% filter(replicate == "rep4") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_25kma %>% filter(replicate == "rep4") %>% select(elev_change:MAP_A_change)), FUN = hist)
+#Visualizations
 
-
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep4") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep4") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep4") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep4") %>% select(elev_change))), FUN = var)
-
-
-#SD
-lapply(X = c((sims_2kma %>% filter(replicate == "rep4") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep4") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep4") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep4") %>% select(elev_change))), FUN = sd)
-
-
-#Rep 5
-lapply((sims_2kma %>% filter(replicate == "rep5") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_5kma %>% filter(replicate == "rep5") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_15kma %>% filter(replicate == "rep5") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_25kma %>% filter(replicate == "rep5") %>% select(elev_change:MAP_A_change)), FUN = hist)
-
-
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(elev_change))), FUN = var)
-
-
-#SD
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(elev_change))), FUN = sd)
-
-
-
-#Other change variables (climate)
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(MAT_100Y_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(MAT_100Y_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(MAT_100Y_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(MAT_100Y_change))), FUN = var)
-
-
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(MAP_100Y_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(MAP_100Y_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(MAP_100Y_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(MAP_100Y_change))), FUN = var)
-
-
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(MAT_A_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(MAT_A_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(MAT_A_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(MAT_A_change))), FUN = var)
-
-
-#Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(MAP_A_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(MAP_A_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(MAP_A_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(MAP_A_change))), FUN = var)
-
-
-#SD for anomaly change:
-
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(MAT_A_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(MAT_A_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(MAT_A_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(MAT_A_change))), FUN = sd)
-
-
-lapply(X = c((sims_2kma %>% filter(replicate == "rep5") %>% select(MAP_A_change)), (sims_5kma %>% filter(replicate == "rep5") %>% select(MAP_A_change)), (sims_15kma %>% filter(replicate == "rep5") %>% select(MAP_A_change)), (sims_25kma %>% filter(replicate == "rep5") %>% select(MAP_A_change))), FUN = sd)
-
-#Coeff_var gives weird estimates that don't follow the trend of variance or sd...
+ggplot(data = enviro_change %>% filter(param == "elev")) +
+  geom_col(aes(x = contrast, y = var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAT_100Y")) +
+  geom_col(aes(x = contrast, y = var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAP_100Y")) + #Negligible change in MAP_100Y sd
+  geom_col(aes(x = contrast, y = var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAT_A")) +
+  geom_col(aes(x = contrast, y = var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAP_A")) +
+  geom_col(aes(x = contrast, y = var_sd))
 
 ```
 
-Generally, variance and SD increase with increasing simulated distances, indicating a greater amount of variability in new coordinates' elevation, long-term AND anomalous climate conditions!
+Generally, variance and SD increase with increasing simulated distances, indicating a greater amount of variability in new coordinates' elevation, long-term AND anomalous climate conditions! Increases in SD with increasing simulation distance are especially apparent for elevation, MAT_100Y and MAT_A.
 
 
-
-**Elevation**  
-
-
-**Climate**
-
-
-**Elevation & Climate**
 
 ### Correlation among change variables and climate predictors
 ```{r}
 library(corrplot)
-
 corrplot(cor(sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year, elev_change, MAT_100Y_change, MAP_100Y_change, MAT_A_change, MAP_A_change)), method = "color", addCoef.col = "black", number.cex = .6)
 #similar results for different replicates...
 
@@ -907,13 +849,11 @@ corrplot(cor(sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_100Y, MAP
 #25k
 corrplot(cor(sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year, elev_change, MAT_100Y_change, MAP_100Y_change, MAT_A_change, MAP_A_change)), method = "color", addCoef.col = "black", number.cex = .6)
 
-
 ```
 **2km sims:**
 Strongly correlated (r >= .65): MAT & MAP_100Y_change & elev_change 
 
 Moderately correlated (0.3 < r < 0.65): MAT_A_change & MAP_A_change; MAT_A & MAT_A_change; MAT/MAP_A_change & elev_change (MAP_A_change & MAP_A r > 0.3 in some replicates)
-
 
 **Larger sims:**  
 Correlations b/w MAT/MAP_100Y & elev_change still strong, but become weaker. Correlation b/w MAT/MAP_A_change & MAT/MAP_A become **much stronger** (over 0.9 for MAT_A), corr w/ elev_change becomes **stronger** (r = .41 to .57)
@@ -921,12 +861,29 @@ Anomaly correlations w/ geography (lat, long, elev_m) also become stronger!
 Increasing correlation b/w elev_m & elev_change
 
 
+Conclusion: *Do not include `elev_change` and `MAT/MAP_100Y_change` in the same model!* when trying to interpret their effects. It seems reasonable here to assume that changes in elevation serve as a decent proxy for changes in long-term, chronic climatic conditions.
+Correlations among `elev_change` and `MAT/MAP_A_change` are also present but more moderate, stronger w/ larger sim distances. Given strong correlations w/ `MAT/MAP_A`, examine predictive power of change variables alone. Check VIFs for all models.  
 
-Conclusion: *Do not include `elev_change` and `MAT/MAP_100Y_change` in the same model!* It's reasonable here to assume that changes in elevation serve as a decent proxy for changes in long-term, chronic climatic conditions.
-Correlations among `elev_change` and `MAT/MAP_A_change` are also present but more moderate, stronger w/ larger sim distances. Given strong correlations w/ `MAT/MAP_A`, examine predictive power of change variables alone. Check VIFs for all models.
+<br>  
+
+**Correlations among change variables, change in coeff_estimates/SE by contrast**  
+```{r}
+sims_change <- merge(param_change, enviro_change, by = c("contrast", "param"))
+#Add elevation coeff values to 'param_change' table above?
+
+corrplot(cor(sims_change %>% select(coef_dif, SE_dif, R2_dif, var_sd)), method = "color", addCoef.col = "black", number.cex = .6)
 
 
-## Run Models with change variables as covariates  
+```
+Change in R2 values is strongly negatively correlated with changes in coefficient SE! Also, changes in variable standard deviation (with increasing simulation distances) is positively correlated with coefficient differences.
+
+*Double check that nothing funky is happening with these correlations...*
+
+<br>  
+
+
+
+## Influence of changes in variables on models with simulated data  
 These models will be identical to those evaluated earlier in this Rmd, except now we include:
 - elev_change
 - MAT_A_change
