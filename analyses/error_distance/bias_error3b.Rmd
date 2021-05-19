@@ -671,6 +671,16 @@ Trends in slope estimates of anomalies potentially tied to reduced effects of el
 ### Changes in coefficient estimates, R2 values among simulated coordinate groups
 - Calculate differences in estimates, SEs, in differences b/w sim estimates (for *each* replicate?)
 
+Examine how the change in climatic predictors and elevation drive the decrease in R2, the change in estimates of sensitivity
+
+Change variables reflect difference between original and simulated values:
+
+- elev_change 
+- MAT_100Y_change 
+- MAP_100Y_change 
+- MAT_A_change
+- MAP_A_change
+
 **Change in Estimates (means & variance) among replicates**  
 ```{r}
 #Differences b/w parameter estimates among simulated records (mean-centered and scaled)
@@ -752,31 +762,16 @@ ggplot(data = param_R2change) +
 
 Negative values indicate the coefficient of the original data is LESS than the coefficient of the simulated data. More intuitive-- have subtraction go the other way.
 
-### Change in climate, elevation
 
-Examine how the change in climatic predictors and elevation drive the decrease in R2, the change in estimates of sensitivity
+#### Comparing Variance metrics among data sets
+For the change in elevation, MAT/MAP norms and anomalies
 
-Change variables reflect difference between original and simulated values:
-
-- elev_change 
-- MAT_100Y_change 
-- MAP_100Y_change 
-- MAT_A_change
-- MAP_A_change
 
 Compare differences in magnitude of change (esp. climate) b/w norms and anomalies.  
 
 **EDA**
-```{r message = FALSE, eval = FALSE, warning = FALSE}
-#Rep 1
+```{r message = FALSE, warning = FALSE}
 #Note: The scales of SD among parameters greatly differ... comparisons among variables will not be reliable, but comparisons within variables will be
-
-#Histograms for change in each of the above variables - all centered around 0, as expected
-lapply((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-#lapply((sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-#lapply((sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-
 
 #Table for combining change values
 enviro_change <- tibble(.rows = 20, contrast = rep(factor(c("2 km", "5 km", "15 km", "25 km"), levels = c("2 km", "5 km", "15 km", "25 km"), ordered = TRUE), 5), param = c(rep("elev", 4), rep("MAT_100Y", 4), rep("MAP_100Y", 4), rep("MAT_A", 4), rep("MAP_A", 4)), var_sd = NA)
@@ -789,12 +784,11 @@ lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change))
 #SD
 enviro_change$var_sd[1:4] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = sd))
 
-
-#coeff_var <- function(x){
-#  X = as.numeric(x)
-#  cv = 100*(sd(X)/mean(X))
-#  cv}
-
+#Not used here
+coeff_var <- function(x){
+  X = as.numeric(x)
+  cv = 100*(sd(X)/mean(X))
+  cv}
 #lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = coeff_var) #coefficient of variation
 #coeff_var gives weird estimates that don't follow the trend of variance or sd...
 
@@ -827,11 +821,90 @@ ggplot(data = enviro_change %>% filter(param == "MAT_A")) +
   geom_col(aes(x = contrast, y = var_sd))
 ggplot(data = enviro_change %>% filter(param == "MAP_A")) +
   geom_col(aes(x = contrast, y = var_sd))
+```
+
+
+```{r message = FALSE, warning = FALSE}
+#With OG (error =< 2km) data
+nemo_e2_c <- nemo_e2 %>% 
+  mutate(elev_m_c = scale(elev_m, scale = FALSE),
+         MAT_100Y_c = scale(MAT_100Y, scale = FALSE),
+         MAP_100Y_c = scale(MAP_100Y, scale = FALSE)#, 
+         #MAT_A_c = scale(MAT_A, scale = FALSE), #Anomalies already 0-centered
+         #MAP_A_c = scale(MAP_A, scale = FALSE)
+         )
+lapply((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A)), FUN = hist)
+
+##Quantify the variability in each of these variables
+#SD
+as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd))
+
+#Variance
+
+#CV
+
+
+###Visualizations
+OGsds <- tibble(.rows = 5) %>% 
+  mutate(contrast = rep("OG", 5), param = c("elev", "MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), var_sd =         
+  as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd)))
+
+enviro_change2 = rbind(enviro_change, OGsds)
+
+
+
+ggplot(data = filter(enviro_change2, param == "elev")) +
+  geom_col(aes(x = contrast, y = var_sd)) +
+  theme_bw()
+ggplot(data = filter(enviro_change2, param == "MAT_100Y")) +
+  geom_col(aes(x = contrast, y = var_sd)) +
+  theme_bw()
+ggplot(data = filter(enviro_change2, param == "MAP_100Y")) +
+  geom_col(aes(x = contrast, y = var_sd)) +
+  theme_bw()
+ggplot(data = filter(enviro_change2, param == "MAT_A")) +
+  geom_col(aes(x = contrast, y = var_sd)) +
+  theme_bw()
+ggplot(data = filter(enviro_change2, param == "MAP_A")) +
+  geom_col(aes(x = contrast, y = var_sd)) +
+  theme_bw()
 
 ```
 
 Generally, variance and SD increase with increasing simulated distances, indicating a greater amount of variability in new coordinates' elevation, long-term AND anomalous climate conditions! Increases in SD with increasing simulation distance are especially apparent for elevation, MAT_100Y and MAT_A.
 
+
+<br>  
+
+#### Compare Frequency distributions
+
+```{r}
+#OG data (centered)
+lapply((nemo_e2_c %>% select(elev_m, MAT_100Y, MAP_100Y, MAT_A, MAP_A)), FUN = hist)
+
+#Histograms for change in each of the 5 above variables - all centered around 0, as expected
+lapply((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist) #2km sims
+lapply((sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist) #5km sims
+lapply((sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist) #15km sims
+lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist) #25km sims
+
+```
+```{r}
+##OG vs 5 km simulations
+
+
+
+## vs 15 km simulations
+
+
+
+## vs 25 km simulations
+
+
+
+```
+
+<br>  
 
 
 ### Correlation among change variables and climate predictors
@@ -850,6 +923,7 @@ corrplot(cor(sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_100Y, MAP
 corrplot(cor(sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, lat, long, year, elev_change, MAT_100Y_change, MAP_100Y_change, MAT_A_change, MAP_A_change)), method = "color", addCoef.col = "black", number.cex = .6)
 
 ```
+
 **2km sims:**
 Strongly correlated (r >= .65): MAT & MAP_100Y_change & elev_change 
 
@@ -873,14 +947,12 @@ sims_change <- merge(param_change, enviro_change, by = c("contrast", "param"))
 
 corrplot(cor(sims_change %>% select(coef_dif, SE_dif, R2_dif, var_sd)), method = "color", addCoef.col = "black", number.cex = .6)
 
-
 ```
 Change in R2 values is strongly negatively correlated with changes in coefficient SE! Also, changes in variable standard deviation (with increasing simulation distances) is positively correlated with coefficient differences.
 
 *Double check that nothing funky is happening with these correlations...*
 
 <br>  
-
 
 
 ## Influence of changes in variables on models with simulated data  
