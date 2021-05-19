@@ -750,7 +750,7 @@ ggplot(data = param_R2change) +
 
 ```
 
-
+Negative values indicate the coefficient of the original data is LESS than the coefficient of the simulated data. More intuitive-- have subtraction go the other way.
 
 ### Change in climate, elevation
 
@@ -772,10 +772,10 @@ Compare differences in magnitude of change (esp. climate) b/w norms and anomalie
 #Note: The scales of SD among parameters greatly differ... comparisons among variables will not be reliable, but comparisons within variables will be
 
 #Histograms for change in each of the above variables - all centered around 0, as expected
-#lapply((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+lapply((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
 #lapply((sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
 #lapply((sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
-#lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
+lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist)
 
 
 #Table for combining change values
