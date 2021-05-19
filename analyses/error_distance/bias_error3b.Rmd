@@ -877,6 +877,7 @@ Generally, variance and SD increase with increasing simulated distances, indicat
 <br>  
 
 #### Compare Frequency distributions
+*Plot overlapping histograms for sd/variance in OG vs simulated ata parameters*
 
 ```{r}
 #OG data (centered)
