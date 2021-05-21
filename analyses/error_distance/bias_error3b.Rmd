@@ -766,6 +766,29 @@ Negative values indicate the coefficient of the original data is LESS than the c
 #### Comparing Variance metrics among data sets
 For the change in elevation, MAT/MAP norms and anomalies
 
+**Create a Mega-data frame with all simulations in one table**:  
+```{r warning = FALSE, results = 'hide'}
+nemo_combinedsims1 <- bind_rows("OG" = nemo_e2, "2km" = sims_2kma, "5km" = sims_5kma, "15km" = sims_15kma, "25km" = sims_25kma, .id = "data_origin")
+
+#Be mindful of the 5 replicates for each record of each simulated dataset
+
+nemo_combinedsims2 <- nemo_combinedsims1 %>% 
+  select(data_origin:DOY, replicate, MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_change:MAP_A_change, -c(date_new:day)) %>% #Select only variables to be analyzed
+  mutate(replicate = case_when(data_origin != "OG" ~ replicate,
+                               data_origin == "OG" ~ "rep1")) %>% # Append dummy replicate to OG data
+  filter(replicate == "rep1") %>% #Filter just to rep1 
+  mutate(data_origin = factor(data_origin, ordered = TRUE, levels = c("OG", "2km", "5km", "15km", "25km"))) #level order
+```
+
+
+**Compare Variance/SD among simulation groups**:  
+```{r warning = FALSE, eval = FALSE}
+#There doesn't seem to be any more robust ways to test for differences in variances bw groups than an F-test or Levene's test..
+
+leveneTest(elev_m ~ data_origin, data = filter(nemo_combinedsims2, data_origin %in% c("OG", "25km")))
+
+```
+
 
 Compare differences in magnitude of change (esp. climate) b/w norms and anomalies.  
 
@@ -806,11 +829,12 @@ enviro_change$var_sd[13:16] <- as.numeric(lapply(X = c((sims_2kma %>% filter(rep
 
 #MAP_A SD
 enviro_change$var_sd[17:20] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_A))), FUN = sd))
+```
 
 
-
+```{r message = FALSE, warning = FALSE, eval = FALSE}
 #Visualizations
-
+## --See more below
 ggplot(data = enviro_change %>% filter(param == "elev")) +
   geom_col(aes(x = contrast, y = var_sd))
 ggplot(data = enviro_change %>% filter(param == "MAT_100Y")) +
@@ -848,25 +872,32 @@ as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, 
 OGsds <- tibble(.rows = 5) %>% 
   mutate(contrast = rep("OG", 5), param = c("elev", "MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), var_sd =         
   as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd)))
+#Centered vs non-centered variables: no difference in estimates of variability. Stick w/ non-centered estimates?
+##
+
 
 enviro_change2 = rbind(enviro_change, OGsds)
 
 
-
 ggplot(data = filter(enviro_change2, param == "elev")) +
   geom_col(aes(x = contrast, y = var_sd)) +
+  labs(title = "Elevation", y = "Standard Deviation", x = "Data") +
   theme_bw()
 ggplot(data = filter(enviro_change2, param == "MAT_100Y")) +
   geom_col(aes(x = contrast, y = var_sd)) +
+  labs(title = "MAT (100Y)", y = "Standard Deviation", x = "Data") +
   theme_bw()
 ggplot(data = filter(enviro_change2, param == "MAP_100Y")) +
   geom_col(aes(x = contrast, y = var_sd)) +
+  labs(title = "MAP (100Y)", y = "Standard Deviation", x = "Data") +
   theme_bw()
 ggplot(data = filter(enviro_change2, param == "MAT_A")) +
   geom_col(aes(x = contrast, y = var_sd)) +
+  labs(title = "MAT (Anom.)", y = "Standard Deviation", x = "Data") +
   theme_bw()
 ggplot(data = filter(enviro_change2, param == "MAP_A")) +
   geom_col(aes(x = contrast, y = var_sd)) +
+  labs(title = "MAP (Anom.)", y = "Standard Deviation", x = "Data") +
   theme_bw()
 
 ```
@@ -879,7 +910,8 @@ Generally, variance and SD increase with increasing simulated distances, indicat
 #### Compare Frequency distributions
 *Plot overlapping histograms for sd/variance in OG vs simulated ata parameters*
 
-```{r}
+```{r eval = FALSE}
+#Individual histograms
 #OG data (centered)
 lapply((nemo_e2_c %>% select(elev_m, MAT_100Y, MAP_100Y, MAT_A, MAP_A)), FUN = hist)
 
@@ -891,7 +923,29 @@ lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_
 
 ```
 ```{r}
+
+ggplot(data = nemo_combinedsims2) +
+  geom_histogram(aes(x = elev_m, fill = data_origin)) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  theme_classic() 
+
+ggplot(data = nemo_combinedsims2) +
+  geom_histogram(aes(x = elev_change, fill = data_origin)) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  theme_classic()
+
+#Not very helpful for visualizing differences in variance... stick with bar plots above?
+
+
 ##OG vs 5 km simulations
+ggplot(data = filter(nemo_combinedsims2, data_origin == "5km")) +
+  geom_histogram(aes(x = elev_change, fill = data_origin)) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
+  theme_classic()
+
 
 
 
