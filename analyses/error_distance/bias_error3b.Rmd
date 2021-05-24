@@ -292,10 +292,15 @@ MLA_25klmR1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + lo
 mod.list <- list(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c)
 sapply(mod.list, adjrsq)
 
-#Climate only diplayed
-plot_summs(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
 
+
+#Climate only displayed 
+##
+plot_summs(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c, model.names = c("Original", "2 km sims", "5 km sims", "15 km sims", "25 km sims"), coefs = c("MAT (100Y)" = "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" = "MAT_A", "MAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE, colors = "Rainbow") + theme_bw() + labs(y = "Predictor")
+  #scale_color_manual(values = c("#4470D8", "#8AABF0", "#405DAF", "#E1DECD", "#524273"), labels = NULL) #+ scale_x_continuous(limits = c(-15, 10))
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full1.png"), width = 6, height = 4)
+
+## Rainbow palette from jtools -- use for figures to denote different simulated data sets
 
 #All covariates
 plot_summs(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
@@ -736,27 +741,36 @@ param_change$R2_dif <- rep(c(adjrsq(MLA_lm1c) - adjrsq(MLA_2klmR1c), adjrsq(MLA_
 ggplot(data = param_change) + 
   geom_col(aes(x = param, y = coef_dif, fill = contrast), col = "black") + 
   geom_hline(yintercept = 0, lty = 2) + #for non-abs values
+  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   scale_x_discrete(labels = c("MAT-100", "MAP-100", "MAT-A", "MAP-A")) +
   facet_wrap(~contrast) +
   theme_bw()
 
 ggplot(data = param_change) + 
-  geom_col(aes(x = param, y = abs_SE_dif, fill = contrast), col = "black") +
-  scale_x_discrete(labels = c("MAT-100", "MAP-100", "MAT-A", "MAP-A")) +
-  #geom_hline(yintercept = 0, lty = 2) +
-  facet_wrap(~contrast) +
-  labs(fill = "Simulated Displacement") +
-  theme_bw()
+  geom_col(aes(x = param, y = -SE_dif, fill = contrast), position = "dodge", col = "black") + 
+  scale_x_discrete(labels = c("MAT (100Y)", "MAP (100Y)", "MAT (Anom.)", "MAP (Anom.)")) +
+  scale_y_continuous(expand = c(0.02,0)) +
+  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_hline(yintercept = 0, lty = 1) +
+  #facet_wrap(~contrast) +
+  labs(fill = "Simulated Data", y = "Change in Estimate SE", x = "Parameter") +
+  theme_classic()
+ggsave(here::here("analyses", "figs1", "errorD", "sims_SE-Est_change.png"), width = 6, height = 4)
+## negative sign for y: positive values indicate increase in SE relative to original data estimates
+# More intuitive without facet_wrap?
 
 param_R2change <- param_change %>% 
   group_by(contrast) %>% 
   summarize(R2_dif = mean(R2_dif))
 
 ggplot(data = param_R2change) + 
-  geom_col(aes(x = contrast, y = R2_dif, fill = contrast), col = "black") +
-  labs(y = "R2 Change") +
+  geom_col(aes(x = contrast, y = -R2_dif, fill = contrast), col = "black", show.legend = FALSE) +
+  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_hline(yintercept = 0, lty = 2) +
+  labs(y = bquote("Adj."~R^2~ "Change"), x = "Simulated Data") +
   theme_bw()
-#Positive values, indicating how much the R2 value decreased
+ggsave(here::here("analyses", "figs1", "errorD", "sims_AdjR2_change.png"), width = 6, height = 4)
+
 
 ```
 

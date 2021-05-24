@@ -291,6 +291,7 @@ lapply(list(M100Y_lm2ALa, erc_an0ALa ,erc_an1ALa, erc_an2ALa), summ, vif = TRUE,
 *NOTE*: Effect of year becomes nonsignificant when anomalous conditions are in model. Makes sense.  
 ```{r wrning = FALSE}
 #Latitude &&& Longitude
+## This model used for reported results
 
 M100Y_lm2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_df2)
 
