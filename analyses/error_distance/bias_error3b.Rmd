@@ -754,7 +754,7 @@ ggplot(data = param_change) +
   geom_hline(yintercept = 0, lty = 1) +
   #facet_wrap(~contrast) +
   labs(fill = "Sim. Data", y = "Change in Estimate SE", x = "Parameter") +
-  theme_bw(base_size = 15) + theme(legend.position = c(0.88, 0.7), legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid'))
+  theme_bw(base_size = 15) + theme(legend.position = c(0.88, 0.7), legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid', size = .5), legend.key.size = unit(.5, "cm"))
 ggsave(here::here("analyses", "figs1", "errorD", "sims_SE-Est_change.png"), width = 6.5, height = 4)
 ## negative sign for y: positive values indicate increase in SE relative to original data estimates
 # More intuitive without facet_wrap?
