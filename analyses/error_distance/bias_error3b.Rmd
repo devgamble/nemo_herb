@@ -745,6 +745,7 @@ ggplot(data = param_change) +
   scale_x_discrete(labels = c("MAT-100", "MAP-100", "MAT-A", "MAP-A")) +
   facet_wrap(~contrast) +
   theme_bw()
+#combine this plot with SEs?
 
 ggplot(data = param_change) + 
   geom_col(aes(x = param, y = -SE_dif, fill = contrast), position = "dodge", col = "black") + 
@@ -804,22 +805,24 @@ leveneTest(elev_m ~ data_origin, data = filter(nemo_combinedsims2, data_origin %
 ```
 
 
-Compare differences in magnitude of change (esp. climate) b/w norms and anomalies.  
+
+Compare variance (SD) estimates of predictor variables among original and simulated data sets.  
 
 **EDA**
 ```{r message = FALSE, warning = FALSE}
 #Note: The scales of SD among parameters greatly differ... comparisons among variables will not be reliable, but comparisons within variables will be
 
 #Table for combining change values
-enviro_change <- tibble(.rows = 20, contrast = rep(factor(c("2 km", "5 km", "15 km", "25 km"), levels = c("2 km", "5 km", "15 km", "25 km"), ordered = TRUE), 5), param = c(rep("elev", 4), rep("MAT_100Y", 4), rep("MAP_100Y", 4), rep("MAT_A", 4), rep("MAP_A", 4)), var_sd = NA)
+enviro_change <- tibble(.rows = 20, contrast = rep(factor(c("2 km", "5 km", "15 km", "25 km"), levels = c("2 km", "5 km", "15 km", "25 km"), ordered = TRUE), 5), param = c(rep("elev", 4), rep("MAT_100Y", 4), rep("MAP_100Y", 4), rep("MAT_A", 4), rep("MAP_A", 4)), var_sd = NA, change_var_sd = NA)
 
 
 #Variance
-lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = var)
-#Variance in change variables increases with farther simulated distances
+#lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate #== "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), #(sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = var)
+
+##Variance in change variables increases with farther simulated distances
 
 #SD
-enviro_change$var_sd[1:4] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = sd))
+enviro_change$var_sd[1:4] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_m)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_m)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_m)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_m))), FUN = sd))
 
 #Not used here
 coeff_var <- function(x){
@@ -830,10 +833,10 @@ coeff_var <- function(x){
 #coeff_var gives weird estimates that don't follow the trend of variance or sd...
 
 
-#Other Change variables
+#Other Variables
 
 #MAT_100Y SD
-enviro_change$var_sd[5:8] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change))), FUN = sd))
+enviro_change$var_sd[5:8] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_100Y)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAT_100Y)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_100Y)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_100Y))), FUN = sd))
 
 #MAP_100Y SD
 enviro_change$var_sd[9:12] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_100Y)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_100Y)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_100Y)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_100Y))), FUN = sd))
@@ -843,24 +846,51 @@ enviro_change$var_sd[13:16] <- as.numeric(lapply(X = c((sims_2kma %>% filter(rep
 
 #MAP_A SD
 enviro_change$var_sd[17:20] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_A)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_A))), FUN = sd))
+
+
+
+
+##
+# SD of change varaibles (rel. to original data)
+##
+
+#Elev_m SD (Change)
+enviro_change$change_var_sd[1:4] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change))), FUN = sd))
+
+#MAT_100Y SD
+enviro_change$change_var_sd[5:8] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_100Y_change))), FUN = sd))
+
+#MAP_100Y SD
+enviro_change$change_var_sd[9:12] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_100Y_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_100Y_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_100Y_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_100Y_change))), FUN = sd))
+
+#MAT_A SD
+enviro_change$change_var_sd[13:16] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAT_A_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAT_A_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAT_A_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAT_A_change))), FUN = sd))
+
+#MAP_A SD
+enviro_change$change_var_sd[17:20] <- as.numeric(lapply(X = c((sims_2kma %>% filter(replicate == "rep1") %>% select(MAP_A_change)), (sims_5kma %>% filter(replicate == "rep1") %>% select(MAP_A_change)), (sims_15kma %>% filter(replicate == "rep1") %>% select(MAP_A_change)), (sims_25kma %>% filter(replicate == "rep1") %>% select(MAP_A_change))), FUN = sd))
+
+
+
 ```
 
 
 ```{r message = FALSE, warning = FALSE, eval = FALSE}
 #Visualizations
 ## --See more below
-ggplot(data = enviro_change %>% filter(param == "elev")) +
-  geom_col(aes(x = contrast, y = var_sd))
-ggplot(data = enviro_change %>% filter(param == "MAT_100Y")) +
-  geom_col(aes(x = contrast, y = var_sd))
-ggplot(data = enviro_change %>% filter(param == "MAP_100Y")) + #Negligible change in MAP_100Y sd
-  geom_col(aes(x = contrast, y = var_sd))
-ggplot(data = enviro_change %>% filter(param == "MAT_A")) +
-  geom_col(aes(x = contrast, y = var_sd))
-ggplot(data = enviro_change %>% filter(param == "MAP_A")) +
-  geom_col(aes(x = contrast, y = var_sd))
-```
 
+#Change variables
+ggplot(data = enviro_change %>% filter(param == "elev")) +
+  geom_col(aes(x = contrast, y = change_var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAT_100Y")) +
+  geom_col(aes(x = contrast, y = change_var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAP_100Y")) + #Negligible change in MAP_100Y sd
+  geom_col(aes(x = contrast, y = change_var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAT_A")) +
+  geom_col(aes(x = contrast, y = change_var_sd))
+ggplot(data = enviro_change %>% filter(param == "MAP_A")) +
+  geom_col(aes(x = contrast, y = change_var_sd))
+```
+Combine tables--compare with original data 
 
 ```{r message = FALSE, warning = FALSE}
 #With OG (error =< 2km) data
@@ -873,28 +903,23 @@ nemo_e2_c <- nemo_e2 %>%
          )
 lapply((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A)), FUN = hist)
 
-##Quantify the variability in each of these variables
-#SD
-as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd))
 
-#Variance
+#as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd))
 
-#CV
-
-
-###Visualizations
 OGsds <- tibble(.rows = 5) %>% 
   mutate(contrast = rep("OG", 5), param = c("elev", "MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), var_sd =         
-  as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd)))
-#Centered vs non-centered variables: no difference in estimates of variability. Stick w/ non-centered estimates?
-##
+  as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m, MAT_100Y, MAP_100Y, MAT_A, MAP_A))), FUN = sd)), change_var_sd = NA)
+#Centered vs non-centered variables: no difference in estimates of variability. Stick w/ non-centered estimates.
 
+#combine data frames
+enviro_change2 = rbind(enviro_change, OGsds) %>% 
+  mutate(contrast = factor(contrast, levels = c("OG", "2 km", "5 km", "15 km", "25 km"), ordered = TRUE))
 
-enviro_change2 = rbind(enviro_change, OGsds)
-
+#Visualize differences in variable SD among data sets
 
 ggplot(data = filter(enviro_change2, param == "elev")) +
   geom_col(aes(x = contrast, y = var_sd)) +
+  coord_cartesian(ylim = c(400, 500)) +
   labs(title = "Elevation", y = "Standard Deviation", x = "Data") +
   theme_bw()
 ggplot(data = filter(enviro_change2, param == "MAT_100Y")) +
@@ -916,7 +941,7 @@ ggplot(data = filter(enviro_change2, param == "MAP_A")) +
 
 ```
 
-Generally, variance and SD increase with increasing simulated distances, indicating a greater amount of variability in new coordinates' elevation, long-term AND anomalous climate conditions! Increases in SD with increasing simulation distance are especially apparent for elevation, MAT_100Y and MAT_A.
+Variance and SD increase with increasing simulated distances ONLY for MAT_A and MAP_A!!! There was little change in elevation SD and no discernible direction of change. Variable SD appeared to *decrease* for MAT_100Y and MAP_100Y, surprisingly. Why? Possibly because there is little variation in long-term average estimates of MAT/MAP? And data sets with farther displacements have marginally smaller sample sizes?
 
 
 <br>  
@@ -936,16 +961,19 @@ lapply((sims_15kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_
 lapply((sims_25kma %>% filter(replicate == "rep1") %>% select(elev_change:MAP_A_change)), FUN = hist) #25km sims
 
 ```
-```{r}
 
+
+```{r}
+#Elevation dsitrbution
 ggplot(data = nemo_combinedsims2) +
   geom_histogram(aes(x = elev_m, fill = data_origin)) +
   scale_y_continuous(expand = c(0,0)) +
   scale_x_continuous(expand = c(0,0)) +
   theme_classic() 
 
+
 ggplot(data = nemo_combinedsims2) +
-  geom_histogram(aes(x = elev_change, fill = data_origin)) +
+  geom_density(aes(x = elev_change, fill = data_origin)) +
   scale_y_continuous(expand = c(0,0)) +
   scale_x_continuous(expand = c(0,0)) +
   theme_classic()
@@ -954,8 +982,8 @@ ggplot(data = nemo_combinedsims2) +
 
 
 ##OG vs 5 km simulations
-ggplot(data = filter(nemo_combinedsims2, data_origin == "5km")) +
-  geom_histogram(aes(x = elev_change, fill = data_origin)) +
+ggplot(data = filter(nemo_combinedsims2)) +
+  geom_density(aes(x = MAT_100Y, fill = data_origin), alpha = 0.6) +
   scale_y_continuous(expand = c(0,0)) +
   scale_x_continuous(expand = c(0,0)) +
   theme_classic()
@@ -1011,7 +1039,7 @@ Correlations among `elev_change` and `MAT/MAP_A_change` are also present but mor
 
 **Correlations among change variables, change in coeff_estimates/SE by contrast**  
 ```{r}
-sims_change <- merge(param_change, enviro_change, by = c("contrast", "param"))
+sims_change <- merge(param_change, enviro_change2, by = c("contrast", "param"))
 #Add elevation coeff values to 'param_change' table above?
 
 corrplot(cor(sims_change %>% select(coef_dif, SE_dif, R2_dif, var_sd)), method = "color", addCoef.col = "black", number.cex = .6)
@@ -1030,9 +1058,9 @@ These models will be identical to those evaluated earlier in this Rmd, except no
 - MAT_A_change
 - MAP_A_change
 
-Examine differences in MAT_A and MAP_A coefficients, which in earlier comparisons became 0 or flipped to positive with greater dispersion distances.
+Examine differences in MAT_A and MAP_A coefficients, which in earlier comparisons became 0 or flipped to positive with greater dispersion distances. Use interaction b/w change variables and climatic predictors
 
-```{r message = FALSE}
+```{r message = FALSE, eval = FALSE}
 #REP 1 
 #Use elev_change as a proxy for long-term change (exclude MAT/MAP_100Y_change)
 
@@ -1061,8 +1089,6 @@ lmsim_change_3b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat +
 summ(lmsim_change_3b, scale = TRUE, vif = TRUE) #c
 
 
-
-
 #25km 
 lmsim_change_4a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_25kma, replicate == "rep1"))
 summ(lmsim_change_4a, scale = TRUE, vif = TRUE)
@@ -1071,60 +1097,36 @@ lmsim_change_4b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat +
 summ(lmsim_change_4b, scale = TRUE, vif = TRUE) 
 
 
-#PLOT of coefficient estimates for climate predictors controlling for elev_change, MAT-P_A_change:
-
-
-#PLOT comparing estimates for models including elev_change && elev_change + MAT/P_A_change:
-
 ```
-General results: Controlling for change in elevation, MAT/P_A from original coords EXPLAINS observed changes in MAT/P_A estimates!! Coefficients return to values similar to the original (&2km dispersed) data at for higher-distance simulations. High collinearity present - see MAT_A, elev_m, long... too many variables in these models?
 
+As an additive predictor (no interaction), change in elevation was significant. Change in MAT/P_A explained variation in DOY less often. Quantitatively, these variables are probably associated with trends in actual local climate. Alone, these change variables have no reason to explain change in DOY. Therefore their interactive effects deserve more attention.
 
-
-Change variables alone as predictors
 ```{r}
-#All Reps:
-##Note: Not filtering by reps essentially multiplies the sample size by 5... For the purposes of illustrating a trend, is this okay??? As noted at the end of this file, averaging replicates together is a bad idea.
-lmsim_change_2k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = sims_2kma)
-summ(lmsim_change_2k, scale = TRUE, vif = TRUE)
+lmsim_change_1a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A*elev_change + MAP_A*elev_change + lat + long + year, data = filter(sims_25kma, replicate == "rep1"))
+summ(lmsim_change_1a, scale = TRUE, vif = TRUE)
 
-lmsim_change_5k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = sims_5kma)
-summ(lmsim_change_5k, scale = TRUE, vif = TRUE)
-
-lmsim_change_15k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = sims_15kma)
-summ(lmsim_change_15k, scale = TRUE, vif = TRUE)
-
-lmsim_change_25k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = sims_25kma)
-summ(lmsim_change_25k, scale = TRUE, vif = TRUE)
-
-
-
-#Rep 1
-lmsim_change_2k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = filter(sims_2kma, replicate == "rep1"))
-summ(lmsim_change_2k, scale = TRUE, vif = TRUE)
-
-lmsim_change_5k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = filter(sims_5kma, replicate == "rep1"))
-summ(lmsim_change_5k, scale = TRUE, vif = TRUE)
-
-lmsim_change_15k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = filter(sims_15kma, replicate == "rep1"))
-summ(lmsim_change_15k, scale = TRUE, vif = TRUE)
-
-lmsim_change_25k <- lm(DOY ~ elev_change + MAT_A_change + MAP_A_change, data = filter(sims_25kma, replicate == "rep1"))
-summ(lmsim_change_25k, scale = TRUE, vif = TRUE)
-
-#Estimates in rep1 vs all-reps model are pretty similar, evidence for just reporting estimates from all reps...?
 
 ```
 
-As simulated distances get larger, model R2 improves and change variables predict more variation in DOY (estimates significant for elev_change & MAT_A_change)!!! Negative coefficient for MAT_A & elev change variables indicate that increases in climate anomalies and elevation should predict advanced DOY at these new coordinates.
+There may not be significant interactions of change variables with MAT_A or MAP_A, even if it accounts for change in estimates of sensitivity, since the magnitude of change depends on the simulated distance, which are separated in the different data sets. By accounting for this in a model:
+
+```{r}
+lmsim_change_c_1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A*elev_change + MAP_A*elev_change + lat + long + year + data_origin, data = filter(nemo_combinedsims2, replicate == "rep1")) #controls for data_origin
+summ(lmsim_change_1_c, scale = TRUE, vif = TRUE)
+#NS
+```
 
 
+
+Change variables alone as predictors -- removed. Mostly NS. No reasonable predictions for this
 
 
 
 #### Averages among replicates  
 
 **NOTE**: NOT A GOOD IDEA for showing effect on anomalies. Averaged values for Anomalies will be inaccurate - lots of variations among replicates (even in 2 km sims) in anomalous conditions. In addition, averaged simulated coordinates may not accurately reflect deviations from the original point...    
+
+Potential work-around: average (separately) coefficient estimates, SEs, SD estimates for predictor variables for all replicates from a full data table...
 
 ```{r message = FALSE, eval = FALSE}
 #Average long-term and anomalous MAT, MAP by Replicate (single values for each specimen number)
