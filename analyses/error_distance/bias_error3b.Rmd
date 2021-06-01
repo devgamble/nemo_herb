@@ -270,7 +270,7 @@ ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_A_r1c.png"), width
 MLA_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_e2)
 #summ(MLA_lm1, vifs = TRUE)
 
-MLA_2klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAP_A, data = filter(sims_2kma, replicate == "rep1"))
+MLA_2klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = filter(sims_2kma, replicate == "rep1"))
 MLA_5klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = filter(sims_5kma, replicate == "rep1"))
 MLA_15klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = filter(sims_15kma, replicate == "rep1"))
 MLA_25klmR1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = filter(sims_25kma, replicate == "rep1"))
@@ -1058,120 +1058,225 @@ These models will be identical to those evaluated earlier in this Rmd, except no
 - MAT_A_change
 - MAP_A_change
 
-Examine differences in MAT_A and MAP_A coefficients, which in earlier comparisons became 0 or flipped to positive with greater dispersion distances. Use interaction b/w change variables and climatic predictors
+Examine differences in MAT_A and MAP_A coefficients, which in earlier comparisons became 0 or flipped to positive with greater dispersion distances. Use interaction b/w change variables and climatic predictors.
+[Change variables alone as predictors -- removed. Mostly NS. No reasonable predictions for this]
 
-```{r message = FALSE, eval = FALSE}
-#REP 1 
-#Use elev_change as a proxy for long-term change (exclude MAT/MAP_100Y_change)
-
-#Just elev change
-lmsim_change_1a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_2kma, replicate == "rep1"))
-summ(lmsim_change_1a, scale = TRUE, vif = TRUE)
-
-#Followed by elev_change & MAT/P_A_change
-lmsim_change_1b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_2kma, replicate == "rep1"))
-summ(lmsim_change_1b, scale = TRUE, vif = TRUE) #collinearity with long may be problematic
-
-
-#5km
-lmsim_change_2a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_5kma, replicate == "rep1"))
-summ(lmsim_change_2a, scale = TRUE, vif = TRUE)
-
-lmsim_change_2b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_5kma, replicate == "rep1"))
-summ(lmsim_change_2b, scale = TRUE, vif = TRUE) 
-
-
-#15km
-lmsim_change_3a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_15kma, replicate == "rep1"))
-summ(lmsim_change_3a, scale = TRUE, vif = TRUE)
-
-lmsim_change_3b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_15kma, replicate == "rep1"))
-summ(lmsim_change_3b, scale = TRUE, vif = TRUE) #c
-
-
-#25km 
-lmsim_change_4a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change, data = filter(sims_25kma, replicate == "rep1"))
-summ(lmsim_change_4a, scale = TRUE, vif = TRUE)
-
-lmsim_change_4b <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + elev_change + MAT_A_change + MAP_A_change, data = filter(sims_25kma, replicate == "rep1"))
-summ(lmsim_change_4b, scale = TRUE, vif = TRUE) 
-
-
-```
 
 As an additive predictor (no interaction), change in elevation was significant. Change in MAT/P_A explained variation in DOY less often. Quantitatively, these variables are probably associated with trends in actual local climate. Alone, these change variables have no reason to explain change in DOY. Therefore their interactive effects deserve more attention.
 
-```{r}
+```{r eval = FALSE}
 lmsim_change_1a <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A*elev_change + MAP_A*elev_change + lat + long + year, data = filter(sims_25kma, replicate == "rep1"))
 summ(lmsim_change_1a, scale = TRUE, vif = TRUE)
 
+#Other modls tested, no significant interactions found
 
 ```
+
+No significant interaction between change variables and climatic predictors.
 
 There may not be significant interactions of change variables with MAT_A or MAP_A, even if it accounts for change in estimates of sensitivity, since the magnitude of change depends on the simulated distance, which are separated in the different data sets. By accounting for this in a model:
 
 ```{r}
 lmsim_change_c_1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A*elev_change + MAP_A*elev_change + lat + long + year + data_origin, data = filter(nemo_combinedsims2, replicate == "rep1")) #controls for data_origin
-summ(lmsim_change_1_c, scale = TRUE, vif = TRUE)
+summ(lmsim_change_c_1, scale = TRUE, vif = TRUE)
 #NS
+
+lmsim_change_c_1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A*MAT_100Y_change + MAP_A*MAT_100Y_change + lat + long + year + data_origin, data = filter(nemo_combinedsims2, replicate == "rep1")) #controls for data_origin
+summ(lmsim_change_c_1, scale = TRUE, vif = TRUE)
+#NS
+
+lmsim_change_c_1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A*MAT_A_change + MAP_A*MAT_A_change + lat + long + year + data_origin, data = filter(nemo_combinedsims2, replicate == "rep1")) #controls for data_origin
+summ(lmsim_change_c_1, scale = TRUE, vif = TRUE)
+#NS
+
 ```
 
-
-
-Change variables alone as predictors -- removed. Mostly NS. No reasonable predictions for this
-
+<br>  
 
 
 #### Averages among replicates  
 
-**NOTE**: NOT A GOOD IDEA for showing effect on anomalies. Averaged values for Anomalies will be inaccurate - lots of variations among replicates (even in 2 km sims) in anomalous conditions. In addition, averaged simulated coordinates may not accurately reflect deviations from the original point...    
-
-Potential work-around: average (separately) coefficient estimates, SEs, SD estimates for predictor variables for all replicates from a full data table...
-
-```{r message = FALSE, eval = FALSE}
-#Average long-term and anomalous MAT, MAP by Replicate (single values for each specimen number)
-
-nemo_2ksim_avg <- sims_2kma %>% group_by(specimen_number) %>% 
-  select(-replicate) %>% 
-  summarize(across(everything(), mean))
-
-nemo_5ksim_avg <- sims_5kma %>% group_by(specimen_number) %>% 
-  select(-replicate) %>% 
-  summarize(across(everything(), mean))
-
-nemo_15ksim_avg <- sims_15kma %>% group_by(specimen_number) %>% 
-  select(-replicate) %>% 
-  summarize(across(everything(), mean))
-
-nemo_25ksim_avg <- sims_25kma %>% group_by(specimen_number) %>% 
-  select(-replicate) %>% 
-  summarize(across(everything(), mean))
-
-### 
-# Long-term & Anomalies 
-###
-
-#With Covariates
-MLA_lm1c <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long + year, data = nemo_e2)
-#summ(MLA_lm1c, vifs = TRUE)
-
-MLA_2klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_2ksim_avg)
-MLA_5klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_5ksim_avg)
-MLA_15klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_15ksim_avg)
-MLA_25klmRAVGc <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_25ksim_avg)
-
-#Adj Rsq
-mod.list <- list(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc)
-sapply(mod.list, adjrsq)
-
-#Climate only diplayed
-plot_summs(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+**NOTE**: Averaging raw variables is NOT A GOOD IDEA for showing effect on anomalies. Averaged values for Anomalies will be inaccurate - lots of variations among replicates (even in 2 km sims) in anomalous conditions. In addition, averaged simulated coordinates may not accurately reflect deviations from the original point...    
 
 
-#All covariates
-plot_summs(MLA_lm1c, MLA_2klmRAVGc, MLA_5klmRAVGc, MLA_15klmRAVGc, MLA_25klmRAVGc, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+Work around (below): average coefficient estimates, SEs, SD estimates for predictor variables for all replicates from a full data table...  
+
+**Model averages** in table form
+
+```{r}
+#Build Table
+param_table <- tibble(replicate = c(rep("rep1", 20), rep("rep2", 20), rep("rep3", 20), rep("rep4", 20), rep("rep5", 20))) %>% 
+  mutate(contrast = rep(c(rep("2 km", 5), rep( "5 km", 5), rep("15 km", 5), rep("25 km", 5)), 5), param = rep(c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m"), 20), coeff_est = NA, coeff_SE = NA, adj.R2 = NA, low.coeff.ci = NA, high.coeff.ci = NA) %>% 
+mutate(contrast = factor(contrast, levels = c("2 km", "5 km", "15 km", "25 km"), ordered = TRUE))
+
+
+#Fill coefficient estimates and SEs -- standardized
+param_table$coeff_est[1:5] <- summ(MLA_2klmR1c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[1:5] <- summ(MLA_2klmR1c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[1:5] <- adjrsq(MLA_2klmR1c)
+param_table$low.coeff.ci[1:5] <- summ(MLA_2klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[1:5] <- summ(MLA_2klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[6:10] <- summ(MLA_5klmR1c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[6:10] <- summ(MLA_5klmR1c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[6:10] <- adjrsq(MLA_5klmR1c)
+param_table$low.coeff.ci[6:10] <- summ(MLA_5klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[6:10] <- summ(MLA_5klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[11:15] <- summ(MLA_15klmR1c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[11:15] <- summ(MLA_15klmR1c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[11:15] <- adjrsq(MLA_15klmR1c)
+param_table$low.coeff.ci[11:15] <- summ(MLA_15klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[11:15] <- summ(MLA_15klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[16:20] <- summ(MLA_25klmR1c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[16:20] <- summ(MLA_25klmR1c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[16:20] <- adjrsq(MLA_25klmR1c)
+param_table$low.coeff.ci[16:20] <- summ(MLA_25klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[16:20] <- summ(MLA_25klmR1c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+#Rep2
+param_table$coeff_est[21:25] <- summ(MLA_2klmR2c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[21:25] <- summ(MLA_2klmR2c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[21:25] <- adjrsq(MLA_2klmR2c)
+param_table$low.coeff.ci[21:25] <- summ(MLA_2klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[21:25] <- summ(MLA_2klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[26:30] <- summ(MLA_5klmR2c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[26:30] <- summ(MLA_5klmR2c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[26:30] <- adjrsq(MLA_5klmR2c)
+param_table$low.coeff.ci[26:30] <- summ(MLA_5klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[26:30] <- summ(MLA_5klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[31:35] <- summ(MLA_15klmR2c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[31:35] <- summ(MLA_15klmR2c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[31:35] <- adjrsq(MLA_15klmR2c)
+param_table$low.coeff.ci[31:35] <- summ(MLA_15klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[31:35] <- summ(MLA_15klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[36:40] <- summ(MLA_25klmR2c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[36:40] <- summ(MLA_25klmR2c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[36:40] <- adjrsq(MLA_25klmR2c)
+param_table$low.coeff.ci[36:40] <- summ(MLA_25klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[36:40] <- summ(MLA_25klmR2c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+#Rep3
+param_table$coeff_est[41:45] <- summ(MLA_2klmR3c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[41:45] <- summ(MLA_2klmR3c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[41:45] <- adjrsq(MLA_2klmR3c)
+param_table$low.coeff.ci[41:45] <- summ(MLA_2klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[41:45] <- summ(MLA_2klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[46:50] <- summ(MLA_5klmR3c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[46:50] <- summ(MLA_5klmR3c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[46:50] <- adjrsq(MLA_5klmR3c)
+param_table$low.coeff.ci[46:50] <- summ(MLA_5klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[46:50] <- summ(MLA_5klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[51:55] <- summ(MLA_15klmR3c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[51:55] <- summ(MLA_15klmR3c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[51:55] <- adjrsq(MLA_15klmR3c)
+param_table$low.coeff.ci[51:55] <- summ(MLA_15klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[51:55] <- summ(MLA_15klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[56:60] <- summ(MLA_25klmR3c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[56:60] <- summ(MLA_25klmR3c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[56:60] <- adjrsq(MLA_25klmR3c)
+param_table$low.coeff.ci[56:60] <- summ(MLA_25klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[56:60] <- summ(MLA_25klmR3c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+#Rep4
+param_table$coeff_est[61:65] <- summ(MLA_2klmR4c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[61:65] <- summ(MLA_2klmR4c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[61:65] <- adjrsq(MLA_2klmR4c)
+param_table$low.coeff.ci[61:65] <- summ(MLA_2klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[61:65] <- summ(MLA_2klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[66:70] <- summ(MLA_5klmR4c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[66:70] <- summ(MLA_5klmR4c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[66:70] <- adjrsq(MLA_5klmR4c)
+param_table$low.coeff.ci[66:70] <- summ(MLA_5klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[66:70] <- summ(MLA_5klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[71:75] <- summ(MLA_15klmR4c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[71:75] <- summ(MLA_15klmR4c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[71:75] <- adjrsq(MLA_15klmR4c)
+param_table$low.coeff.ci[71:75] <- summ(MLA_15klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[71:75] <- summ(MLA_15klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[76:80] <- summ(MLA_25klmR4c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[76:80] <- summ(MLA_25klmR4c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[76:80] <- adjrsq(MLA_25klmR4c)
+param_table$low.coeff.ci[76:80] <- summ(MLA_25klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[76:80] <- summ(MLA_25klmR4c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+#Rep5
+param_table$coeff_est[81:85] <- summ(MLA_2klmR5c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[81:85] <- summ(MLA_2klmR5c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[81:85] <- adjrsq(MLA_2klmR5c)
+param_table$low.coeff.ci[81:85] <- summ(MLA_2klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[81:85] <- summ(MLA_2klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[86:90] <- summ(MLA_5klmR5c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[86:90] <- summ(MLA_5klmR5c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[86:90] <- adjrsq(MLA_5klmR5c)
+param_table$low.coeff.ci[86:90] <- summ(MLA_5klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[86:90] <- summ(MLA_5klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[91:95] <- summ(MLA_15klmR5c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[91:95] <- summ(MLA_15klmR5c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[91:95] <- adjrsq(MLA_15klmR5c)
+param_table$low.coeff.ci[91:95] <- summ(MLA_15klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[91:95] <- summ(MLA_15klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+param_table$coeff_est[96:100] <- summ(MLA_25klmR5c, scale = TRUE)$coeftable[2:6,1]
+param_table$coeff_SE[96:100] <- summ(MLA_25klmR5c, scale = TRUE)$coeftable[2:6,2]
+param_table$adj.R2[96:100] <- adjrsq(MLA_25klmR5c)
+param_table$low.coeff.ci[96:100] <- summ(MLA_25klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,2]
+param_table$high.coeff.ci[96:100] <- summ(MLA_25klmR5c, scale = TRUE, confint = TRUE)$coeftable[2:6,3]
+
+
+
+
+#Calculate CIs by hand:
+#param_table <- param_table %>% 
+#  mutate(low.coeff.ci = (coeff_est-(1.96*coeff_SE)),
+#         high.coeff.ci = (coeff_est+(1.96*coeff_SE)))
+
+
+##Summary table -- averages among replicates!!
+
+param_sum_table <- param_table %>% 
+  group_by(contrast, param) %>% 
+  summarize(
+  coeff_est_avg = mean(coeff_est),
+  coeff_SE_avg = mean(coeff_SE),
+  low_ci_avg = mean(low.coeff.ci),
+  high_ci_avg = mean(high.coeff.ci))
+  
+
+ggplot(data = filter(param_sum_table, param != "elev_m")) + #exclude elev_m
+  geom_errorbarh(aes(y = param, xmin = coeff_est_avg-coeff_SE_avg, xmax = coeff_est_avg+coeff_SE_avg, color = contrast), size = 1) +
+  geom_point(aes(x = coeff_est_avg, y = param), size = 2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  facet_wrap(~contrast, ncol = 1) +
+  labs(color = "Model Data", x = "Mean Estimate (standardized)") +
+  theme_bw()
+#These error bars are SEs, not 95% confidence intervals as in other plots; are not as broad
+ggsave(here::here("analyses", "figs1", "errorD", "coeff_avg_across_reps_SEbars.png"), width = 6, height = 4)
+
+
+#With manually calculated CIs
+ggplot(data = filter(param_sum_table, param != "elev_m")) + #exclude elev_m
+  geom_errorbarh(aes(y = param, xmin = low_ci_avg, xmax = high_ci_avg, color = contrast), size = 1) +
+  geom_point(aes(x = coeff_est_avg, y = param), size = 2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  facet_wrap(~contrast, ncol = 1) +
+  labs(color = "Model Data", x = "Mean Estimate (standardized)") +
+  theme_bw()
+ggsave(here::here("analyses", "figs1", "errorD", "coeff_avg_across_reps_CIbars.png"), width = 6, height = 4)
+
+
+#With these averages, it appears that deviations beyond 5 km (as opposed to 15 km) lead to erroneous predictions wrt climate anomalies! BUT:  95% CIs would like be broader than these.
 
 ```
-
