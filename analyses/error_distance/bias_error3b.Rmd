@@ -748,7 +748,7 @@ ggplot(data = param_change) +
 #combine this plot with SEs?
 
 ggplot(data = param_change) + 
-  geom_col(aes(x = param, y = -SE_dif, fill = contrast), position = "dodge", col = "black") + 
+  geom_col(aes(x = param, y = -SE_dif, fill = contrast), position = "dodge", col = "black", alpha = 0.9) + 
   scale_x_discrete(labels = c("MAT (100Y)", "MAP (100Y)", "MAT (A)", "MAP (A)")) +
   scale_y_continuous(expand = c(0.02,0)) +
   scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
@@ -765,7 +765,7 @@ param_R2change <- param_change %>%
   summarize(R2_dif = mean(R2_dif))
 
 ggplot(data = param_R2change) + 
-  geom_col(aes(x = contrast, y = -R2_dif, fill = contrast), col = "black", show.legend = FALSE) +
+  geom_col(aes(x = contrast, y = -R2_dif, fill = contrast), col = "black", alpha = 0.9, show.legend = FALSE) +
   scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   geom_hline(yintercept = 0, lty = 2) +
   labs(y = bquote("Adj."~R^2~ "Change"), x = "Simulated Data") +
@@ -916,28 +916,41 @@ enviro_change2 = rbind(enviro_change, OGsds) %>%
   mutate(contrast = factor(contrast, levels = c("OG", "2 km", "5 km", "15 km", "25 km"), ordered = TRUE))
 
 #Visualize differences in variable SD among data sets
-
+#Edit these
 ggplot(data = filter(enviro_change2, param == "elev")) +
-  geom_col(aes(x = contrast, y = var_sd)) +
+  geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   coord_cartesian(ylim = c(400, 500)) +
   labs(title = "Elevation", y = "Standard Deviation", x = "Data") +
   theme_bw()
+
 ggplot(data = filter(enviro_change2, param == "MAT_100Y")) +
-  geom_col(aes(x = contrast, y = var_sd)) +
+  geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   labs(title = "MAT (100Y)", y = "Standard Deviation", x = "Data") +
   theme_bw()
+ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAT_100Y.png"), width = 6, height = 4)
+
 ggplot(data = filter(enviro_change2, param == "MAP_100Y")) +
-  geom_col(aes(x = contrast, y = var_sd)) +
+  geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   labs(title = "MAP (100Y)", y = "Standard Deviation", x = "Data") +
   theme_bw()
+ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAP_100Y.png"), width = 6, height = 4)
+
 ggplot(data = filter(enviro_change2, param == "MAT_A")) +
-  geom_col(aes(x = contrast, y = var_sd)) +
+  geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   labs(title = "MAT (Anom.)", y = "Standard Deviation", x = "Data") +
   theme_bw()
+ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAT_A.png"), width = 6, height = 4)
+
 ggplot(data = filter(enviro_change2, param == "MAP_A")) +
-  geom_col(aes(x = contrast, y = var_sd)) +
+  geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   labs(title = "MAP (Anom.)", y = "Standard Deviation", x = "Data") +
   theme_bw()
+ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAP_A.png"), width = 6, height = 4)
 
 ```
 

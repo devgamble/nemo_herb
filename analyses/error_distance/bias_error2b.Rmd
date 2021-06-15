@@ -297,7 +297,7 @@ ggplot(data = summ_table1) +
   theme_bw()
 
 ggsave(here::here("analyses", "figs1", "errorD", "Bayes_error_comp1c.png"), width = 6, height = 4)
-
+#latest file [c] is most up-to-date
 ```
 
 Very similar results for weakly informative priors (estimates = 0) and more informative priors (estimates = -2, 6, -3, 1). 0-2 km MAP_A is non-significant for weakly informative priors (0), but all other estimates appear unchanged.  
