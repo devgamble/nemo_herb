@@ -430,8 +430,8 @@ mod.list <- list(MLA_lm2c, MLA_2klmR2c, MLA_5klmR2c, MLA_15klmR2c, MLA_25klmR2c)
 sapply(mod.list, adjrsq)
 
 #Climate only diplayed
-plot_summs(MLA_lm2c, MLA_2klmR2c, MLA_5klmR2c, MLA_15klmR2c, MLA_25klmR2c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+plot_summs(MLA_lm2c, MLA_2klmR2c, MLA_5klmR2c, MLA_15klmR2c, MLA_25klmR2c, model.names = c("Original", "2 km sims", "5 km sims", "15 km sims", "25 km sims"), coefs = c("MAT (100Y)" = "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" = "MAT_A", "MAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE, colors = "Rainbow") + theme_bw() + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full_rep2.png"), width = 6, height = 4)
 
 ```
 
@@ -506,8 +506,8 @@ mod.list <- list(MLA_lm3c, MLA_2klmR3c, MLA_5klmR3c, MLA_15klmR3c, MLA_25klmR3c)
 sapply(mod.list, adjrsq)
 
 #Climate only diplayed
-plot_summs(MLA_lm3c, MLA_2klmR3c, MLA_5klmR3c, MLA_15klmR3c, MLA_25klmR3c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+plot_summs(MLA_lm3c, MLA_2klmR3c, MLA_5klmR3c, MLA_15klmR3c, MLA_25klmR3c, model.names = c("Original", "2 km sims", "5 km sims", "15 km sims", "25 km sims"), coefs = c("MAT (100Y)" = "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" = "MAT_A", "MAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE, colors = "Rainbow") + theme_bw() + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full_rep3.png"), width = 6, height = 4)
 
 ```
 
@@ -582,9 +582,8 @@ mod.list <- list(MLA_lm4c, MLA_2klmR4c, MLA_5klmR4c, MLA_15klmR4c, MLA_25klmR4c)
 sapply(mod.list, adjrsq)
 
 #Climate only diplayed
-plot_summs(MLA_lm4c, MLA_2klmR4c, MLA_5klmR4c, MLA_15klmR4c, MLA_25klmR4c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
-
+plot_summs(MLA_lm4c, MLA_2klmR4c, MLA_5klmR4c, MLA_15klmR4c, MLA_25klmR4c, model.names = c("Original", "2 km sims", "5 km sims", "15 km sims", "25 km sims"), coefs = c("MAT (100Y)" = "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" = "MAT_A", "MAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE, colors = "Rainbow") + theme_bw() + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full_rep4.png"), width = 6, height = 4)
 
 ```
 
@@ -659,8 +658,8 @@ mod.list <- list(MLA_lm5c, MLA_2klmR5c, MLA_5klmR5c, MLA_15klmR5c, MLA_25klmR5c)
 sapply(mod.list, adjrsq)
 
 #Climate only diplayed
-plot_summs(MLA_lm5c, MLA_2klmR5c, MLA_5klmR5c, MLA_15klmR5c, MLA_25klmR5c, model.names = c("Original (0-2km error)", "2km sims", "5km sims", "15km sims", "25km  sims"), coefs = c("MAT_100Y" = "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" = "MAT_A", "MAP_A" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))
-#ggsave(here::here("analyses", "figs1", "error_d_subset_MAT-MAP1.png"), width = 6, height = 4)
+plot_summs(MLA_lm5c, MLA_2klmR5c, MLA_5klmR5c, MLA_15klmR5c, MLA_25klmR5c, model.names = c("Original", "2 km sims", "5 km sims", "15 km sims", "25 km sims"), coefs = c("MAT (100Y)" = "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" = "MAT_A", "MAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE, colors = "Rainbow") + theme_bw() + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full_rep5.png"), width = 6, height = 4)
 
 ```
 

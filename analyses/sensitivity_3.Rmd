@@ -23,6 +23,7 @@ library(here)
 library(ggplot2)
 library(visreg)
 library(jtools)
+library(interactions)
 ```
 
 
@@ -151,14 +152,13 @@ summary(year_int_lm2)
 
 
 ```{r}
-sens_int_lm1 <- lm(DOY ~ MAT_A*MAT_100Y + MAT_A*MAP_100Y + elev_m + long + year, data = nemo_df2)
-summary(sens_int_lm1)
+sens_int_lm1 <- lm(DOY ~ MAT_A*MAT_100Y + MAT_A*MAP_100Y + elev_m + lat + long + year, data = nemo_df2)
 
 
-sens_int_lm2 <- lm(DOY ~ MAP_A*MAT_100Y + MAP_A*MAP_100Y + elev_m + long + year, data = nemo_df2)
-summary(sens_int_lm2)
+sens_int_lm2 <- lm(DOY ~ MAP_A*MAT_100Y + MAP_A*MAP_100Y + elev_m + lat + long + year, data = nemo_df2)
 
-lapply(list(sens_int_lm1, sens_int_lm2), summ, scale = TRUE, vif = TRUE)
+
+lapply(list(sens_int_lm1, sens_int_lm2), summ, scale = TRUE, vifs = TRUE)
 
 ```
 
@@ -182,6 +182,82 @@ johnson_neyman(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAP2.png"), height = 4, width = 5)
 interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAP (anomaly)", legend.main = "MAP (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP2.png"), height = 4, width = 6)
+```
+
+**Simple Slopes analysis**  
+
+Determine conditional slope of predictor for different values of mod var.
+```{r}
+##Following function (from 'interactions') mean-centers non-focal predictor var.s && calculate conditional slopes for means +/- 1 SD
+## Similar to Johnson-Nayman plots in aim
+sslm1 <- sim_slopes(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y")
+sslm1
+plot(sslm1)
+
+sslm2a <- sim_slopes(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y")
+sslm2a
+plot(sslm2a)
+
+sslm2b <- sim_slopes(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y")
+sslm2b
+plot(sslm2b)
+
+```
+It appears that these interactions are N.S. for high values of MAT_100Y (mean + 1 SD); and low values of MAP_100Y (mean = 1 SD). MAT_A*MAT_100Y high-end is only marginally NS... 
+
+
+
+##### Model Diagnostics  
+
+```{r}
+plot(sens_int_lm1)
+plot(sens_int_lm2)
+
+##Check assumption that relationship b/w anomaly and DOY is linear regardless of level of mod.x (long-term MAT/MAP)
+interact_plot(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
+interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
+interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
+
+#Suggests that all interactions found here are nonlinear! 
+#Solution: polynomial terms, GAMs/etc. [Polynomials didn't help much].
+```
+
+
+
+
+Final versions of interaction plots:
+
+```{r warning = FALSE}
+#Legend titles are weird with theme_apa -- may need to add to image later
+#80% intervals, option to remove
+
+#MAT_100Y * MAT_A
+interact_plot(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_apa() +
+geom_vline(xintercept = 0, lty = 2, col = "#808080")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT_v2.png"), height = 4, width = 6)
+
+
+#MAP_100Y * MAT_A
+interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_apa() + theme(legend.title = element_text("MAT (1901-2000)")) +
+geom_vline(xintercept = 0, lty = 2, col = "#808080")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAPa_v2.png"), height = 4, width = 6)
+
+
+#MAP_100Y * MAP_A
+interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAP (anomaly)", legend.main = "MAP (1901-2000)") + theme_apa() + theme(legend.title = element_text("MAT (1901-2000)")) +
+geom_vline(xintercept = 0, lty = 2, col = "#808080")
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAPb_v2.png"), height = 4, width = 6)
+```
+
+
+
+
+**Other Interaction Plots**  
+
+```{r}
+#plot_model(sens_int_lm1, type = "pred", terms = c("MAT_100Y", "MAT_A"))
+
+
 ```
 
 

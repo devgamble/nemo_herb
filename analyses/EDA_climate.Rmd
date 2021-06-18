@@ -629,6 +629,7 @@ ggsave(here::here("analyses", "figs1", "MAP_100Y_raster.png"))
 
 ##COMBINED MAP & MAT
 
+##Figures save better (for some reason) when entire chunk is run.
 #Check out tmap for better mapping?
 
 ggplot() +
@@ -641,6 +642,19 @@ ggplot() +
   theme_minimal() + 
   theme(legend.key.size = unit(5, "mm"), legend.position = c(0.9, 0.7))
 ggsave(here::here("analyses", "figs1", "MAP-MAT-combo_100Y_raster.png"))
+
+
+#Version 2
+ggplot() +
+  geom_sf(data = ca_counties, fill = "#dfffd1") +
+  geom_sf(data = clim_dfsf, aes(fill = MAT_100Y, size = (MAP_100Y/10)), pch = 21, alpha = 1, show.legend = TRUE) +
+  scale_size_continuous(range = c(0.5, 4.5)) +
+  labs(size = "MAP (cm)") +
+  labs(fill = "MAT (°C)") +
+  scale_fill_gradientn(colors = c("#63c8ff", "#cc0000"), values = c(0, 1)) +
+  theme_minimal() + 
+  theme(legend.key.size = unit(5, "mm"), legend.position = c(0.9, 0.7))
+ggsave(here::here("analyses", "figs1", "MAP-MAT-combo_100Y_raster_v2.png"))
 
 
 ##Heat-Moisture Index
@@ -657,6 +671,18 @@ ggplot() +
 ```
 
 
+**Tmap** Distribution Maps
+
+```{r message = FALSE, eval = FALSE}
+#sf is laready loaded
+library(tmap)
+
+#Need additional raster files for elevation, climate, etc...
+
+tm_shape(ca_counties) + tm_polygons(border.col = "white") +
+  tm_raster(style = "cont", title = "Elevation", palette = terrain.colors)
+
+```
 
 
 
