@@ -95,7 +95,7 @@ Details: Construct four models, one for each set of the data corresponding to le
 
 
 100-Y MAT & MAP
-```{r 100-Y MAT and MAP, message = FALSE, warning = FALSE, eval = FALSE}
+```{r 100-Y MAT and MAP, message = FALSE, warning = FALSE}
 ##
 #MAT & MAP
 ##
@@ -208,7 +208,7 @@ summ(M100Y_lm2A, vif = TRUE)
 
 Anomalies & Long-term Climate
 
-```{r Anomalies & Long-term Climate, message = FALSE, warning = FALSE, eval = FALSE}
+```{r Anomalies & Long-term Climate, message = FALSE, warning = FALSE}
 #Base models, not geography/year covariates
 M100Y_lm1AL <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_df2)
 
@@ -751,6 +751,11 @@ nemo_e10_15 <- nemo_all_errors %>%
   filter(error_bin == "10-15 km") 
 #24 obs
 
+###ALT: 10 km+ error
+nemo_e10plus <- nemo_all_errors %>% 
+  filter(error_bin %in% c("10-15 km", ">15 km")) 
+#42 obs
+
 #5-10 km
 nemo_e5_10 <- nemo_all_errors %>% 
   filter(error_bin == "5-10 km") 
@@ -778,6 +783,9 @@ erc_an3ALd <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long
 erc_an4ALd <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e2_5)
 erc_an5ALd <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e2)
 
+#Alt: 10plus error as highest group
+erc_an10pALd <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e10plus)
+
 #Just Climate
 plot_summs(M100Y_lmALd, erc_an0ALd, erc_an1ALd, erc_an2ALd, erc_an3ALd, erc_an4ALd, erc_an5ALd, model.names = c("All records", "No error", ">15 km", "10-15 km", "5-10 km", "2-5 km", "<2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "MAP (Anom.)" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-8, 11)) + labs(y = "Predictor")
 #ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 6, height = 4)
@@ -797,6 +805,16 @@ lapply(list(M100Y_lmALd, erc_an0ALd, erc_an1ALd, erc_an2ALd, erc_an3ALd, erc_an4
 
 #These results are all over the place... would not make sense to use.
 
+```
+
+
+```{r eval = FALSE}
+#W/ 10+ group
+plot_summs(M100Y_lmALd, erc_an0ALd, erc_an10pALd, erc_an3ALd, erc_an4ALd, erc_an5ALd, model.names = c("All records", "No error", ">10 km", "5-10 km", "2-5 km", "<2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "MAP (Anom.)" = "MAP_A"), scale = TRUE) + theme_bw() 
+#+ scale_x_continuous(limits = c(-8, 11)) + labs(y = "Predictor") #removed -- hides 10+ results
+#ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 6, height = 4)
+
+lapply(list(M100Y_lmALd, erc_an0ALd, erc_an1ALd, erc_an2ALd, erc_an3ALd, erc_an4ALd, erc_an5ALd), summ, vif = TRUE, scale = TRUE)
 ```
 
 

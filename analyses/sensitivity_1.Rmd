@@ -63,22 +63,19 @@ options(contrasts = c("contr.sum", "contr.poly"))
 
 <br>  
 
-
-
 May also consider:  
 - NFFD, bFFP, CMD, RH, DD5, MCMT (see EDA2)
 
+## Annual Conditions  
 
-### Annual Conditions  
-
- 
-```{r message = FALSE, warning = FALSE}
+*100Y Norms* only
+```{r message = FALSE, warning = FALSE, eval = FALSE}
 #100Y
 
 ann_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y, data = nemo_df2)
 ann_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m, data = nemo_df2)
 ann_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long, data = nemo_df2)
-ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + long + year, data = nemo_df2) #Best, though adding year doesn't change much
+ann_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + elev_m + lat + long + year, data = nemo_df2) #Best, though adding year doesn't change much
 #No interactions
 
 summary(ann_clim1)
@@ -98,14 +95,13 @@ visreg(ann_clim3, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#40
 visreg(ann_clim3, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#404040"))
 
 visreg(ann_clim4, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
-ggsave(here::here("analyses", "figs1", "MAT_100Y_phensen.png"), height = 4, width = 6)
+#ggsave(here::here("analyses", "figs1", "MAT_100Y_phensen.png"), height = 4, width = 6)
 visreg(ann_clim4, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
-ggsave(here::here("analyses", "figs1", "MAP_100Y_phensen.png"), height = 4, width = 6)
+#ggsave(here::here("analyses", "figs1", "MAP_100Y_phensen.png"), height = 4, width = 6)
 
 ##Plots same as those created in `bias_error.Rmd'
 
 ```
-
 
 ```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
 #redudant with EDA2 code
@@ -123,21 +119,13 @@ visreg(nonclim1, "year", xlab = "Year", points = list(col = "#404040"))
 visreg(nonclim1, "long", xlab = "Longitude", points = list(col = "#404040"))
 ```
 
-
 The relationship b/w DOY and MAT weakens as the model is parameterized, while the estimate of MAP strengthens. MAP appears to be driving variation in DOY. There were no significant interactions between any covariates.  
 While MAT still appears to advance DOY, controlling for geography seems to explain a good deal of this variation (over a 100-yr avg). Examining seasonal climate and anomalies should shed more light on this.  
 
-
 Note: Everything at the annual scale for 100Y averages is strongly correlated (see EDA2.Rmd). Refer to `ann_clim3` model above (controls for elev_m and long).  
 
-<br>  
-
-
-
-## Anomalous Long-term Climate Variables  
-
-**Annual Variables**  
-```{r message = FALSE, warning = FALSE}
+*Anomalies* only  
+```{r message = FALSE, warning = FALSE, eval = FALSE}
 #100Y
 
 anom_clim1 <- lm(DOY ~ MAT_A + MAP_A, data = nemo_df2)
@@ -164,125 +152,175 @@ visreg(anom_clim3, "MAP_A", xlab = "MAP (anomaly)", points = list(col = "#404040
 
 visreg(anom_clim4, "MAT_A", xlab = "MAT (anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
   geom_vline(xintercept = 0, lty = 2)
-ggsave(here::here("analyses", "figs1", "MAT_A_phensen.png"), height = 4, width = 6)
+#ggsave(here::here("analyses", "figs1", "MAT_A_phensen.png"), height = 4, width = 6)
 visreg(anom_clim4, "MAP_A", xlab = "MAP (anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
   geom_vline(xintercept = 0, lty = 2)
-ggsave(here::here("analyses", "figs1", "MAP_A_phensen.png"), height = 4, width = 6)
+#ggsave(here::here("analyses", "figs1", "MAP_A_phensen.png"), height = 4, width = 6)
 
 ##Plots same as those created in `bias_error.Rmd'
-
 ```
 
 
 
-### Seasonal Conditions - Long-term
+**Normals & Anomalies**
+Final models -- use these
+```{r warning = FALSE, message = FALSE}
+#an_full_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_df2)
+#an_full_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2)
+#an_full_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_df2)
+an_full_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_df2) #Best, though adding year doesn't change much
+#No interactions
+
+summ(an_full_clim4, vif = TRUE) #Not scaled
+summ(an_full_clim4, scale = TRUE, vif = TRUE) #Scaled = sdtandardized (centered & scaled)
+
+#Visualize Phenological sensitivity (slope estimates are NOT standardized)
+#Anomalies
+visreg(an_full_clim4, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+ggsave(here::here("analyses", "figs1", "MAT_A_phensen.png"), height = 4, width = 6)
+
+visreg(an_full_clim4, "MAP_A", xlab = "MAP (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+ggsave(here::here("analyses", "figs1", "MAP_A_phensen.png"), height = 4, width = 6)
+
+#Norms
+visreg(an_full_clim4, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "MAT_100Y_phensen.png"), height = 4, width = 6)
+
+visreg(an_full_clim4, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa() #reverse transform?
+ggsave(here::here("analyses", "figs1", "MAP_100Y_phensen.png"), height = 4, width = 6)
+
+
+```
+
+<br>  
+
+
+### Seasonal Conditions
 
 For Seasonal variables, examine models with:
 - Tmin & Tave (Winter, spring) [No Tmax]  
 - PPT (Winter, Spring, Summer)  
 
-
 May also consider  
-- DD > 5 (spring and winter)   
-- DD > 18 (spring and summer)  
-- CMD (winter, spring, summer)? RH?  
-<br>  
-
-
+- DD > 5 (spring and winter); DD > 18 (spring and summer); CMD (winter, spring, summer)? RH?  
+--
 From 'EDA2.Rmd', Both Spring temperature and precipitation (from 100Y averages) appeared to be the most influential on DOY. Tave had a higher R2 and Beta than Tmin for spring temps...  
 
-**Winter Conditions**
 
+**Winter Conditions** only
 ```{r message = FALSE, warning = FALSE}
-
 #Winter Conditions
-sz_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y, data = nemo_df2)
-#summary(sz_wt1)
+sz_wt1 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A, data = nemo_df2)
+#summ(sz_wt1, vifs = TRUE)
 
-sz_wt1c <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1c)
+sz_wt1c <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) #Tmin
+summ(sz_wt1c, vifs = TRUE)
+summ(sz_wt1c, scale = TRUE, vifs = TRUE)
 
-#visreg(sz_wt1, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
-#visreg(sz_wt1, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
-
-visreg(sz_wt1c, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
-visreg(sz_wt1c, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
-
-
-sz_wt1cave <- lm(DOY ~ Tave_wt_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1cave) #These have low R2 and high SE, plus estimates are crazy  
+visreg(sz_wt1c, xvar = "PPT_wt_100Y", xlab = "PPT Norm (winter)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
+visreg(sz_wt1c, xvar = "Tmin_wt_100Y", xlab = "Tmin Norm (winter)", points = list(col = "#333333"),gg = TRUE) + theme_apa()
+visreg(sz_wt1c, xvar = "PPT_wt_A", xlab = "PPT Anom. (winter)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+visreg(sz_wt1c, xvar = "Tmin_wt_A", xlab = "Tmin Anom. (winter)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
 
 
-sz_wt1_int <- lm(DOY ~ PPT_wt_100Y*Tmin_wt_100Y + elev_m + long + year, data = nemo_df2) #NS w/ elev + long
-#summary(sz_wt1_int) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, removed Tave
+#Ave Tmin - higher VIFs fo TAve_100Y (> 5) -- possibility from colinaerity with lat/long...?
+sz_wt1cave <- lm(DOY ~ Tave_wt_100Y + PPT_wt_100Y + Tave_wt_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) #Tave
+#summ(sz_wt1cave, vifs = TRUE) #These have low R2 and high SE, plus estimates are crazy
+```
 
 
-visreg(sz_wt1_int, xvar = "PPT_wt_100Y", xlab = "PPT (winter)", points = list(col = "#404040"))
-visreg(sz_wt1_int, xvar = "Tmin_wt_100Y", xlab = "Tmin (winter)", points = list(col = "#404040"))
+Winter Interaction Models
+**(See `sensitivity_3.Rmd` for Normal x Anom. interaction models!)**
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#Interaction Models
+sz_wt1_int1 <- lm(DOY ~ Tmin_wt_100Y*PPT_wt_100Y + Tmin_wt_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) #NS w/ elev + long
+summ(sz_wt1_int1) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, removed Tave
 
-johnson_neyman(sz_wt1_int, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
-interact_plot(sz_wt1_int, pred = "Tmin_wt_100Y", modx = "PPT_wt_100Y")
-interact_plot(sz_wt1_int, pred = "PPT_wt_100Y", modx = "Tmin_wt_100Y") + theme_bw()
-
-
-AIC(sz_wt1c, sz_wt1cave, sz_wt1_int)
-#Tmin model has lower AIC than Tave model
-#Tmax N.S.
-
-lapply(list(sz_wt1c, sz_wt1cave, sz_wt1_int), summ, vif = TRUE, scale = TRUE)
+sz_wt1_int2 <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A*PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) #NS w/ elev + long
+summ(sz_wt1_int2)
+#Both NS
 
 ```
 
 
-Controlling for geographic location (long and elev) [not shown], the interaction between Tmin_wt and PPT_wt disappears. Including year as a covariate slightly improves $R^2$ and Tmin estimate.  
+Controlling for geographic location (lat and long and elev), the interaction between Tmin_wt and PPT_wt disappears. Including year as a covariate slightly improves $R^2$.  
 
 
 **Spring Conditions**
 
 ```{r message = FALSE, warning = FALSE}
-#Spring Conditions
-#sz_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y, data = nemo_df2)
-#summary(sz_sp1)
-#sz_sp1.1 <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y, data = nemo_df2)
-#summary(sz_sp1)
-#visreg(sz_sp1, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
-#visreg(sz_sp1, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+sz_sp1c <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+summ(sz_sp1c, vifs = TRUE)
+summ(sz_sp1c, scale = TRUE, vifs = TRUE)
 
 
-sz_sp1c <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1c)
+#Visualizations#
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "Spring PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "spring_PPT100_phensen.png"), height = 4, width = 6)
 
-sz_sp1cave <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1c)
+visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Spring Tmin (1901-2000)", points = list(col = "#333333"),gg = TRUE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "spring_Tmin100_phensen.png"), height = 4, width = 6)
 
-visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "PPT (spring)", points = list(col = "#404040"))
-visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Tmin (spring)", points = list(col = "#404040"))
+visreg(sz_sp1c, xvar = "PPT_sp_A", xlab = "Spring PPT (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+ggsave(here::here("analyses", "figs1", "spring_PPT_A_phensen.png"), height = 4, width = 6)
 
-
-#Interactions
-sz_sp1_int <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1_int) #Interaction with Tmin more significant than Tave, NS with elev and long
-
-johnson_neyman(sz_sp1_int, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y")
-interact_plot(sz_sp1_int, pred = "Tmin_sp_100Y", modx = "PPT_sp_100Y", x.label = "Tmin (spring)", legend.main = "PPT (spring)") + theme_bw()
-interact_plot(sz_sp1_int, pred = "PPT_sp_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (spring)", legend.main = "Tmin (spring)") + theme_bw()
-#Swapping Tave for DD>5: similar but much weaker. DD v correlated to Tave
+visreg(sz_sp1c, xvar = "Tmin_sp_A", xlab = "Spring Tmin (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+ggsave(here::here("analyses", "figs1", "spring_Tmin_A_phensen.png"), height = 4, width = 6)
 
 
-AIC(sz_sp1c, sz_sp1cave, sz_sp1_int)
-#Non-interaction, Tmin model most supported
+#Tave model
+sz_sp1cave <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y + Tave_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+#summ(sz_sp1cave, vifs = TRUE)
+#VIF for Tave is much higher than VIF for Tmin - another reason to use Tmin...
+```
 
-lapply(list(sz_sp1c, sz_sp1cave, sz_sp1_int), summ, vif = TRUE, scale = TRUE)
+
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#ALTERNATIVE FIGS for poster
+#More compressed, saved as narrower in ggsave()
+
+#Visualizations#
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "Spring PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "spring_PPT100_phensenV2.png"), height = 4, width = 5)
+
+visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Spring Tmin (1901-2000)", points = list(col = "#333333"),gg = TRUE) + theme_apa()
+ggsave(here::here("analyses", "figs1", "spring_Tmin100_phensenV2.png"), height = 4, width = 5)
+
+visreg(sz_sp1c, xvar = "PPT_sp_A", xlab = "Spring PPT (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+ggsave(here::here("analyses", "figs1", "spring_PPT_A_phensenV2.png"), height = 4, width = 5)
+
+visreg(sz_sp1c, xvar = "Tmin_sp_A", xlab = "Spring Tmin (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+  geom_vline(xintercept = 0, lty = 2)
+ggsave(here::here("analyses", "figs1", "spring_Tmin_A_phensenV2.png"), height = 4, width = 5)
 
 ```
 
 
 
-Interaction term becomes marginally significant. Removing it, we see results similar to the above winter 'standard' model - advancing effect of Tmin (+ year), delaying effect of PPT (+ long, elevation)
+Spring Interaction Models:
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+#Interaction Models
+sz_sp1_int1 <- lm(DOY ~ Tmin_sp_100Y*PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) #NS w/ elev + long
+summ(sz_wt1_int1, vifs = TRUE) #R2 - 0.18, interaction B = -1.25     #Tmin more significant, removed Tave
 
-Tmin appears to explain more variation than Tave *in its interaction with PPT_sp*. Interaction is stronger with Tmin than Tave and PPT. Better $R^2$ and AIC with Tmin model (no interaction).  
+sz_sp1_int2 <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A*PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) #NS w/ elev + long
+summ(sz_wt1_int2, vifs = TRUE)
+#Both NS
+
+```
+
+
+Interaction term becomes non-significant with all other covariates. Removing it, we see results similar to the above winter 'standard' model - advancing effect of Tmin (+ year), delaying effect of PPT (+ long, elevation)
 
 [Summer conditions are likely not biologically important in the phenology of N menziesii, patterns due to correlation]
+
 ```{r message = FALSE, warning = FALSE, echo = FALSE, eval = FALSE}
 #Summer Conditions
 sz_clim3 <- lm(DOY ~ Tmin_sm_100Y + PPT_sm_100Y, data = nemo_df2)
@@ -295,81 +333,99 @@ sz_clim3.2 <- lm(DOY ~ Tmin_sm_100Y +  PPT_sm_100Y + Tmin_sm_100Y*PPT_sm_100Y, d
 visreg(sz_clim3.2, xvar = "PPT_sm_100Y", xlab = "PPT (summer)", points = list(col = "#404040"))
 ```
 
+<br>  
 
-**Winter x Spring Conditions**
+#### Comparing Additive Winter & Spring Models  
 
-```{r message = FALSE, warning = FALSE, results = 'hide'}
-sz_wt_sp1 <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_sp1)
-sz_wt_sp1ave <- lm(DOY ~ Tave_sp_100Y + PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_sp1ave)
-
-sz_wt_sp2 <- lm(DOY ~ Tmin_wt_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_sp2)
-sz_wt_sp2ave <- lm(DOY ~ Tave_wt_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_sp2ave)
-
-sz_wt_sp1_int <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_100Y*PPT_wt_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_sp1_int)
-
-sz_wt_sp2_int <- lm(DOY ~ Tmin_wt_100Y + PPT_sp_100Y + Tmin_wt_100Y*PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-summary(sz_wt_sp2_int)
-
-
-
-johnson_neyman(sz_wt_sp1_int, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
-interact_plot(sz_wt_sp1_int, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y", x.label = "Tmin (spring)", legend.main = "PPT (winter)") + theme_bw()
-ggsave(here::here("analyses", "figs1", "intplot_wtP_spT1_100Y.png"), height = 4, width = 6)
-
-johnson_neyman(sz_wt_sp1_int, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y")
-interact_plot(sz_wt_sp1_int, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (winter)", legend.main = "Tmin (spring)") + theme_bw()
-ggsave(here::here("analyses", "figs1", "intplot_wtP_spT2_100Y.png"), height = 4, width = 6)
-
-
-
-AIC(sz_wt_sp1, sz_wt_sp2, sz_wt_sp1ave, sz_wt_sp2ave, sz_wt_sp1_int, sz_wt_sp2_int) #Reg, Tave, interactions
-
-#Non-int Tmin_wt & PPT_sp has lowest AIC/most support **(sz_wt_sp2)**. 
-
-#Lower AIC support but Tmin_sp & PPT_wt interaction was significant **(sz_wt_sp1_int)**
-
-lapply(list(sz_wt_sp1, sz_wt_sp2, sz_wt_sp1ave, sz_wt_sp2ave, sz_wt_sp1_int, sz_wt_sp2_int), summ, vif = TRUE, scale = TRUE)
+```{r warning = FALSE}
+AIC(sz_wt1c, sz_sp1c, an_full_clim4)
+#More support for spring model, as expected
 
 ```
 
 
 
+**Winter AND Spring Conditions** Together  
+Exploring different additive combinations of parameters -- use AIC to find most-supported model.  
+[Result: Spring-only model better than each combination]
+```{r message = FALSE, warning = FALSE, eval = FALSE}
+sz_wtxsp_1a <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+sz_wtxsp_1b <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_sp_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
+#Winter Norms, Spring Anom.
+sz_wtxsp_1c <- lm(DOY ~ Tmin_wt_100Y + PPT_wt_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
 
-#### Comparing Models  
+sz_wtxsp_1d <- lm(DOY ~ Tmin_wt_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) #Second Lowest
+sz_wtxsp_1e <- lm(DOY ~ Tmin_wt_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
 
+sz_wtxsp_1f <- lm(DOY ~ Tmin_wt_100Y + PPT_sp_100Y + Tmin_wt_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
+#Winter Tmin, Spring PPT
+sz_wtxsp_1g <- lm(DOY ~ Tmin_wt_100Y + PPT_sp_100Y + Tmin_wt_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) #Third Lowest
 
-**Compare supported seasonal models**  
+#Spring Norms, Winter Anom. 
+sz_wtxsp_1h <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_wt_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
 
-```{r}
-library(MASS) #Crashes other functions, only load for use
-#Additive only
-AIC(ann_clim4, sz_wt1c, sz_sp1c, sz_wt_sp2)
+sz_wtxsp_1i <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_wt_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) #LOWEST AIC
+sz_wtxsp_1j <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
 
-#sz_sp1c most supported, only slightly better than Tmin_wt & PPT_sp
-#Suggests that PPT_sp is a major determining factor of DOY!
+sz_wtxsp_1k <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+#Winter PPT, Spring Tmin
+sz_wtxsp_1l <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_sp_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
+sz_wtxsp_1m <- lm(DOY ~ Tmin_sp_100Y + PPT_wt_100Y + Tmin_wt_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
 
+#Compare AIC values
+AIC(sz_wtxsp_1a, sz_wtxsp_1b, sz_wtxsp_1c, sz_wtxsp_1d, sz_wtxsp_1e, sz_wtxsp_1f, sz_wtxsp_1g, sz_wtxsp_1h, sz_wtxsp_1i, sz_wtxsp_1j, sz_wtxsp_1k, sz_wtxsp_1l, sz_wtxsp_1m) #Mostly pretty close
+#"Best" Model: Long-term Spring averages, Winter Tmin Anom. & Spring PPT Anom.
 
-#With int
-AIC(sz_wt1c, sz_sp1c, sz_sp1_int, sz_wt_sp2, sz_wt_sp1_int)
-#sz_sp1c most supported and significant #sz_sp1_int NS, but more supported (NS, AIC < 2) than non-int
+lapply(list(sz_wtxsp_1i, sz_wtxsp_1d, sz_wtxsp_1g), summ, scale = TRUE, vifs = TRUE) #scale true
+#Adj. R2s are all equal
 
-
-#StepAIC model & evaluation
-sz_comb_mAIC <- lm(DOY ~ Tmin_wt_100Y + Tmin_sp_100Y + PPT_wt_100Y + PPT_sp_100Y + elev_m + long + year, data = nemo_df2)
-stepAIC(sz_comb_mAIC)
-#Additive: Prefers T_sp & PPT_sp the most!
+#Compare with spring-only model:
+AIC(sz_sp1c, sz_wtxsp_1i, sz_wtxsp_1d, sz_wtxsp_1g)
+#Spring-only model is still best!!!
 
 ```
-`sz_sp1c` was the model most supported by AIC comparison (and stepAIC). This suggests that both Spring PPT and Tmin are major determinants of DOY. However, the combo model with Winter Tmin and Spring PPT was significant, although less supported.
+
+Given that there were no significant interactions in winter-only or spring-only models, winter x spring interactions are not examined here.
+
+Winter & Spring interactions (Among Norms *or* Anomalies)
+```{r message = FALSE, warning = FALSE}
+#Interaction Models 
+#Use spring conditions for "control" climate parameters since they were most predictive according to model comparisons
+
+#Norms interactions
+sz_wt_sp1a_int <- lm(DOY ~ Tmin_sp_100Y*PPT_wt_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+summ(sz_wt_sp1a_int, vifs = TRUE) #Significant Interaction!
+
+johnson_neyman(sz_wt_sp1a_int, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y")
+interact_plot(sz_wt_sp1a_int, pred = "Tmin_sp_100Y", modx = "PPT_wt_100Y", x.label = "Tmin (spring)", legend.main = "PPT (winter)") + theme_bw()
+#ggsave(here::here("analyses", "figs1", "intplot_wtP_spT1_100Y.png"), height = 4, width = 6)
+johnson_neyman(sz_wt_sp1a_int, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y")
+interact_plot(sz_wt_sp1a_int, pred = "PPT_wt_100Y", modx = "Tmin_sp_100Y", x.label = "PPT (winter)", legend.main = "Tmin (spring)") + theme_bw()
+
+
+sz_wt_sp1b_int <- lm(DOY ~ Tmin_wt_100Y*PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+#Interaction NS
+#Anomalies Interactions
+sz_wt_sp2a_int <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_wt_A*PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
+#Interaction NS
+sz_wt_sp2b_int <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A*PPT_wt_A + elev_m + lat + long + year, data = nemo_df2)
+#Interaction NS
 
 
 
-**Plots** - Only additive models included
+
+#Spring-only model vs Norms interaction model
+AIC(sz_sp1c, sz_wt_sp1a_int, an_full_clim4) 
+#Spring-only model still preferred! 
+
+```
+
+The **Spring Model** Has the most support compared to Winter-only, mixed winter and spring, and MAT based on AIC comparisons above.
+Did not use stepAIC since it's difficult to avoid collinearity when testing more than four climate predictors at a time.
+
+This suggests that both Spring PPT and Tmin are major determinants of DOY. 
+
+**Plots/Visualizations** - Only additive models included
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 #Center & Scale Estimates to make comparisons
 
@@ -392,135 +448,7 @@ ggsave(here::here("analyses", "figs1", "plot_summs_An_wt_sp_100Y.png"), height =
 ```
 
 
-
-### Seasonal Conditions - Anomalies
-
-**Winter Conditions**
-
-```{r message = FALSE, warning = FALSE}
-sz_wt1A <- lm(DOY ~ Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1A)
-#visreg(sz_wt1A, xvar = "PPT_wt_A", xlab = "PPT (winter)", points = list(col = "#404040"))
-#visreg(sz_wt1A, xvar = "Tmin_wt_A", xlab = "Tmin (winter)", points = list(col = "#404040"))
-
-
-sz_wt1caveA <- lm(DOY ~ Tave_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1caveA) 
-
-sz_wt1A_int <- lm(DOY ~ PPT_wt_A*Tmin_wt_A + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1A_int) #NS
-
-
-AIC(sz_wt1A, sz_wt1caveA, sz_wt1A_int)
-#Tmin model has lowest AIC 
-
-
-lapply(list(sz_wt1A, sz_wt1caveA, sz_wt1A_int), summ, vif = TRUE, scale = TRUE)
-
-```
-
-Use additive model: sz_wt1A
-
-
-**Spring Conditions**
-```{r message = FALSE, warning = FALSE}
-sz_sp1A <- lm(DOY ~ Tmin_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1A)
-#visreg(sz_sp1A, xvar = "PPT_sp_A", xlab = "PPT (winter)", points = list(col = "#404040"))
-#visreg(sz_sp1A, xvar = "Tmin_sp_A", xlab = "Tmin (winter)", points = list(col = "#404040"))
-
-
-sz_sp1caveA <- lm(DOY ~ Tave_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1caveA) 
-sz_sp1cmaxA <- lm(DOY ~ Tmax_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1cmaxA) 
-
-
-sz_sp1A_int <- lm(DOY ~ PPT_sp_A*Tmin_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1A_int) #NS, but similar p value as in long-term model
-#Int w/ Tmax also NS
-
-
-AIC(sz_sp1A, sz_sp1caveA, sz_sp1cmaxA, sz_sp1A_int)
-#Tmax model having the most support (followed by Tave) for spring!!!
-
-
-lapply(list(sz_sp1A, sz_sp1caveA, sz_sp1cmaxA, sz_sp1A_int), summ, vif = TRUE, scale = TRUE)
-#Tmax_sp_A has the largest coeff, followed by Tave_sp_A has larger coefficient than Tmin
-
-```
-
-Use Model: sz_sp1cmaxA (followed by: sz_sp1caveA, sz_sp1A)
-
-Temperature: Tmin_A is more influential in the winter, Tmax_A more important in the spring
-
-**Winter x Spring conditions**  
-```{r}
-#sz_wt_sp1A <- lm(DOY ~ Tmin_sp_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp1A)
-#sz_wt_sp1Aave <- lm(DOY ~ Tave_sp_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp1Aave)
-sz_wt_sp1Amax <- lm(DOY ~ Tmax_sp_A + PPT_wt_A + elev_m + long + year, data = nemo_df2) #use this Tmax_sp, highest R2, lowest AIC of the 3
-summary(sz_wt_sp1Amax)
-
-
-sz_wt_sp2A <- lm(DOY ~ Tmin_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)#Use this: Tmin_wt, highest R2, lowest AIC
-summary(sz_wt_sp2A)
-#sz_wt_sp2Aave <- lm(DOY ~ Tave_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp2Aave)
-#sz_wt_sp2Amax <- lm(DOY ~ Tmax_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp2Amax)
-
-
-#Interactions
-sz_wt_sp1_intA <- lm(DOY ~ Tmin_wt_A + PPT_sp_A + Tmin_wt_A*PPT_sp_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp1_intA)
-sz_wt_sp2_intA <- lm(DOY ~ Tmax_sp_A + PPT_wt_A + Tmax_sp_A*PPT_wt_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp2_intA) #Both NS.
-
-
-AIC(sz_wt_sp1Amax, sz_wt_sp2A)
-#sz_wt_sp1Amax has slightly more support (Tmax_sp_A, PPT_Wt)
-
-lapply(list(sz_wt_sp1Amax, sz_wt_sp2A), summ, vif = TRUE, scale = TRUE)
-
-```
-Use model: `sz_wt_sp1Amax` (Tmax_sp_A & PPT_Wt)
-
-
-*NOTE*: PPT_A in the above models is always NS (except for models with Tmin_sp & Tave_sp)!!!
-
-**More complex models - multiple season/climate parameters:
-```{r eval = FALSE}
-#Model Check - including multiple temp anomalies!
-cor(nemo_df2$Tmin_wt_A, nemo_df2$Tmax_sp_A)
-#Winter & Spring T anoms are not that correlated!!!
-
-badmodel <- lm(DOY ~ Tmin_wt_A + Tmax_sp_A + PPT_sp_A + elev_m + long, data = nemo_df2)
-summ(badmodel, scale = TRUE, vif = TRUE)
-plot(badmodel) #Assumptions met!
-```
-
-
-
-#### Comparing Models - Anoms  
-
-**Compare supported seasonal models**  
-
-```{r}
-#Additive only
-AIC(anom_clim4, sz_wt1A, sz_sp1cmaxA, sz_wt_sp1Amax)
-#Most support for Spring Tmax_A model (PPT NS)
-
-
-#StepAIC model & evaluation
-sz_comb_mAICA <- lm(DOY ~ Tmin_wt_A + Tmax_sp_A + PPT_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-stepAIC(sz_comb_mAICA)
-#Additive: Prefers T_sp & PPT_sp the most!
-#See above --- using multiple season*climate paramters^^^
-```
-
-
+[Anomalies Only]
 
 **Plots** - Only additive models included
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
@@ -580,109 +508,5 @@ ggsave(here::here("analyses", "figs1", "plot_summs_Sp_Anomx100Y.png"), height = 
 
 
 <br>  
-
-
-
-
-
-
-### Seasonal Conditions - Long-term & Anomalies
-
-*NOTE*: MAT/MAP_100Y and Tmin/PPT_100Y (winter/spring) are strongly correlated--control for long-term MAT/MAP instead. [See EDA2.Rmd]
-
-*Clean up this*
-
-**Winter Conditions**
-
-```{r message = FALSE, warning = FALSE}
-sz_wt1A2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmin_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1A2)
-#visreg(sz_wt1A2, xvar = "PPT_wt_A", xlab = "PPT (winter)", points = list(col = "#404040"))
-#visreg(sz_wt1A2, xvar = "Tmin_wt_A", xlab = "Tmin (winter)", points = list(col = "#404040"))
-
-
-sz_wt1caveA2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tave_wt_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1caveA2) 
-
-sz_wt1A_int2 <- lm(DOY ~ MAT_100Y + MAP_100Y + PPT_wt_A*Tmin_wt_A + elev_m + long + year, data = nemo_df2)
-summary(sz_wt1A_int2) #NS
-
-
-AIC(sz_wt1A2, sz_wt1caveA2, sz_wt1A_int2)
-#Tmin model has lowest AIC 
-
-
-lapply(list(sz_wt1A2, sz_wt1caveA2, sz_wt1A_int2), summ, vif = TRUE, scale = TRUE)
-
-```
-
-Use additive model: 
-
-
-**Spring Conditions**
-```{r message = FALSE, warning = FALSE}
-sz_sp1A2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmin_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1A2)
-#visreg(sz_sp1A2, xvar = "PPT_sp_A", xlab = "PPT (winter)", points = list(col = "#404040"))
-#visreg(sz_sp1A2, xvar = "Tmin_sp_A", xlab = "Tmin (winter)", points = list(col = "#404040"))
-
-
-sz_sp1caveA2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tave_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1caveA2) 
-sz_sp1cmaxA2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmax_sp_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1cmaxA2) 
-
-
-sz_sp1A_int2 <- lm(DOY ~ MAT_100Y + MAP_100Y + PPT_sp_A*Tmin_sp_A + elev_m + long + year, data = nemo_df2)
-summary(sz_sp1A_int2) #NS, but similar p value as in long-term model
-#Int w/ Tmax also NS
-
-
-AIC(sz_sp1A2, sz_sp1caveA2, sz_sp1cmaxA2, sz_sp1A_int2)
-#Tmax model having the most support (followed by Tave) for spring!!!
-
-
-lapply(list(sz_sp1A2, sz_sp1caveA2, sz_sp1cmaxA2, sz_sp1A_int2), summ, vif = TRUE, scale = TRUE)
-#Tmax_sp_A has the largest coeff, followed by Tave_sp_A has larger coefficient than Tmin
-
-```
-
-Use Model: (followed by: )
-
-
-
-**Winter x Spring conditions**  
-```{r}
-#sz_wt_sp1A2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmin_sp_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp1A2)
-#sz_wt_sp1Aave <- lm(DOY ~ MAT_100Y + MAP_100Y + Tave_sp_A + PPT_wt_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp1Aave2)
-sz_wt_sp1Amax2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmax_sp_A + PPT_wt_A + elev_m + long + year, data = nemo_df2) #use this Tmax_sp, highest R2, lowest AIC of the 3
-summary(sz_wt_sp1Amax2)
-
-
-sz_wt_sp2A2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmin_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)#Use this: Tmin_wt, highest R2, lowest AIC
-summary(sz_wt_sp2A2)
-#sz_wt_sp2Aave2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tave_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp2Aave2)
-#sz_wt_sp2Amax2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmax_wt_A + PPT_sp_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp2Amax2)
-
-
-#Interactions
-sz_wt_sp1_intA2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmin_wt_A + PPT_sp_A + Tmin_wt_A*PPT_sp_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp1_intA2)
-sz_wt_sp2_intA2 <- lm(DOY ~ MAT_100Y + MAP_100Y + Tmax_sp_A + PPT_wt_A + Tmax_sp_A*PPT_wt_A + elev_m + long + year, data = nemo_df2)
-#summary(sz_wt_sp2_intA2) #Both NS.
-
-
-AIC(sz_wt_sp1Amax2, sz_wt_sp2A2)
-#sz_wt_sp1Amax has slightly more support (Tmax_sp_A, PPT_Wt)
-
-lapply(list(sz_wt_sp1Amax2, sz_wt_sp2A2), summ, vif = TRUE, scale = TRUE)
-
-```
-
-
 
 

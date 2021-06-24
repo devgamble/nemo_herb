@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Investigating variation in phenological sensitivity  
 
 A. Through time
-B. Across regions
+B. Across regions [Line ~ 150]
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 #Load Packages
@@ -152,35 +152,62 @@ summary(year_int_lm2)
 
 
 ```{r}
-sens_int_lm1 <- lm(DOY ~ MAT_A*MAT_100Y + MAT_A*MAP_100Y + elev_m + lat + long + year, data = nemo_df2)
-
-
+sens_int_lm1 <- lm(DOY ~ MAT_A*MAT_100Y + MAT_A*MAP_100Y + elev_m + lat + long + year, data = nemo_df2) #does not control for MAP_A...
 sens_int_lm2 <- lm(DOY ~ MAP_A*MAT_100Y + MAP_A*MAP_100Y + elev_m + lat + long + year, data = nemo_df2)
 
-
 lapply(list(sens_int_lm1, sens_int_lm2), summ, scale = TRUE, vifs = TRUE)
+#Original: 1st, 3rd and 4th interactions significant
+
+
+#Controlling for MAP_A and MAT_A, respectively
+sens_int_lm1b <- lm(DOY ~ MAT_A*MAT_100Y + MAT_A*MAP_100Y + MAP_A + elev_m + lat + long + year, data = nemo_df2) #does control for MAP_A
+sens_int_lm2b <- lm(DOY ~ MAP_A*MAT_100Y + MAP_A*MAP_100Y + MAT_A + elev_m + lat + long + year, data = nemo_df2)
+
+lapply(list(sens_int_lm1b, sens_int_lm2b), summ, scale = TRUE, vifs = TRUE)
+#No change in Adj. R2. BUT MAP_A*MAP_100Y interaction becomes NS!!!!!! VIFs are okay.
+#1st and 3rd interactions significant (MAT_A*MAP_100Y became NS when controlling for MAP_A...)
+
+
+#Excluding Main effect of interacting anomaly (led to a VIF issue with seasonal models below):
+sens_int_lm1c <- lm(DOY ~ MAT_A:MAT_100Y + MAT_A:MAP_100Y + MAP_A + elev_m + lat + long + year, data = nemo_df2) 
+sens_int_lm2c <- lm(DOY ~ MAP_A:MAT_100Y + MAP_A:MAP_100Y + MAT_A + elev_m + lat + long + year, data = nemo_df2)
+
+lapply(list(sens_int_lm1c, sens_int_lm2c), summ, scale = TRUE, vifs = TRUE)
+#The R2 values of these models are much lower -- loss of significance for some interactions
+#1st interaction only significant
+
+
+
+#AIC comparison:
+AIC(sens_int_lm1, sens_int_lm1b, sens_int_lm1c, sens_int_lm2, sens_int_lm2b, sens_int_lm2c)
+#Controlling for MAT_A and MAP_A lead to better models, bet excluding main (single) effect terms of predictors in an interaction does not! 
+#(1b and 2b models are best)
 
 ```
+
+Significant Interactions: MAT_A x MAT_100Y && MAP_A x MAT_100Y
 
 
 ```{r}
 #MAT_A
-johnson_neyman(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y")
+johnson_neyman(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y")
 #This J-N plot is super weird... possibly has a tighter CI than linear regression output????
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAT1.png"), height = 4, width = 5)
 
-interact_plot(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
+interact_plot(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT1.png"), height = 4, width = 6)
 
 #MAP_A
-johnson_neyman(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y")
+johnson_neyman(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAP1.png"), height = 4, width = 5)
-interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
+interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP1.png"), height = 4, width = 6)
 
-johnson_neyman(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y")
+
+#The following interaction now NS
+johnson_neyman(sens_int_lm2b, pred = "MAP_A", modx = "MAP_100Y")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_int_JN_MAP2.png"), height = 4, width = 5)
-interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAP (anomaly)", legend.main = "MAP (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
+interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAP (anomaly)", legend.main = "MAP (1901-2000)") + theme_bw() + geom_vline(xintercept = 0, lty = 2, col = "#808080")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP2.png"), height = 4, width = 6)
 ```
 
@@ -190,17 +217,17 @@ Determine conditional slope of predictor for different values of mod var.
 ```{r}
 ##Following function (from 'interactions') mean-centers non-focal predictor var.s && calculate conditional slopes for means +/- 1 SD
 ## Similar to Johnson-Nayman plots in aim
-sslm1 <- sim_slopes(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y")
+sslm1 <- sim_slopes(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y")
 sslm1
 plot(sslm1)
 
-sslm2a <- sim_slopes(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y")
+sslm2a <- sim_slopes(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y")
 sslm2a
 plot(sslm2a)
 
-sslm2b <- sim_slopes(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y")
-sslm2b
-plot(sslm2b)
+#sslm2b <- sim_slopes(sens_int_lm2b, pred = "MAP_A", modx = "MAP_100Y")
+#sslm2b
+#plot(sslm2b)
 
 ```
 It appears that these interactions are N.S. for high values of MAT_100Y (mean + 1 SD); and low values of MAP_100Y (mean = 1 SD). MAT_A*MAT_100Y high-end is only marginally NS... 
@@ -210,13 +237,13 @@ It appears that these interactions are N.S. for high values of MAT_100Y (mean + 
 ##### Model Diagnostics  
 
 ```{r}
-plot(sens_int_lm1)
-plot(sens_int_lm2)
+plot(sens_int_lm1b)
+plot(sens_int_lm2b)
 
 ##Check assumption that relationship b/w anomaly and DOY is linear regardless of level of mod.x (long-term MAT/MAP)
-interact_plot(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
-interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
-interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
+interact_plot(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
+interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
+interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)", linearity.check = TRUE)
 
 #Suggests that all interactions found here are nonlinear! 
 #Solution: polynomial terms, GAMs/etc. [Polynomials didn't help much].
@@ -228,17 +255,144 @@ interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAT (a
 Final versions of interaction plots:
 
 ```{r warning = FALSE}
-#Legend titles are weird with theme_apa -- may need to add to image later
+#Legend titles are weird with theme_apa() -- may need to add to image later
 #80% intervals, option to remove
 
 #MAT_100Y * MAT_A
-interact_plot(sens_int_lm1, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_apa() +
+interact_plot(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() +
+geom_vline(xintercept = 0, lty = 2, col = "#808080") + scale_y_continuous(limits = c(80, 120), n.breaks = 3)
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT_A_v2.png"), height = 4, width = 5.5)
+#Edited breaks to have DOY scale line up, combine plots into a single figure
+
+#MAT_100Y * MAP_A 
+interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + 
+geom_vline(xintercept = 0, lty = 2, col = "#808080") + scale_y_continuous(limits = c(80, 120), n.breaks = 3)
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP_A_v2.png"), height = 4, width = 5.5)
+
+
+#MAP_100Y * MAP_A ###!! Became NS when controlling for MAP_A!
+#interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAP_100Y", x.label = "MAP (anomaly)", legend.main = "MAP (1901-2000)") + theme_apa() + 
+#geom_vline(xintercept = 0, lty = 2, col = "#808080")
+#ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAPb_v2.png"), height = 4, width = 6)
+
+#Only marginally NS, however (p = 0.06)^^^
+```
+
+<br>  
+
+#### Seasonl Interactions Models  
+
+**Choose best seasonal model to explore norm x anomaly interactions here**  
+See `sensitivity_1.Rmd` for original seasonal models.  
+
+
+*Winter Conditions*  
+**Not as well supported as Spring models
+```{r eval = FALSE}
+#Anomaly*Norm Interactions
+
+wt_int_2a <- lm(DOY ~ Tmin_wt_A*Tmin_wt_100Y + Tmin_wt_A*PPT_wt_100Y + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(wt_int_2a, vifs = TRUE)
+
+wt_int_2b <- lm(DOY ~ PPT_wt_A*Tmin_wt_100Y + PPT_wt_A*PPT_wt_100Y + Tmin_wt_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(wt_int_2b, vifs = TRUE)
+#Both terms significant
+
+#High VIF values here (but not for MAT/MAP interactions) with complete interaction model. Test interaction only:
+
+wt_int_2a.2 <- lm(DOY ~ Tmin_wt_A:Tmin_wt_100Y + Tmin_wt_A:PPT_wt_100Y + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(wt_int_2a.2, vifs = TRUE) #Looks better, but has much lower R2
+#Significant Interaction
+wt_int_2b.2 <- lm(DOY ~ PPT_wt_A:Tmin_wt_100Y + PPT_wt_A:PPT_wt_100Y + Tmin_wt_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(wt_int_2b.2, vifs = TRUE)
+#These also fail to control for the norms... not sure about using these models
+```
+
+Colinearity among seasonal variables is likely greater, producing more variance inflation compared to annual parameters.
+
+**Question**: Can we ignore high VIFs for significant interaction terms, if they're only due to the addition of a main effect of a predictor present in that interaction...?
+It sounds like this might be reasonable. If so, the first models would be the best.
+
+*Spring Conditions*  
+```{r}
+#Anomaly*Norm Interactions
+sp_int_1a <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + Tmin_sp_A*PPT_sp_100Y + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_1a, vifs = TRUE)
+
+sp_int_1b <- lm(DOY ~ PPT_sp_A*Tmin_sp_100Y + PPT_sp_A*PPT_sp_100Y + Tmin_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_1b, vifs = TRUE)
+#Marginally NS (p = 0.051038) 
+#Crazy high VIF values!!!
+#Significant when not controlling for Tmin_A
+
+
+#High VIF values here (but not for MAT/MAP interactions) with complete interaction model. Test interaction only:
+sp_int_2a <- lm(DOY ~ Tmin_sp_A:Tmin_sp_100Y + Tmin_sp_A:PPT_sp_100Y + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_2a, vifs = TRUE)
+
+sp_int_2b <- lm(DOY ~ PPT_sp_A:Tmin_sp_100Y + PPT_sp_A:PPT_sp_100Y + Tmin_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_2b, vifs = TRUE)
+#Still some VIF issues (in interaction terms...), but lower R2s and loss of significance
+
+
+#Alternative: Test only single Interaction terms, including main effect:
+#(Also adding a covariate to control for the Norm not included)
+sp_int_3a <- lm(DOY ~ Tmin_sp_A*Tmin_sp_100Y + PPT_sp_100Y + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_3a, vifs = TRUE)
+
+sp_int_3b <- lm(DOY ~ Tmin_sp_A*PPT_sp_100Y + Tmin_sp_100Y + Tmin_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_3b, vifs = TRUE)
+
+sp_int_3c <- lm(DOY ~ PPT_sp_A*Tmin_sp_100Y + PPT_sp_100Y + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_3c , vifs = TRUE)
+
+sp_int_3d <- lm(DOY ~ PPT_sp_A*PPT_sp_100Y + Tmin_sp_100Y + Tmin_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_3d, vifs = TRUE)
+
+#R2s better
+#VIF issues persist...
+
+##
+# REGARDLESS
+##
+
+#No significant interactions from these models
+
+```
+**Long-term Annual Norms & Spring Anomalies**:  
+
+```{r}
+sp_int_4a <- lm(DOY ~ Tmin_sp_A*MAT_100Y + Tmin_sp_A*MAP_100Y + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_4a, vifs = TRUE)
+
+sp_int_4b <- lm(DOY ~ PPT_sp_A*MAT_100Y + PPT_sp_A*MAP_100Y + Tmin_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_4b, vifs = TRUE)
+
+##Barely significant PPT_sp_A*MAP_100Y interaction
+##Try PPT_wt instead?
+
+sp_int_4c <- lm(DOY ~ PPT_sp_A*MAT_100Y + PPT_sp_A*PPT_wt_100Y + Tmin_sp_A + elev_m + lat + long + year, data = nemo_df2) 
+summ(sp_int_4c, vifs = TRUE)
+#NS
+
+#VIFs still insane...
+
+```
+
+
+
+
+**Visualizations**  
+Assuming the first Spring interaction models are acceptable:
+```{r}
+#MAT_100Y * MAT_A
+interact_plot(sp_int_1a, pred = "Tmin_sp_A", modx = "Tmin_sp_100Y", x.label = "Spring Tmin (anomaly)", legend.main = "Spring Tmin (1901-2000)") + theme_apa() +
 geom_vline(xintercept = 0, lty = 2, col = "#808080")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT_v2.png"), height = 4, width = 6)
 
 
 #MAP_100Y * MAT_A
-interact_plot(sens_int_lm2, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_apa() + theme(legend.title = element_text("MAT (1901-2000)")) +
+interact_plot(sens_int_lm2, pred = "Tmin_sp_A", modx = "PPT_sp_100Y", x.label = "Spring Tmin (anomaly)", legend.main = "MAT (1901-2000)") + theme_apa() + theme(legend.title = element_text("MAT (1901-2000)")) +
 geom_vline(xintercept = 0, lty = 2, col = "#808080")
 ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAPa_v2.png"), height = 4, width = 6)
 
@@ -251,18 +405,13 @@ ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAPb_v2.png"
 
 
 
-
-**Other Interaction Plots**  
-
-```{r}
-#plot_model(sens_int_lm1, type = "pred", terms = c("MAT_100Y", "MAT_A"))
-
-
-```
+**Diagnostics & J-N plots**  
 
 
 
 
+
+<br>  
 
 
 

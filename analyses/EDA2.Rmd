@@ -219,10 +219,6 @@ corrplot(cor(nemo_df2 %>% select(Tmin_wt_100Y:PPT_sp_100Y, DD5_wt_100Y:DD5_at_10
 #PPT_sm_100Y all NAs, not included
 
 
-#Normals & Anomalies - Seasonal
-corrplot(cor(nemo_df2 %>% select(Tmin_wt_100Y, Tmax_wt_100Y, Tmin_sp_100Y, Tmax_sp_100Y, PPT_wt_100Y, PPT_sp_100Y, Tmin_wt_A, Tmax_wt_A, Tmin_sp_A, Tmax_sp_A, PPT_wt_A, PPT_sp_A)), method = "color", addCoef.col = "black", type = "upper", number.cex = .7,)
-
-
 
 #100Y other clim var.s
 corrplot(cor(nemo_df2 %>% select(MAT_100Y:MCMT_100Y, MAP_100Y:DD5_100Y, NFFD_100Y, PAS_100Y, CMD_100Y, RH_100Y)), type = "upper", method = "color", addCoef.col = "black", number.cex = .7)
@@ -238,6 +234,17 @@ corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAT_N51, MAT_N81, MAP_100Y, MAP_N51, 
 #Significance test of correlations
 #cr2 <- cor.mtest(nemo_corrcheck_sz, conf.level = 0.7)
 #corrplot(cor_sz, p.mat = cr2$p, insig = "pch", pch.cex = 1, method = "square", type = "upper", order = "FPC", addCoef.col = "black", number.cex = 0.5, diag = F)
+```
+
+
+**Saving Additional Corrplots**  
+```{r eval = FALSE}
+png(filename = "figs1/corrplot_clim_predictors.png", units = "in", width = 5, height = 5, res = 300)
+
+## "All" Seasonal & Annual Predictors:
+corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, Tmin_wt_100Y, Tmin_sp_100Y, PPT_wt_100Y, PPT_sp_100Y, MAT_A, MAP_A, Tmin_wt_A, Tmin_sp_A, PPT_wt_A, PPT_sp_A)), method = "color", addCoef.col = "black", number.cex = .6, outline = TRUE, tl.col = "red")
+
+dev.off()
 ```
 
 
