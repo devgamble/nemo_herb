@@ -227,7 +227,7 @@ visreg(sz_wt1c, xvar = "Tmin_wt_A", xlab = "Tmin Anom. (winter)", points = list(
   geom_vline(xintercept = 0, lty = 2)
 
 
-#Ave Tmin - higher VIFs fo TAve_100Y (> 5) -- possibility from colinaerity with lat/long...?
+#Ave T - higher VIFs fo TAve_100Y (> 5) -- possibility from colinaerity with lat/long...?
 sz_wt1cave <- lm(DOY ~ Tave_wt_100Y + PPT_wt_100Y + Tave_wt_A + PPT_wt_A + elev_m + lat + long + year, data = nemo_df2) #Tave
 #summ(sz_wt1cave, vifs = TRUE) #These have low R2 and high SE, plus estimates are crazy
 ```
@@ -254,12 +254,12 @@ Controlling for geographic location (lat and long and elev), the interaction bet
 
 ```{r message = FALSE, warning = FALSE}
 sz_sp1c <- lm(DOY ~ Tmin_sp_100Y + PPT_sp_100Y + Tmin_sp_A + PPT_sp_A + elev_m + lat + long + year, data = nemo_df2)
-summ(sz_sp1c, vifs = TRUE)
+summ(sz_sp1c, vifs = TRUE) #not scaled
 summ(sz_sp1c, scale = TRUE, vifs = TRUE)
 
 
 #Visualizations#
-visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "Spring PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "Spring LOG-PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
 ggsave(here::here("analyses", "figs1", "spring_PPT100_phensen.png"), height = 4, width = 6)
 
 visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Spring Tmin (1901-2000)", points = list(col = "#333333"),gg = TRUE) + theme_apa()
@@ -286,17 +286,23 @@ sz_sp1cave <- lm(DOY ~ Tave_sp_100Y + PPT_sp_100Y + Tave_sp_A + PPT_sp_A + elev_
 #More compressed, saved as narrower in ggsave()
 
 #Visualizations#
-visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "Spring PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xlab = "Spring PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa(x.font.size = 14, y.font.size = 14) + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14))
 ggsave(here::here("analyses", "figs1", "spring_PPT100_phensenV2.png"), height = 4, width = 5)
 
-visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Spring Tmin (1901-2000)", points = list(col = "#333333"),gg = TRUE) + theme_apa()
+
+#V2.5 - back-transform PPT
+visreg(sz_sp1c, xvar = "PPT_sp_100Y", xtrans = exp, xlab = "Spring PPT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa(x.font.size = 14, y.font.size = 14) + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14))
+ggsave(here::here("analyses", "figs1", "spring_PPT100_phensen_xtransexp.png"), height = 4, width = 5)
+
+
+ visreg(sz_sp1c, xvar = "Tmin_sp_100Y", xlab = "Spring Tmin (1901-2000)", points = list(col = "#333333"),gg = TRUE) + theme_apa(x.font.size = 14, y.font.size = 14) + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14))
 ggsave(here::here("analyses", "figs1", "spring_Tmin100_phensenV2.png"), height = 4, width = 5)
 
-visreg(sz_sp1c, xvar = "PPT_sp_A", xlab = "Spring PPT (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+visreg(sz_sp1c, xvar = "PPT_sp_A", xlab = "Spring PPT (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa(x.font.size = 14, y.font.size = 14) + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14)) + 
   geom_vline(xintercept = 0, lty = 2)
 ggsave(here::here("analyses", "figs1", "spring_PPT_A_phensenV2.png"), height = 4, width = 5)
 
-visreg(sz_sp1c, xvar = "Tmin_sp_A", xlab = "Spring Tmin (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+visreg(sz_sp1c, xvar = "Tmin_sp_A", xlab = "Spring Tmin (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa(x.font.size = 14, y.font.size = 14) + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14)) +
   geom_vline(xintercept = 0, lty = 2)
 ggsave(here::here("analyses", "figs1", "spring_Tmin_A_phensenV2.png"), height = 4, width = 5)
 
@@ -426,7 +432,7 @@ Did not use stepAIC since it's difficult to avoid collinearity when testing more
 This suggests that both Spring PPT and Tmin are major determinants of DOY. 
 
 **Plots/Visualizations** - Only additive models included
-```{r warning = FALSE, message = FALSE, echo = FALSE}
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
 #Center & Scale Estimates to make comparisons
 
 #Just Seasonal Variables
@@ -451,7 +457,7 @@ ggsave(here::here("analyses", "figs1", "plot_summs_An_wt_sp_100Y.png"), height =
 [Anomalies Only]
 
 **Plots** - Only additive models included
-```{r warning = FALSE, message = FALSE, echo = FALSE}
+```{r warning = FALSE, message = FALSE, echo = FALSE, eval = FALSE}
 #Scaling = Standardize & Center Estimates to make comparisons
 
 #Just Seasonal Variables

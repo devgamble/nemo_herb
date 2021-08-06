@@ -259,15 +259,15 @@ Final versions of interaction plots:
 #80% intervals, option to remove
 
 #MAT_100Y * MAT_A
-interact_plot(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() +
+interact_plot(sens_int_lm1b, pred = "MAT_A", modx = "MAT_100Y", x.label = "MAT (Anomaly)", legend.main = "MAT (1901-2000)") + theme_bw(base_size = 14) +
 geom_vline(xintercept = 0, lty = 2, col = "#808080") + scale_y_continuous(limits = c(80, 120), n.breaks = 3)
-ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT_A_v2.png"), height = 4, width = 5.5)
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAT_A_v2.png"), height = 4, width = 6)
 #Edited breaks to have DOY scale line up, combine plots into a single figure
 
 #MAT_100Y * MAP_A 
-interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (anomaly)", legend.main = "MAT (1901-2000)") + theme_bw() + 
+interact_plot(sens_int_lm2b, pred = "MAP_A", modx = "MAT_100Y", x.label = "MAP (Anomaly)", legend.main = "MAT (1901-2000)") + theme_bw(base_size = 14) + 
 geom_vline(xintercept = 0, lty = 2, col = "#808080") + scale_y_continuous(limits = c(80, 120), n.breaks = 3)
-ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP_A_v2.png"), height = 4, width = 5.5)
+ggsave(here::here("analyses", "figs1", "sens_3_figs", "clim_intplot_MAP_A_v2.png"), height = 4, width = 6)
 
 
 #MAP_100Y * MAP_A ###!! Became NS when controlling for MAP_A!
