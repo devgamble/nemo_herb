@@ -53,15 +53,19 @@ climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")
   rename(year = YoC) #Also 1764 obs
 
 #Transform Precipitation variables to be normal -- Log transforms Monthly and seasonal PPT, MAP, MSP
+#UPDATE: Un-did log-transformation: apply as-needed in separate analysis .Rmds!!!
+
 #log transformations do not work on PAS
+
 climNA_all1 <- climNA_all %>% 
-  mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
-                 PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
-                 PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
-                 PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
-                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+ # mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
+  #               PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
+  #               PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+  #               PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
+  #               PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
   na_if(y = -Inf)
 #see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
+
 ```
 <br>  
 
@@ -111,8 +115,8 @@ nemo_spec2 <- collectormerge2 %>%
 ```
 
 
+### Merge herbarium records and climate data (by specimen number)
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
-#Merge herbarium records and climate data (by specimen number)
 nemo_df1 <- merge(nemo_spec2, climNA_all1) #1764 obs and 1251 total columns
 
 write_csv(nemo_df1, here::here("data_cleaning", "nemo_full_1861_2019.csv")) #All years in the data

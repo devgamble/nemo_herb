@@ -83,7 +83,8 @@ These csv files can be found in the **data_cleaning** folder (within additional 
 ##### **All-in-one, most up-to-date** csv file:  
 `nemo_full_1901_2019.csv`  
 
-- Combines specimen data from `nemo_all_2.csv` (with error distance) and climate data from `climNA_nemo_all.csv` (with PPT vars log-transformed), filtering for years only from 1901-2019. Use `nemo_full_1861_2019.csv` for full temporal breadth.
+- Combines specimen data from `nemo_all_2.csv` (with error distance) and climate data from `climNA_nemo_all.csv`, filtering for years only from 1901-2019. Use `nemo_full_1861_2019.csv` for full temporal breadth.
+Update (08/13/2021): PPT variables no longer log-transformed in this csv!
 
 <br>  
 
@@ -133,7 +134,7 @@ Markdown Files:
 - `EDA2.Rmd`
   + More comprehensive exploratory analysis, including: Adding collector information back into combined dataset, creating error-distance subsets, examining variable correlations, creating basic pheno-climatic models, examining temporal change in climate variables, interaction plots, a couple 'nice' figures.
   + This file is long and not very well-organized. It mainly serves as a sketch pad for analyses that were (or would be) refined later.
-  + First writing of the complete `nemo_full_1901_2019.csv` and `nemo_full_1861_2019.csv`, after log-transforming PPT variables!  
+  + First writing of the complete `nemo_full_1901_2019.csv` and `nemo_full_1861_2019.csv' (PPT variables no longer log-transformed)   
   
 
 - `EDA_climate.Rmd`
