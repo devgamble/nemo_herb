@@ -163,12 +163,12 @@ visreg(anom_clim4, "MAP_A", xlab = "MAP (anomaly)", points = list(col = "#333333
 
 
 **Normals & Anomalies**
-Final models -- use these
+**Final models** -- use these
 ```{r warning = FALSE, message = FALSE}
 #an_full_clim1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A, data = nemo_df2)
 #an_full_clim2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2)
 #an_full_clim3 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_df2)
-an_full_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_df2) #Best, though adding year doesn't change much
+an_full_clim4 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_df2) #Best, though adding year doesn't change much
 #No interactions
 
 summ(an_full_clim4, vif = TRUE) #Not scaled
@@ -180,7 +180,7 @@ visreg(an_full_clim4, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#333
   geom_vline(xintercept = 0, lty = 2)
 ggsave(here::here("analyses", "figs1", "MAT_A_phensen.png"), height = 4, width = 6)
 
-visreg(an_full_clim4, "MAP_A", xlab = "MAP (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
+visreg(an_full_clim4, "MAP_A", xlab = "CAP (Anomaly)", points = list(col = "#333333"), gg = TRUE) + theme_apa() +
   geom_vline(xintercept = 0, lty = 2)
 ggsave(here::here("analyses", "figs1", "MAP_A_phensen.png"), height = 4, width = 6)
 
@@ -188,7 +188,7 @@ ggsave(here::here("analyses", "figs1", "MAP_A_phensen.png"), height = 4, width =
 visreg(an_full_clim4, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa()
 ggsave(here::here("analyses", "figs1", "MAT_100Y_phensen.png"), height = 4, width = 6)
 
-visreg(an_full_clim4, "MAP_100Y", xlab = "MAP (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa() #reverse transform?
+visreg(an_full_clim4, "MAP_100Y", xlab = "CAP (1901-2000)", points = list(col = "#333333"), gg = TRUE) + theme_apa() #reverse transform?
 ggsave(here::here("analyses", "figs1", "MAP_100Y_phensen.png"), height = 4, width = 6)
 
 

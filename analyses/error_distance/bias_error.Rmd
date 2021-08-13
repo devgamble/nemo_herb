@@ -154,7 +154,7 @@ summ(M100Y_lm1, vifs = TRUE)
 vif(M100Y_lm1)
 shapiro.test(M100Y_lm1$residuals) #graphs suggest model meets assumption, significant (non-normal) results may be a factor of sample size
 durbinWatsonTest(M100Y_lm1) #Address with more covariates or more complex models to improve fit
-durbinWatsonTest(M100Y_lm2AL) #slightly better but still S.
+#durbinWatsonTest(M100Y_lm2AL) #slightly better but still S.
 ```
 <br>  
 
@@ -288,19 +288,19 @@ lapply(list(M100Y_lm2ALa, erc_an0ALa ,erc_an1ALa, erc_an2ALa), summ, vif = TRUE,
 #Latitude &&& Longitude
 ## This model used for reported results
 
-M100Y_lm2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_df2)
+M100Y_lm2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_df2)
 
-erc_an0ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_all_errors)
-erc_an1ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e0_5)
-erc_an2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year, data = nemo_e2)
+erc_an0ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_all_errors)
+erc_an1ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_e0_5)
+erc_an2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_e2)
 
 #Just Climate
-plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "MAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "MAP (Anom.)" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-8, 11)) + labs(y = "Predictor")
+plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "CAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "CAP (Anom.)" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-9, 10.5)) + labs(y = "Predictor")
 ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 6, height = 4)
 
 
 #Climate & Covariates
-plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "MAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "MAP_A" = "MAP_A", "Elevation" = "elev_m", "Latitude" = "lat", "Longitude" = "long", "Year" = "year"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
+plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT_100Y" =  "MAT_100Y", "CAP_100Y" = "MAP_100Y", "MAT_A" =  "MAT_A", "CAP_A" = "MAP_A", "Elevation" = "elev_m", "Latitude" = "lat", "Longitude" = "long"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-15, 15))
 
 #More precise Adj. R2s
 adjrsq <- function(x){
@@ -358,25 +358,25 @@ corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long,
 #### Visualizations  
 
 ```{r Partial-reg plots, warning = FALSE, message = FALSE, eval = FALSE}
-#100Y MAT + MAP w/ covariates
+#100Y MAT + MAP w/ covariates -- these figures v similar to those in sensitivity_1 Rmd.
 
 #Latitude instead of longitude
 #Report scaled coefficients
 
-visreg(M100Y_lm2AL, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
+visreg(M100Y_lm2ALb, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_100.png"), height = 4, width = 6) #Dims: 4x6 clearer than 5x8
 
-visreg(M100Y_lm2AL, "MAP_100Y", xlab = "log[MAP] (1901-2000)", points = list(col = "#404040"), gg = TRUE) +  #option: use xtrans = exp 
+visreg(M100Y_lm2ALb, "MAP_100Y", xlab = "CAP (1901-2000)", points = list(col = "#404040"), gg = TRUE) +  #option: use xtrans = exp 
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_100.png"), height = 4, width = 6)
 
-visreg(M100Y_lm2AL, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
+visreg(M100Y_lm2ALb, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
   geom_vline(xintercept = 0, lty = 2) +
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_A.png"), height = 4, width = 6)
 
-visreg(M100Y_lm2AL, "MAP_A", xlab = "MAP (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
+visreg(M100Y_lm2ALb, "MAP_A", xlab = "CAP (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
   geom_vline(xintercept = 0, lty = 2) +
   theme_apa()
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_A.png"), height = 4, width = 6)
@@ -407,7 +407,7 @@ ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_A.png"), height = 4, w
 ```{r message = FALSE, warning = FALSE}
 #plot(nemo_df2$error_bin)
 
-clim_errorbin_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + error_bin, data = nemo_df2)
+clim_errorbin_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + error_bin, data = nemo_df2)
 
 summ(clim_errorbin_lm1, scale = TRUE, vifs = TRUE)
 
@@ -424,7 +424,7 @@ nemo_ebins_df2 <- nemo_df2 %>%
   mutate(error_bin2 = factor(error_bin2, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km", "missing")))
 
 
-clim_errorbin_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + error_bin2, data = nemo_ebins_df2)
+clim_errorbin_lm2 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + error_bin2, data = nemo_ebins_df2)
 
 summ(clim_errorbin_lm2, scale = TRUE, vifs = TRUE)
 
@@ -445,7 +445,7 @@ hist(nemo_df2$error_dist_m)
 hist(log(nemo_df2$error_dist_m))
 #Does error distance need to be transformed? Maybe....
 
-clim_errorm_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + year + error_dist_m, data = nemo_df2)
+clim_errorm_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long + error_dist_m, data = nemo_df2)
 
 summ(clim_errorm_lm1, scale = TRUE, vifs = TRUE)
 
