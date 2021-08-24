@@ -295,8 +295,8 @@ erc_an1ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long
 erc_an2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_e2)
 
 #Just Climate
-plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All records", "With error", "0-5 km", "0-2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "CAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "CAP (Anom.)" = "MAP_A"), scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-9, 10.5)) + labs(y = "Predictor")
-ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 6, height = 4)
+plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All Records", "Records with Error", "Error < 5 km", "Error < 2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "CAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "CAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-9, 10.5)) + labs(y = "Predictor")
+ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 7, height = 4)
 
 
 #Climate & Covariates

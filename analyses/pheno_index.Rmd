@@ -1,0 +1,73 @@
+---
+title: "pheno_index"
+output: pdf_document
+date: "8/24/2021"
+output: pdf_document
+---
+
+# Load & Integrate phenolgoical index to data set  
+
+
+**RE-DO THIS PROCESS with cleaned scores!!**  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+#Load Packages
+library(tidyverse)
+library(here)
+library(car)
+library(corrplot)
+library(jtools)
+```
+
+
+First, download the PI scoring data sheets to `cch2_pi_scored` in `data_cleaning`. Save each as a .csv file. Be sure to clear empty space under main rows!!!!
+Load csv's:
+```{r echo = FALSE, message = FALSE}
+cch2_AC_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_AC_pi.csv"), na = c("", "NA", "#DIV/0!")) #Keep div0 as NA??
+
+cch2_DL_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_DL_pi.csv"), na = c("", "NA", "#DIV/0!"))
+cch2_OS_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_OS_pi.csv"), na = c("", "NA", "#DIV/0!"))
+cch2_SU_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_SU_pi.csv"), na = c("", "NA", "#DIV/0!"))
+cch2_UCR_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_UCR_pi.csv"), na = c("", "NA", "#DIV/0!"))
+cch2_UCSB_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_UCSB_pi.csv"), na = c("", "NA", "#DIV/0!"))
+
+
+cch2_pi_full <- rbind(cch2_AC_pi, cch2_DL_pi, cch2_OS_pi, cch2_SU_pi, cch2_UCR_pi, cch2_UCSB_pi) %>% 
+  mutate(plant_PI = as.numeric(plant_PI)) %>% 
+  mutate(open_flr_present = case_when(flowers_2 > 0 | open_flr_present == "y" ~ "y",
+                                      flowers_2 == 0 | open_flr_present == "n" ~ "n")) %>% 
+  mutate(frt_present = case_when(immature_4 > 0 | mature_5 > 0 | frt_present == "y" ~ "y",
+                                      immature_4 == 0 & mature_5 == 0 | frt_present == "n" ~ "n")) %>%
+  select(specimen_number, date_new, DOY, scored_by, notes, open_flr_present:plant_PI) %>% 
+  filter(!is.na(open_flr_present)) #Optional filter -- refine later
+
+
+#3617 rows
+#Remove one specimen (DAV300327) from main data set -- likely N. maculata
+```
+
+```{r eval = FALSE}
+## Calculate % individual plants (NOT specimens) with open flowers
+
+100*count(filter(cch2_pi_full, open_flr_present == "y"))/count(cch2_pi_full)
+#Over 94%
+```
+
+
+
+**Average PI values for multiple plants on a sheet**
+Have one value of PI for each unique specimen number:
+```{r}
+cch2_pi_unq <- cch2_pi_full %>% group_by(specimen_number, open_flr_present, frt_present) %>% summarize(mean_PI = mean(plant_PI), DOY = mean(DOY))
+#success
+#How does this treat differences among plants (within sheets) in flowers/fruit present?
+#Add column for number of whole (scored) plants on a sheet
+
+```
+
+
