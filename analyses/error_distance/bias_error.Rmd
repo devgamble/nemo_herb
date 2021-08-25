@@ -341,9 +341,14 @@ For variables in model:
 ```{r Corr-plot, message = FALSE, warning = FALSE}
 #png(filename = "corrplot_modelparams.png", units = "in", width = 5, height = 5, res = 300)
 
+nemo_df2ren <- nemo_df2 %>% 
+  rename(CAP_100Y = MAP_100Y, CAP_A = MAP_A, CAP_YoC = MAP_Y, MAT_YoC = MAT_Y)
+
 #Corrplot for supp mat?
-corrplot(cor(nemo_df2 %>% select(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m, long, lat, year)), method = "color", addCoef.col = "black", number.cex = .6, outline = TRUE) #some autocorrelation in T anoms? elev*long corr
+corrplot(cor(nemo_df2ren %>% select(MAT_100Y, CAP_100Y, MAT_YoC, CAP_YoC, MAT_A, CAP_A, elev_m, long, lat)), method = "color", addCoef.col = "black", number.cex = .6, outline = TRUE) #some autocorrelation in T anoms? elev*long corr
 #similar VIFs as in 100Y only models, but these are still pretty low
+
+#Year removed...
 
 #dev.off()
 

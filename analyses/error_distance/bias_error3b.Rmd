@@ -908,13 +908,13 @@ lapply((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A)), F
 #as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m_c, MAT_100Y_c, MAP_100Y_c, MAT_A, MAP_A))), FUN = sd))
 
 OGsds <- tibble(.rows = 5) %>% 
-  mutate(contrast = rep("OG", 5), param = c("elev", "MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), var_sd =         
+  mutate(contrast = rep("Original", 5), param = c("elev", "MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"), var_sd =         
   as.numeric(lapply(X = c((nemo_e2_c %>% select(elev_m, MAT_100Y, MAP_100Y, MAT_A, MAP_A))), FUN = sd)), change_var_sd = NA)
 #Centered vs non-centered variables: no difference in estimates of variability. Stick w/ non-centered estimates.
 
 #combine data frames
 enviro_change2 = rbind(enviro_change, OGsds) %>% 
-  mutate(contrast = factor(contrast, levels = c("OG", "2 km", "5 km", "15 km", "25 km"), ordered = TRUE))
+  mutate(contrast = factor(contrast, levels = c("Original", "2 km", "5 km", "15 km", "25 km"), ordered = TRUE))
 
 #Visualize differences in variable SD among data sets
 #Edit these
@@ -923,34 +923,35 @@ ggplot(data = filter(enviro_change2, param == "elev")) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   coord_cartesian(ylim = c(400, 500)) +
   labs(title = "Elevation", y = "Standard Deviation", x = "Data") +
-  theme_bw()
+  theme_bw() + theme(legend.position = "none")
+ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_elev_m.png"), width = 6, height = 4)
 
 ggplot(data = filter(enviro_change2, param == "MAT_100Y")) +
   geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   labs(title = "MAT (100Y)", y = "Standard Deviation", x = "Data") +
-  theme_bw()
+  theme_bw() + theme(legend.position = "none")
 ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAT_100Y.png"), width = 6, height = 4)
 
 ggplot(data = filter(enviro_change2, param == "MAP_100Y")) +
   geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
-  labs(title = "MAP (100Y)", y = "Standard Deviation", x = "Data") +
-  theme_bw()
+  labs(title = "CAP (100Y)", y = "Standard Deviation", x = "Data") +
+  theme_bw() + theme(legend.position = "none")
 ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAP_100Y.png"), width = 6, height = 4)
 
 ggplot(data = filter(enviro_change2, param == "MAT_A")) +
   geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
   labs(title = "MAT (Anom.)", y = "Standard Deviation", x = "Data") +
-  theme_bw()
+  theme_bw()+ theme(legend.position = "none")
 ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAT_A.png"), width = 6, height = 4)
 
 ggplot(data = filter(enviro_change2, param == "MAP_A")) +
   geom_col(aes(x = contrast, y = var_sd, fill = contrast), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
-  labs(title = "MAP (Anom.)", y = "Standard Deviation", x = "Data") +
-  theme_bw()
+  labs(title = "CAP (Anom.)", y = "Standard Deviation", x = "Data") +
+  theme_bw() + theme(legend.position = "none")
 ggsave(here::here("analyses", "figs1", "errorD", "sims_SD_MAP_A.png"), width = 6, height = 4)
 
 ```

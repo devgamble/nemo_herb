@@ -56,6 +56,7 @@ cch2_pi_full <- rbind(cch2_AC_pi, cch2_DL_pi, cch2_OS_pi, cch2_SU_pi, cch2_UCR_p
 
 100*count(filter(cch2_pi_full, open_flr_present == "y"))/count(cch2_pi_full)
 #Over 94%
+#Because of multiple plants on a sheet (some with and without flowers), the number of SPECIMENS with open flowers must be > 94%!
 ```
 
 
