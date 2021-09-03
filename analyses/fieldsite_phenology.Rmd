@@ -37,11 +37,11 @@ climNA_all <- read_csv(here::here("climateNA", "all_cna", "climNA_nemo_all.csv")
 
 #Transform Precipitation variables to be normal -- Log transforms Monthly and seasonal PPT, MAP, MSP #PAS ignored
 climNA_all1 <- climNA_all %>% 
-  mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
-                 PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
-                 PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
-                 PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
-                 PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
+#  mutate_at(vars(PPT01_N51:PPT12_N51, PPT_wt_N51:PPT_at_N51, MAP_N51, MSP_N51,
+ #                PPT01_N81:PPT12_N81, PPT_wt_N81:PPT_at_N81, MAP_N81, MSP_N81,
+  #               PPT01_100Y:PPT12_100Y, PPT_wt_100Y:PPT_at_100Y, MAP_100Y, MSP_100Y,
+   #              PPT01_L1:PPT12_L1, PPT_wt_L1:PPT_at_L1, MAP_L1, MSP_L1,
+    #             PPT01_Y:PPT12_Y, PPT_wt_Y:PPT_at_Y, MAP_Y, MSP_Y), log) %>% 
   na_if(y = -Inf)
 #see EDA_climate for other variables to be transformed... (maybe AHM, DD if using)
 #Transform anomalies after they are added to ClimNA_nemo_all csv!
@@ -86,9 +86,9 @@ df2_AC %>%
   filter(specimen_number == "HSC201472") %>% 
   select(MAT_100Y)
 #MAP
-exp(df2_AC %>% 
+df2_AC %>% 
   filter(specimen_number == "HSC201472") %>% 
-  select(MAP_100Y))
+  select(MAP_100Y)
 
 
 #BO: 37.3819 +- 0.5 lat; -121.7367 +- 0.5 long (correspond to radius of 55.5 km)
@@ -105,9 +105,50 @@ df2_BO %>%
   filter(specimen_number == "SJSU1031") %>% 
   select(MAT_100Y)
 #MAP
-exp(df2_BO %>% 
+df2_BO %>% 
   filter(specimen_number == "SJSU1031") %>% 
-  select(MAP_100Y))
+  select(MAP_100Y)
+```
+
+
+
+```{r}
+#Create Subsets for BB & HA
+df2_BB <- nemo_df2 %>% 
+  filter(lat <= 38.8186 & lat > 37.8186) %>% 
+  filter(long <= -122.5718 & long > -123.5718)
+
+mean(df2_BB$DOY)
+se(df2_BB$DOY)
+
+#sample 1901-2018 MAT
+df2_BB %>% 
+  filter(specimen_number == "SEINET7067240") %>% 
+  select(MAT_100Y)
+#MAP
+df2_BB %>% 
+  filter(specimen_number == "SEINET7067240") %>% 
+  select(MAP_100Y)
+
+
+
+#HA
+df2_HA <- nemo_df2 %>% 
+  filter(lat <= 36.8792 & lat > 35.8792) %>% 
+  filter(long <= -121.0629 & long > -122.0629)
+
+mean(df2_HA$DOY)
+se(df2_HA$DOY)
+
+#sample 1901-2018 MAT
+df2_HA %>% 
+  filter(specimen_number == "PGM1065") %>% 
+  select(MAT_100Y)
+#MAP
+df2_HA %>% 
+  filter(specimen_number == "PGM1065") %>% 
+  select(MAP_100Y)
+
 ```
 
 

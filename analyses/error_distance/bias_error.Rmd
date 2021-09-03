@@ -369,21 +369,21 @@ corrplot(cor(nemo_df2ren %>% select(MAT_100Y, CAP_100Y, MAT_YoC, CAP_YoC, MAT_A,
 #Report scaled coefficients
 
 visreg(M100Y_lm2ALb, "MAT_100Y", xlab = "MAT (1901-2000)", points = list(col = "#404040"), gg = TRUE) + 
-  theme_apa()
+  theme_apa() + theme(axis.text=element_text(size=14), axis.title.x=element_text(size=16), axis.title.y=element_text(size=16))
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_100.png"), height = 4, width = 6) #Dims: 4x6 clearer than 5x8
 
 visreg(M100Y_lm2ALb, "MAP_100Y", xlab = "CAP (1901-2000)", points = list(col = "#404040"), gg = TRUE) +  #option: use xtrans = exp 
-  theme_apa()
+  theme_apa() + theme(axis.text=element_text(size=14), axis.title.x=element_text(size=16), axis.title.y=element_text(size=16))
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_100.png"), height = 4, width = 6)
 
 visreg(M100Y_lm2ALb, "MAT_A", xlab = "MAT (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
   geom_vline(xintercept = 0, lty = 2) +
-  theme_apa()
+  theme_apa() + theme(axis.text=element_text(size=14), axis.title.x=element_text(size=16), axis.title.y=element_text(size=16))
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAT_A.png"), height = 4, width = 6)
 
 visreg(M100Y_lm2ALb, "MAP_A", xlab = "CAP (Anomaly)", points = list(col = "#404040"), gg = TRUE) + 
   geom_vline(xintercept = 0, lty = 2) +
-  theme_apa()
+  theme_apa() + theme(axis.text=element_text(size=14), axis.title.x=element_text(size=16), axis.title.y=element_text(size=16))
 ggsave(here::here("analyses", "figs1", "errorD", "DOY-MAP_A.png"), height = 4, width = 6)
 #Alternative - use ggplot instead
 
