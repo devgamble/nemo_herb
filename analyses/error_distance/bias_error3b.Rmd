@@ -31,6 +31,8 @@ library(ggplot2)
 library(visreg)
 library(jtools)
 library(stringr)
+
+sessionInfo()
 ```
 
 
@@ -264,6 +266,8 @@ ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_A_r1c.png"), width
 ```
 
 
+
+##### Figure 2 in ms
 ```{r REP 1c, message = FALSE}
 ### 
 # Long-term & Anomalies 
@@ -302,7 +306,7 @@ plot_summs(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c, model
   #scale_color_manual(values = c("#4470D8", "#8AABF0", "#405DAF", "#E1DECD", "#524273"), labels = NULL) #+ scale_x_continuous(limits = c(-15, 10))
 ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full1.png"), width = 6, height = 4)
 
-## Rainbow palette from jtools -- use for figures to denote different simulated data sets
+## Rainbow palette from jtools -- use for figures to denote different *simulated data sets*
 
 #All covariates
 plot_summs(MLA_lm1c, MLA_2klmR1c, MLA_5klmR1c, MLA_15klmR1c, MLA_25klmR1c, model.names = c("Original", "2 km sim.", "5 km sim.", "15 km sim.", "25 km sim."), scale = TRUE) + theme_bw() #+ scale_x_continuous(limits = c(-15, 10))

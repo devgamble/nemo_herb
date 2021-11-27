@@ -19,6 +19,8 @@ library(corrplot)
 library(visreg)
 library(jtools)
 library(interactions)
+
+sessionInfo()
 ```
 
 
