@@ -26,6 +26,9 @@ library(jtools)
 
 
 First, download the PI scoring data sheets to `cch2_pi_scored` in `data_cleaning`. Save each as a .csv file. Be sure to clear empty space under main rows!!!!
+
+Note: These csvs last updated 8-24-2021 -- wille need to be REVIEWED AGAIN to clean up scores in google sheets prior to another download...
+
 Load csv's:
 ```{r echo = FALSE, message = FALSE}
 cch2_AC_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_AC_pi.csv"), na = c("", "NA", "#DIV/0!")) #Keep div0 as NA??
@@ -52,6 +55,13 @@ cch2_pi_full <- rbind(cch2_AC_pi, cch2_DL_pi, cch2_OS_pi, cch2_SU_pi, cch2_UCR_p
 ```
 
 ```{r eval = FALSE}
+#Check for any NA values in open flowers
+sum(is.na(cch2_pi_full$open_flr_present)) #0
+
+#For PI scores
+sum(is.na(cch2_pi_full$plant_PI)) #58
+
+
 ## Calculate % individual plants (NOT specimens) with open flowers
 
 100*count(filter(cch2_pi_full, open_flr_present == "y"))/count(cch2_pi_full)
@@ -60,10 +70,32 @@ cch2_pi_full <- rbind(cch2_AC_pi, cch2_DL_pi, cch2_OS_pi, cch2_SU_pi, cch2_UCR_p
 ```
 
 
+Simplify Data set to unique specimens
+```{r}
+#cch2_spec_pi <- cch2_pi_full %>% 
+#  filter/mutate
+#  group_by(specimen_number)
+
+#Total number of specimens in this data
+nemo_specimens <- cch2_pi_full %>% group_by(specimen_number) %>% 
+  summarize(specimen_number = unique(specimen_number))
+##1136 specimens
+
+
+#Individual Specimens with 0 open flowers (these SHOULD BE REMOVED from data set!)
+open_flr_check <- cch2_pi_full %>% group_by(specimen_number) %>% 
+  summarize(has_flowers = case_when(any(open_flr_present == "y") ~ "y"))# %>% 
+##1136 rows returned - all have open flowers!!!!
+
+```
+
+
 
 **Average PI values for multiple plants on a sheet**
 Have one value of PI for each unique specimen number:
 ```{r}
+#FIX THIS
+
 cch2_pi_unq <- cch2_pi_full %>% group_by(specimen_number, open_flr_present, frt_present) %>% summarize(mean_PI = mean(plant_PI), DOY = mean(DOY))
 #success
 #How does this treat differences among plants (within sheets) in flowers/fruit present?

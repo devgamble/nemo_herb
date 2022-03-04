@@ -1,0 +1,1374 @@
+---
+title: "Simulated Specimen Displacements - Iterated"
+author: "Devin Gamble"
+date: "2022-02-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+Outline:
+
+1. Generate randomly displaced specimen coordinates at four distance levels (2, 5, 15, 25 km) for all high-confidence herbarium records (error distance <= 2 km).  
+
+2. Match simulated collection points with climate data (four variables: MAT, CAP normals and anomalies).  
+
+3. Run PCMs to estimate phenological sensitivity to climate for the four climate variables. Use bootstrap resampling to estimate regression coefficients and 95% confidence intervals.  
+
+
+
+
+```{r message = FALSE, warning = FALSE}
+#Load Packages
+library(car)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(visreg)
+library(jtools)
+library(stringr)
+library(geosphere)
+library(beepr)
+```
+
+```{r sessionInfo, echo = FALSE, eval = FALSE}
+sessionInfo()
+```
+
+### Generate Simulated Collection Coordinates  
+
+**Convert NAD83 geod to WGS84??**  
+
+```{r message = FALSE, warning = FALSE}
+#Load data
+nemo_df2 <- read_csv(here::here("data_cleaning", "nemo_full_1901_2019.csv")) %>%  
+  mutate(error_bin = as_factor(error_bin)) 
+#1677 obs, 1251 columns
+
+nemo_all_errors <- nemo_df2 %>% 
+  filter(!is.na(error_dist_m)) 
+#1239 out of 1764 obs with error distance
+
+#0-2 km
+nemo_e2 <- nemo_all_errors %>% 
+  filter(error_bin == "<2 km") 
+
+
+#Set contrasts to 'sum to zero' for models with categorical variables
+options(contrasts = c("contr.sum", "contr.poly"))
+
+
+#Select "high-confidence" records (error <= 2 km) 
+nemo_r_2 <- nemo_e2 %>% 
+  select(specimen_number:mature_5) #exclude existing climate data
+```
+
+`geosphere::destPoint()` function computes a new coordinate point (WGS84) when given a start point, initial bearing, and distance.  
+
+*NOTE*: Differences between the WGS84 and NAD83 geodetic datum are minuscule and assumed have no impact on the estimation of new coordinates. The following code may be time- and computationally intensive.  
+
+- Have opted to NOT add elevation to records as was done previously, since it will be time-consuming and is not required by ClimateNA.  
+
+###  Generate Displaced Coordinates  
+
+Note: Climate data extraction for 500 iterations took 30 HOURS + 45 MINUTES!!!! Therefore, we have reduced the number of iterations to 200 (took around 18 hours)
+
+**2 KM**  
+
+```{r eval = FALSE}
+sim_list_2ka <- list()
+
+for(x in 1:200){ #200 reps
+  
+  long_n1 <- rep(NA,nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 2000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_2ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_2ka[[x]]) <- c("specimen_number", "long_n2k", "lat_n2k")
+  
+  #print(x)
+  
+}
+
+#Rbind all list elements
+
+sims_all_2ka <- as.data.frame(reduce(sim_list_2ka, rbind)) %>% 
+  mutate(long_n2k = as.numeric(long_n2k), lat_n2k = as.numeric(lat_n2k))
+
+##Automate replicate ID assignment for a given number of replicates
+#Alternate to writing it out by hand (see following un-evaluated chunk)
+repN <- numeric()
+
+for(x in 1:(nrow(sims_all_2ka)/743)){
+  
+  repN <- c(repN, rep(x, times = 743))
+  
+  #print(repn)
+  }
+repID <- tibble(repN)
+
+
+  
+#Add replicate ID
+sims_all_2ka <- cbind(sims_all_2ka, repID)
+#replicate number is now 'repN' instead of 'replicate'
+
+```
+
+```{r eval = FALSE, echo = FALSE}
+##DEPRECIATED  
+
+
+#Using bind_rows()
+#sims_all_2ka <- bind_rows(sim_list_2ka[[1:10]])
+
+
+#using reduce() 
+sims_all_2ka <- as.data.frame(reduce(sim_list_2ka, rbind)) %>% 
+  mutate(replicate = factor(c(rep("1", times = 743), rep("2", times = 743), rep("3", times = 743), rep("4", times = 743), rep("5", times = 743), rep("6", times = 743),  rep("7", times = 743),  rep("8", times = 743),  rep("9", times = 743),  rep("10", times = 743)))) %>% 
+  mutate(long_n2k = as.numeric(long_n2k), lat_n2k = as.numeric(lat_n2k))
+```
+
+
+
+
+
+
+**5 KM**  
+
+```{r eval = FALSE}
+sim_list_5ka <- list()
+
+for(x in 1:200){ #200 reps
+  
+  long_n1 <- rep(NA,nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 5000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_5ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_5ka[[x]]) <- c("specimen_number", "long_n5k", "lat_n5k")
+  
+  #print(x)
+  
+}
+
+
+#Rbind all list elements
+
+sims_all_5ka <- as.data.frame(reduce(sim_list_5ka, rbind)) %>% 
+  mutate(long_n5k = as.numeric(long_n5k), lat_n5k = as.numeric(lat_n5k))
+
+
+##Automate replicate ID assignment for a given number of replicates
+#Alternate to writing it out by hand (see following un-evaluated chunk)
+repN <- numeric()
+
+for(x in 1:(nrow(sims_all_5ka)/743)){
+  
+  repN <- c(repN, rep(x, times = 743))
+  
+  #print(repn)
+  }
+repID <- tibble(repN)
+
+
+#Add replicate ID
+sims_all_5ka <- cbind(sims_all_5ka, repID)
+#replicate number is now 'repN' instead of 'replicate'
+
+```
+
+
+
+
+**15 KM**  
+
+```{r eval = FALSE}
+sim_list_15ka <- list()
+
+for(x in 1:200){ #200 reps
+  
+  long_n1 <- rep(NA,nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 15000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_15ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_15ka[[x]]) <- c("specimen_number", "long_n15k", "lat_n15k")
+  
+  #print(x)
+  
+}
+
+
+#Rbind all list elements
+
+sims_all_15ka <- as.data.frame(reduce(sim_list_15ka, rbind)) %>% 
+  mutate(long_n15k = as.numeric(long_n15k), lat_n15k = as.numeric(lat_n15k))
+
+
+##Automate replicate ID assignment for a given number of replicates
+#Alternate to writing it out by hand (see following un-evaluated chunk)
+repN <- numeric()
+
+for(x in 1:(nrow(sims_all_15ka)/743)){
+  
+  repN <- c(repN, rep(x, times = 743))
+  
+  #print(repn)
+  }
+repID <- tibble(repN)
+
+
+#Add replicate ID
+sims_all_15ka <- cbind(sims_all_15ka, repID)
+#replicate number is now 'repN' instead of 'replicate'
+
+```
+
+
+**25 KM**  
+
+```{r eval = FALSE}
+sim_list_25ka <- list()
+
+for(x in 1:200){ #200 reps
+  
+  long_n1 <- rep(NA,nrow(nemo_r_2))
+  lat_n1 <- rep(NA, nrow(nemo_r_2))
+
+  
+for(i in 1:length(nemo_r_2$lat)){
+  
+  latlong_n <- destPoint(p = c(nemo_r_2$long[i], nemo_r_2$lat[i]), b = sample(0:360, 1), d = runif(1, 0, 25000))
+  
+  long_n1[i] <-  latlong_n[1]
+  lat_n1[i] <-  latlong_n[2]
+   
+}
+  
+  sim_list_25ka[[x]] <- cbind(nemo_r_2$specimen_number, long_n1, lat_n1)
+  colnames(sim_list_25ka[[x]]) <- c("specimen_number", "long_n25k", "lat_n25k")
+  
+  #print(x)
+  
+}
+
+
+#Rbind all list elements
+
+sims_all_25ka <- as.data.frame(reduce(sim_list_25ka, rbind)) %>% 
+  mutate(long_n25k = as.numeric(long_n25k), lat_n25k = as.numeric(lat_n25k))
+
+
+##Automate replicate ID assignment for a given number of replicates
+#Alternate to writing it out by hand (see following un-evaluated chunk)
+repN <- numeric()
+
+for(x in 1:(nrow(sims_all_25ka)/743)){
+  
+  repN <- c(repN, rep(x, times = 743))
+  
+  #print(repn)
+  }
+repID <- tibble(repN)
+
+
+#Add replicate ID
+sims_all_25ka <- cbind(sims_all_25ka, repID)
+#replicate number is now 'repN' instead of 'replicate'
+
+beep()
+
+```
+
+Note: Clear environment before re-rerunning the above code
+
+
+### Standardize data frames    
+
+For point-location ClimateNA data extraction:  
+
+ClimateNA Inputs:
+- standardized CSV
+- Historical time series data (1901-2019)
+- Annual variables
+- Option: Obtain 1981-2010 Normals 
+
+**Note**: The following code is set to eval = FALSE to avoid saving over csvs. Each standardized csv file should be "cleared" ('clear contents' of empty rows below the final row) prior to input into the ClimateNA application. After data extraction, this code is not requied unless new climate data or more iterations are needed.  
+
+
+```{r eval = FALSE}
+
+## 2 km simulations
+sims_2KE_s <- sims_all_2ka %>% 
+  select(specimen_number, repN, lat_n2k, long_n2k) %>% 
+  rename(ID1 = specimen_number, ID2 = repN, lat = lat_n2k, long = long_n2k) %>% 
+  mutate(el = NA) #Create column for elevation (not specified for these simulations)
+
+#Using replicate as a second ID -- will have to add YoC back in later for calculating anomalies
+
+write_csv(sims_2KE_s, here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_s200.csv"))
+#New folder, csv named to reflect 200 iterations
+
+
+## 5 km 
+sims_5KE_s <- sims_all_5ka %>% 
+  select(specimen_number, repN, lat_n5k, long_n5k) %>% 
+  rename(ID1 = specimen_number, ID2 = repN, lat = lat_n5k, long = long_n5k) %>% 
+  mutate(el = NA) #Create column for elevation (not specified for these simulations)
+
+write_csv(sims_5KE_s, here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_s200.csv"))
+
+
+## 15 km
+sims_15KE_s <- sims_all_15ka %>% 
+  select(specimen_number, repN, lat_n15k, long_n15k) %>% 
+  rename(ID1 = specimen_number, ID2 = repN, lat = lat_n15k, long = long_n15k) %>% 
+  mutate(el = NA) #Create column for elevation (not specified for these simulations)
+
+write_csv(sims_15KE_s, here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_s200.csv"))
+
+
+## 25 km
+sims_25KE_s <- sims_all_25ka %>% 
+  select(specimen_number, repN, lat_n25k, long_n25k) %>% 
+  rename(ID1 = specimen_number, ID2 = repN, lat = lat_n25k, long = long_n25k) %>% 
+  mutate(el = NA) #Create column for elevation (not specified for these simulations)
+
+write_csv(sims_25KE_s, here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_s200.csv"))
+
+
+
+
+```
+
+
+
+### Import ClimateNA data  
+
+**2 km**  
+
+```{r eval = FALSE}
+
+##Allocate more memory to R for the following code:
+memory.limit()
+memory.limit(size=56000) #increase memory limit to 7 GB (on a 64-bit machine with 8GB+ RAM)
+
+
+#Column renaming function
+rename_ftn <- function(x, apnd, rang){         
+  names_x <- colnames(x)[rang]
+  print(paste(names_x, apnd, sep = ""))
+} 
+
+#Load trimmed 2 km sims data
+TS_sims_2kE <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "new_clim_v2", "sims_2ka_s200_1901-2019Y.csv"), na = c("-9999", "-9999.0")) %>% 
+   rename(specimen_number = ID1, replicate = ID2, lat_n2k = Latitude, long_n2k = Longitude, elev_m_n = Elevation) %>%
+  filter(!is.na(MAT)) %>%  #Filter records in the ocean
+  select(-c(MAR)) #remove these columns
+
+
+#Add in YoC
+nemo_2k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+TS_sims_2kE_YoC <- merge(TS_sims_2kE, nemo_2k_YoC, all.x = TRUE) #Takes too much memory??
+
+sims_2kE_YoC <- TS_sims_2kE_YoC %>% 
+  filter(YoC == Year) %>%  #Select year-of-collection climate conditions x 200 replicates for each record
+  select(-YoC)
+
+#Append column names
+colnames(sims_2kE_YoC)[7:30] <- rename_ftn(sims_2kE_YoC, apnd = "_Y", rang = 7:30)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_2k_100avg <- TS_sims_2kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(MAT:DD1040), mean)  #It works!
+#NA values returned if any single value is NA
+
+#Alt: Average rom 1981-2010???
+
+#rename 100-yr average variables
+colnames(TS_2k_100avg)[2:25] <- rename_ftn(TS_2k_100avg, apnd = "_100Y", rang = 2:25)
+
+
+## merge YoC & long-term data
+sims_2kE_m <- merge(TS_2k_100avg, sims_2kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+anoms_2k1 <- sims_2kE_m %>% 
+  select(specimen_number:elev_m_n, MAT_100Y:MSP_100Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_2k2 <- anoms_2k1 %>% 
+  mutate(MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_2k3 <- anoms_2k2 %>% 
+  select(specimen_number:elev_m_n, MAT_A:MSP_A)
+
+
+## Combine data frames into one for all 2k simulations climate
+
+sims_2k_all <- merge(sims_2kE_m, anoms_2k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n2k, long_n2k, elev_m_n, everything())
+
+write_csv(sims_2k_all, here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_all_200.csv"))
+
+```
+
+
+NOTE:  
+
+Inspection of the data set shows that there are many repetitions of the same values among different simulated replicates, though there is still some variation among replicates. It seems that there are only a handful of values for the selected climate variables that were pulled from ClimateNA in these 2 km displaced points--it shows that the resolution is really likely only around 800 m.  
+
+
+The following code chunks require a decent amount of processing power and are computationally intensive. Like above, the default 'eval = FALSE' has been set in the chunk settings. If these need to be run, running the code line-by-line is recommended.  
+
+
+
+** 5 km**  
+
+
+```{r eval = FALSE}
+#Increase the memory limit of R to run the following code
+#May need to repeat these steps for the following chunks.
+memory.limit()
+memory.limit(size=56000) #increase memory limit to 7 GB (on a 64-bit machine with 8GB+ RAM)
+
+#Load 5 km sims data
+TS_sims_5kE <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "new_clim_v2", "sims_5ka_s200_1901-2019Y.csv"), na = c("-9999", "-9999.0")) %>% 
+  filter(!is.na(MAT)) %>% #Filter records in the ocean #doing this first might help memory issues...?
+  rename(specimen_number = ID1, replicate = ID2, lat_n5k = Latitude, long_n5k = Longitude, elev_m_n = Elevation) %>%
+  select(-c(MAR)) #remove these columns
+
+
+#Add in YoC
+nemo_5k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+TS_sims_5kE_YoC <- merge(TS_sims_5kE, nemo_5k_YoC, all.x = TRUE) #Takes a lot of memory
+
+sims_5kE_YoC <- TS_sims_5kE_YoC %>% 
+  filter(YoC == Year) %>%  #Select year-of-collection climate conditions x 200 replicates for each record
+  select(-YoC)
+
+
+#Column renaming function
+rename_ftn <- function(x, apnd, rang){         
+  names_x <- colnames(x)[rang]
+  print(paste(names_x, apnd, sep = ""))
+} 
+
+#Append column names
+colnames(sims_5kE_YoC)[7:30] <- rename_ftn(sims_5kE_YoC, apnd = "_Y", rang = 7:30)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_5k_100avg <- TS_sims_5kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(MAT:DD1040), mean)  #It works!
+#NA values returned if any single value is NA
+
+#Alt: Average rom 1981-2010???
+
+#rename 100-yr average variables
+colnames(TS_5k_100avg)[2:25] <- rename_ftn(TS_5k_100avg, apnd = "_100Y", rang = 2:25)
+
+
+## merge YoC & long-term data
+sims_5kE_m <- merge(TS_5k_100avg, sims_5kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+anoms_5k1 <- sims_5kE_m %>% 
+  select(specimen_number:elev_m_n, MAT_100Y:MSP_100Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_5k2 <- anoms_5k1 %>% 
+  mutate(MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_5k3 <- anoms_5k2 %>% 
+  select(specimen_number:elev_m_n, MAT_A:MSP_A)
+
+
+## Combine data frames into one for all 5k simulations climate
+
+sims_5k_all <- merge(sims_5kE_m, anoms_5k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n5k, long_n5k, elev_m_n, everything())
+
+write_csv(sims_5k_all, here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_all_200.csv"))
+
+```
+
+
+
+** 15 km**  
+
+
+```{r eval = FALSE}
+#Increase the memory limit of R to run the following code
+#May need to repeat these steps for the following chunks.
+memory.limit()
+memory.limit(size=56000) #increase memory limit to 7 GB (on a 64-bit machine with 8GB+ RAM)
+
+#Load 15 km sims data
+TS_sims_15kE <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "new_clim_v2", "sims_15ka_s200_1901-2019Y.csv"), na = c("-9999", "-9999.0")) %>% 
+  filter(!is.na(MAT)) %>% #Filter records in the ocean #doing this first might help memory issues...?
+  rename(specimen_number = ID1, replicate = ID2, lat_n15k = Latitude, long_n15k = Longitude, elev_m_n = Elevation) %>%
+  select(-c(MAR)) #remove these columns
+
+
+#Add in YoC
+nemo_15k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+TS_sims_15kE_YoC <- merge(TS_sims_15kE, nemo_15k_YoC, all.x = TRUE) #Takes a lot of memory
+
+sims_15kE_YoC <- TS_sims_15kE_YoC %>% 
+  filter(YoC == Year) %>%  #Select year-of-collection climate conditions x 200 replicates for each record
+  select(-YoC)
+
+
+#Column renaming function
+rename_ftn <- function(x, apnd, rang){         
+  names_x <- colnames(x)[rang]
+  print(paste(names_x, apnd, sep = ""))
+} 
+
+#Append column names
+colnames(sims_15kE_YoC)[7:30] <- rename_ftn(sims_15kE_YoC, apnd = "_Y", rang = 7:30)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_15k_100avg <- TS_sims_15kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(MAT:DD1040), mean)  #It works!
+#NA values returned if any single value is NA
+
+#Alt: Average rom 1981-2010???
+
+#rename 100-yr average variables
+colnames(TS_15k_100avg)[2:25] <- rename_ftn(TS_15k_100avg, apnd = "_100Y", rang = 2:25)
+
+
+## merge YoC & long-term data
+sims_15kE_m <- merge(TS_15k_100avg, sims_15kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+anoms_15k1 <- sims_15kE_m %>% 
+  select(specimen_number:elev_m_n, MAT_100Y:MSP_100Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_15k2 <- anoms_15k1 %>% 
+  mutate(MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_15k3 <- anoms_15k2 %>% 
+  select(specimen_number:elev_m_n, MAT_A:MSP_A)
+
+
+## Combine data frames into one for all 15k simulations climate
+
+sims_15k_all <- merge(sims_15kE_m, anoms_15k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n15k, long_n15k, elev_m_n, everything())
+
+write_csv(sims_15k_all, here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_all_200.csv"))
+
+```
+
+
+
+** 25 km**  
+
+```{r eval = FALSE}
+#Increase the memory limit of R to run the following code
+#May need to repeat these steps for the following chunks.
+memory.limit()
+memory.limit(size=56000) #increase memory limit to 7 GB (on a 64-bit machine with 8GB+ RAM)
+
+#Load 25 km sims data
+TS_sims_25kE <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "new_clim_v2", "sims_25ka_s200_1901-2019Y.csv"), na = c("-9999", "-9999.0")) %>% 
+  filter(!is.na(MAT)) %>% #Filter records in the ocean #doing this first might help memory issues...?
+  rename(specimen_number = ID1, replicate = ID2, lat_n25k = Latitude, long_n25k = Longitude, elev_m_n = Elevation) %>%
+  select(-c(MAR)) #remove these columns
+
+
+#Add in YoC
+nemo_25k_YoC <- nemo_r_2 %>% 
+  select(specimen_number, year) %>%  
+  rename(YoC = year)
+
+TS_sims_25kE_YoC <- merge(TS_sims_25kE, nemo_25k_YoC, all.x = TRUE) #Takes a lot of memory
+
+sims_25kE_YoC <- TS_sims_25kE_YoC %>% 
+  filter(YoC == Year) %>%  #Select year-of-collection climate conditions x 200 replicates for each record
+  select(-YoC)
+
+
+#Column renaming function
+rename_ftn <- function(x, apnd, rang){         
+  names_x <- colnames(x)[rang]
+  print(paste(names_x, apnd, sep = ""))
+} 
+
+#Append column names
+colnames(sims_25kE_YoC)[7:30] <- rename_ftn(sims_25kE_YoC, apnd = "_Y", rang = 7:30)
+
+
+#Average across years 1901 - 2000 for each specimen
+TS_25k_100avg <- TS_sims_25kE %>% 
+  filter(Year >= 1901 & Year < 2001) %>% #Can adjust period (e.g. 80, 90, 110 yr ave)
+  group_by(specimen_number) %>% #Cannot group by multiple columns, kept only specimen number
+  summarize_at(vars(MAT:DD1040), mean)  #It works!
+#NA values returned if any single value is NA
+
+#Alt: Average rom 1981-2010???
+
+#rename 100-yr average variables
+colnames(TS_25k_100avg)[2:25] <- rename_ftn(TS_25k_100avg, apnd = "_100Y", rang = 2:25)
+
+
+## merge YoC & long-term data
+sims_25kE_m <- merge(TS_25k_100avg, sims_25kE_YoC, all.x = TRUE)
+
+
+## Anomalies
+anoms_25k1 <- sims_25kE_m %>% 
+  select(specimen_number:elev_m_n, MAT_100Y:MSP_100Y, MAT_Y:MSP_Y) %>% 
+  filter(!is.na(MAT_Y)) #remove records without YoC climate - will apply to all climate variables
+
+anoms_25k2 <- anoms_25k1 %>% 
+  mutate(MAT_A = MAT_Y - MAT_100Y,
+         MWMT_A = MWMT_Y - MWMT_100Y,
+         MCMT_A = MCMT_Y - MCMT_100Y,
+         MAP_A = MAP_Y - MAP_100Y,
+         MSP_A = MSP_Y - MSP_100Y)
+
+
+anoms_25k3 <- anoms_25k2 %>% 
+  select(specimen_number:elev_m_n, MAT_A:MSP_A)
+
+
+## Combine data frames into one for all 25k simulations climate
+
+sims_25k_all <- merge(sims_25kE_m, anoms_25k3, all.x = TRUE) %>% 
+  rename(year = Year) %>% 
+  select(specimen_number, year, replicate, lat_n25k, long_n25k, elev_m_n, everything())
+
+write_csv(sims_25k_all, here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_all_200.csv"))
+
+```
+
+
+<br>  
+
+
+
+**Load in data sets from saved csvs**  
+
+```{r}
+sims_2km_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_all_200.csv")) %>% 
+  na_if(y = -Inf) %>% 
+  filter(!is.na(replicate))
+
+sims_5km_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_all_200.csv")) %>% 
+  na_if(y = -Inf) %>% 
+  filter(!is.na(replicate))
+
+sims_15km_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_all_200.csv")) %>% 
+  na_if(y = -Inf) %>% 
+  filter(!is.na(replicate))
+
+sims_25km_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_all_200.csv")) %>% 
+  na_if(y = -Inf) %>% 
+  filter(!is.na(replicate))
+
+
+```
+
+
+
+##### Add elevation to records  
+As with the above, this code should be run manually if one wishes to include elevation in their models
+```{r message = FALSE, eval = FALSE}
+# 2 km sims
+
+
+#Add elevation
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+sims_all_2ka <- as.data.frame(sims_2km_200) %>% 
+  select(specimen_number, long_n2k, lat_n2k, replicate) %>% 
+  mutate(replicate = as.factor(replicate)) 
+
+sims_all_2kaE <- sims_all_2ka
+sims_all_2kaE$elev_m_n <- NA
+
+sims_all_2kaE$elev_m_n <- get_elev_point(sims_all_2ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df
+#elev_m_n NA tally: 84
+
+#save as CSV before something screws up
+write_csv(sims_all_2kaE, here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_all_200_e.csv"))
+
+
+```
+
+
+5 - 25 km simulations elevation
+
+```{r eval = FALSE}
+
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+
+## 5 km
+sims_all_5ka <- as.data.frame(sims_5km_200) %>% 
+  select(specimen_number, long_n5k, lat_n5k, replicate) %>% 
+  mutate(replicate = as.factor(replicate)) 
+
+sims_all_5kaE <- sims_all_5ka
+sims_all_5kaE$elev_m_n <- NA
+
+sims_all_5kaE$elev_m_n <- get_elev_point(sims_all_5ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df
+#elev NA tally: 295
+
+#save as CSV before something screws up
+write_csv(sims_all_5kaE, here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_all_200_e.csv"))
+```
+
+
+```{r eval = FALSE}
+##
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+## 15 km
+sims_all_15ka <- as.data.frame(sims_15km_200) %>% 
+  select(specimen_number, long_n15k, lat_n15k, replicate) %>% 
+  mutate(replicate = as.factor(replicate)) 
+
+sims_all_15kaE <- sims_all_15ka
+sims_all_15kaE$elev_m_n <- NA
+
+sims_all_15kaE$elev_m_n <- get_elev_point(sims_all_15ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df
+#NA tally elev: 674
+
+#save as CSV before something screws up
+write_csv(sims_all_15kaE, here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_all_200_e.csv"))
+```
+
+
+```{r eval = FALSE}
+##
+library(elevatr)
+prj_dd <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" #Define parameters for get_elev_point()
+
+## 25 km
+sims_all_25ka <- as.data.frame(sims_25km_200) %>% 
+  select(specimen_number, long_n25k, lat_n25k, replicate) %>% 
+  mutate(replicate = as.factor(replicate)) 
+
+sims_all_25kaE <- sims_all_25ka
+sims_all_25kaE$elev_m_n <- NA
+
+sims_all_25kaE$elev_m_n <- get_elev_point(sims_all_25ka[,2:3], prj = prj_dd, src = "epqs")$elevation #store only elev, function creates new df
+#NA tally: 838
+
+#save as CSV before something screws up
+write_csv(sims_all_25kaE, here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_all_200_e.csv"))
+
+
+```
+
+
+<br>  
+
+##### Re-loading Data
+
+All simulation Data
+- Climate and elevation appended
+
+Remove NA values & negative elevation values (points below sea level i.e. displaced into water)
+```{r}
+sims_elev_2km <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_all_200_e.csv")) %>% 
+  filter(!is.na(elev_m_n), elev_m_n >= 0)
+
+sims_elev_5km <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_all_200_e.csv")) %>% 
+  filter(!is.na(elev_m_n), elev_m_n >= 0)
+
+sims_elev_15km <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_all_200_e.csv")) %>% 
+  filter(!is.na(elev_m_n), elev_m_n >= 0)
+
+sims_elev_25km <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_all_200_e.csv")) %>% 
+  filter(!is.na(elev_m_n), elev_m_n >= 0)
+```
+
+
+Append to main climate data:
++ Add in DOY
+
+```{r eval = FALSE}
+### 2 km
+sims_2km_full_200_a <- right_join(sims_2km_200, sims_elev_2km, by = c("specimen_number", "replicate", "lat_n2k", "long_n2k")) %>% 
+  rename(elev_m_n = elev_m_n.y) %>% 
+  select(-elev_m_n.x)
+
+#Merge in DOY data
+#DOY data in: nemo_r_2
+
+sims_2km_full_200_b <- left_join(sims_2km_full_200_a, select(nemo_r_2, specimen_number, year, DOY), by = c("specimen_number", "year")) %>% 
+  select(specimen_number, replicate, year, DOY, elev_m_n, lat_n2k, long_n2k, everything())
+
+#save final copy
+write_csv(sims_2km_full_200_b, here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_200_final.csv"))
+
+
+
+### 5 km
+sims_5km_full_200_a <- right_join(sims_5km_200, sims_elev_5km, by = c("specimen_number", "replicate", "lat_n5k", "long_n5k")) %>% 
+  rename(elev_m_n = elev_m_n.y) %>% 
+  select(-elev_m_n.x)
+
+#Merge in DOY data
+
+sims_5km_full_200_b <- left_join(sims_5km_full_200_a, select(nemo_r_2, specimen_number, year, DOY), by = c("specimen_number", "year")) %>% 
+  select(specimen_number, replicate, year, DOY, elev_m_n, lat_n5k, long_n5k, everything())
+
+write_csv(sims_5km_full_200_b, here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_200_final.csv"))
+
+
+### 15 km
+sims_15km_full_200_a <- right_join(sims_15km_200, sims_elev_15km, by = c("specimen_number", "replicate", "lat_n15k", "long_n15k")) %>% 
+  rename(elev_m_n = elev_m_n.y) %>% 
+  select(-elev_m_n.x)
+
+#Merge in DOY data
+
+sims_15km_full_200_b <- left_join(sims_15km_full_200_a, select(nemo_r_2, specimen_number, year, DOY), by = c("specimen_number", "year")) %>% 
+  select(specimen_number, replicate, year, DOY, elev_m_n, lat_n15k, long_n15k, everything())
+
+write_csv(sims_15km_full_200_b, here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_200_final.csv"))
+
+
+
+### 25 km
+sims_25km_full_200_a <- right_join(sims_25km_200, sims_elev_25km, by = c("specimen_number", "replicate", "lat_n25k", "long_n25k")) %>% 
+  rename(elev_m_n = elev_m_n.y) %>% 
+  select(-elev_m_n.x)
+
+#Merge in DOY data
+
+sims_25km_full_200_b <- left_join(sims_25km_full_200_a, select(nemo_r_2, specimen_number, year, DOY), by = c("specimen_number", "year")) %>% 
+  select(specimen_number, replicate, year, DOY, elev_m_n, lat_n25k, long_n25k, everything())
+
+
+write_csv(sims_25km_full_200_b, here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_200_final.csv"))
+
+
+```
+
+
+
+
+
+
+#### Phenoclimatic Models  
+
+Run the previous code chunks (from 'Load Data')
+
+```{r eval = FALSE}
+
+## Non-sim base model: 
+
+MLA_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long, data = nemo_e2)
+summ(MLA_lm1, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,2]
+
+```
+
+
+##### 2 km sim PCMs  
+
+
+```{r}
+
+##Load Data: 
+sims_2km_full_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_2ka_200_final.csv")) %>%
+  rename(lat = lat_n2k, long = long_n2k)
+
+##Create For Loop for running PCMs and saving output into data frame  
+
+#blank df to store results
+PCMs_2km_200 <- tibble(replicate = rep(1:200, each = 7), predictor = rep(c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), times = 200), param_est = NA, param_se = NA, ci_.025 = NA, ci_.975 = NA, est_pval = NA, adj.R2 = NA, param_vifs = NA, .rows = 1400)
+
+
+##Model results for a single replicate (compare with for loop results):
+#summ(lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m_n + lat + long, data = filter(sims_2km_full_200, replicate == 4)), scale = TRUE, vifs = TRUE)$coeftable
+
+
+#Create lists to store model summary outputs
+param_est_l <- list()
+est_se_l <- list()
+param_pval_l <- list()
+mod_adjR2_l <- list()
+param_vifs_l <- list()
+ci_.025_l <- list()
+ci_.975_l <- list()
+
+for(i in 1:200){
+
+  m.data <- filter(sims_2km_full_200, replicate == i)
+  
+  lm_2km <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m_n + lat + long, data = m.data)
+  
+  
+  param_est <- summ(lm_2km, scale = TRUE)$coeftable[2:8] #MAT_100Y through elev_m_n
+  est_se <- as.numeric(summ(lm_2km, scale = TRUE)$coeftable[2:8,2])
+  param_pval <- as.numeric(summ(lm_2km, scale = TRUE)$coeftable[2:8,4])
+  mod_adjR2 <- rep(summary(lm_2km)$adj.r.squared, times = 7) #Adj. R2 does not change with scaling/not scaling predictors
+  param_vifs <- as.numeric(summ(lm_2km, scale = TRUE, vifs = TRUE)$coeftable[2:8,5])
+  ci_low <- as.numeric(summ(lm_2km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,2])
+  ci_high <- as.numeric(summ(lm_2km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,3]) #calculate confidence intervals for individual parameter estimates -- identical to method used in 'plot_summs()'
+  
+  param_est_l[[i]] <-  param_est
+  est_se_l[[i]] <- est_se
+  param_pval_l[[i]] <- param_pval
+  mod_adjR2_l[[i]] <- mod_adjR2
+  param_vifs_l[[i]] <- param_vifs
+  ci_.025_l[[i]] <- ci_low
+  ci_.975_l[[i]] <- ci_high
+  
+}
+
+
+PCMs_2km_200$param_est <- unlist(param_est_l)
+PCMs_2km_200$param_se <- unlist(est_se_l)
+PCMs_2km_200$est_pval <- unlist(param_pval_l)
+PCMs_2km_200$adj.R2 <- unlist(mod_adjR2_l)
+PCMs_2km_200$param_vifs <- unlist(param_vifs_l)
+PCMs_2km_200$ci_.025 <- unlist(ci_.025_l)
+PCMs_2km_200$ci_.975 <- unlist(ci_.975_l)
+
+PCMs_2km_200$sim_dist <- factor(rep("2km", times = count(PCMs_2km_200))) #Create simulated distance identifier for later merge
+
+
+```
+
+
+##### 5 km sim PCMs  
+
+
+```{r}
+
+##Load Data: 
+sims_5km_full_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_5ka_200_final.csv")) %>%
+  rename(lat = lat_n5k, long = long_n5k)
+
+
+##Create For Loop for running PCMs and saving output into data frame  
+
+#blank df to store results
+PCMs_5km_200 <- tibble(replicate = rep(1:200, each = 7), predictor = rep(c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), times = 200), param_est = NA, param_se = NA, ci_.025 = NA, ci_.975 = NA, est_pval = NA, adj.R2 = NA, param_vifs = NA, .rows = 1400)
+
+
+#Lists to store model summary outputs
+param_est_l <- list()
+est_se_l <- list()
+param_pval_l <- list()
+mod_adjR2_l <- list()
+param_vifs_l <- list()
+ci_.025_l <- list()
+ci_.975_l <- list()
+
+
+for(i in 1:200){
+
+  m.data <- filter(sims_5km_full_200, replicate == i)
+  
+  lm_5km <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m_n + lat + long, data = m.data)
+  
+  
+  param_est <- summ(lm_5km, scale = TRUE)$coeftable[2:8] #MAT_100Y through elev_m_n
+  est_se <- as.numeric(summ(lm_5km, scale = TRUE)$coeftable[2:8,2])
+  param_pval <- as.numeric(summ(lm_5km, scale = TRUE)$coeftable[2:8,4])
+  mod_adjR2 <- rep(summary(lm_5km)$adj.r.squared, times = 7) #Adj. R2 does not change with scaling
+  param_vifs <- as.numeric(summ(lm_5km, scale = TRUE, vifs = TRUE)$coeftable[2:8,5])
+  ci_low <- as.numeric(summ(lm_5km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,2])
+  ci_high <- as.numeric(summ(lm_5km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,3])
+  
+  param_est_l[[i]] <-  param_est
+  est_se_l[[i]] <- est_se
+  param_pval_l[[i]] <- param_pval
+  mod_adjR2_l[[i]] <- mod_adjR2
+  param_vifs_l[[i]] <- param_vifs
+  ci_.025_l[[i]] <- ci_low
+  ci_.975_l[[i]] <- ci_high
+  
+}
+
+
+PCMs_5km_200$param_est <- unlist(param_est_l)
+PCMs_5km_200$param_se <- unlist(est_se_l)
+PCMs_5km_200$est_pval <- unlist(param_pval_l)
+PCMs_5km_200$adj.R2 <- unlist(mod_adjR2_l)
+PCMs_5km_200$param_vifs <- unlist(param_vifs_l)
+PCMs_5km_200$ci_.025 <- unlist(ci_.025_l)
+PCMs_5km_200$ci_.975 <- unlist(ci_.975_l)
+
+PCMs_5km_200$sim_dist <- factor(rep("5km", times = count(PCMs_5km_200)))
+
+```
+
+
+
+
+##### 15 km sim PCMs  
+
+
+```{r}
+
+##Load Data: 
+sims_15km_full_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_15ka_200_final.csv")) %>% rename(lat = lat_n15k, long = long_n15k)
+
+
+##Create For Loop for running PCMs and saving output into data frame  
+
+#blank df to store results
+PCMs_15km_200 <- tibble(replicate = rep(1:200, each = 7), predictor = rep(c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), times = 200), param_est = NA, param_se = NA, ci_.025 = NA, ci_.975 = NA, est_pval = NA, adj.R2 = NA, param_vifs = NA, .rows = 1400)
+
+
+#Lists to store model summary outputs
+param_est_l <- list()
+est_se_l <- list()
+param_pval_l <- list()
+mod_adjR2_l <- list()
+param_vifs_l <- list()
+ci_.025_l <- list()
+ci_.975_l <- list()
+
+
+for(i in 1:200){
+
+  m.data <- filter(sims_15km_full_200, replicate == i)
+  
+  lm_15km <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m_n + lat + long, data = m.data)
+  
+  
+  param_est <- summ(lm_15km, scale = TRUE)$coeftable[2:8] #MAT_100Y through elev_m_n
+  est_se <- as.numeric(summ(lm_15km, scale = TRUE)$coeftable[2:8,2])
+  param_pval <- as.numeric(summ(lm_15km, scale = TRUE)$coeftable[2:8,4])
+  mod_adjR2 <- rep(summary(lm_15km)$adj.r.squared, times = 7) #Adj. R2 does not change with scaling
+  param_vifs <- as.numeric(summ(lm_15km, scale = TRUE, vifs = TRUE)$coeftable[2:8,5])
+  ci_low <- as.numeric(summ(lm_15km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,2])
+  ci_high <- as.numeric(summ(lm_15km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,3])
+  
+  param_est_l[[i]] <-  param_est
+  est_se_l[[i]] <- est_se
+  param_pval_l[[i]] <- param_pval
+  mod_adjR2_l[[i]] <- mod_adjR2
+  param_vifs_l[[i]] <- param_vifs
+  ci_.025_l[[i]] <- ci_low
+  ci_.975_l[[i]] <- ci_high
+  
+}
+
+
+PCMs_15km_200$param_est <- unlist(param_est_l)
+PCMs_15km_200$param_se <- unlist(est_se_l)
+PCMs_15km_200$est_pval <- unlist(param_pval_l)
+PCMs_15km_200$adj.R2 <- unlist(mod_adjR2_l)
+PCMs_15km_200$param_vifs <- unlist(param_vifs_l)
+PCMs_15km_200$ci_.025 <- unlist(ci_.025_l)
+PCMs_15km_200$ci_.975 <- unlist(ci_.975_l)
+
+PCMs_15km_200$sim_dist <- factor(rep("15km", times = count(PCMs_15km_200)))
+
+```
+
+
+
+##### 25 km sim PCMs  
+
+
+```{r}
+
+##Load Data: 
+sims_25km_full_200 <- read_csv(here::here("analyses", "error_distance", "new_coords_v2", "sims_25ka_200_final.csv")) %>% rename(lat = lat_n25k, long = long_n25k)
+
+
+##Create For Loop for running PCMs and saving output into data frame  
+
+#blank df to store results
+PCMs_25km_200 <- tibble(replicate = rep(1:200, each = 7), predictor = rep(c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), times = 200), param_est = NA, param_se = NA, ci_.025 = NA, ci_.975 = NA, est_pval = NA, adj.R2 = NA, param_vifs = NA, .rows = 1400)
+
+
+#Lists to store model summary outputs
+param_est_l <- list()
+est_se_l <- list()
+param_pval_l <- list()
+mod_adjR2_l <- list()
+param_vifs_l <- list()
+ci_.025_l <- list()
+ci_.975_l <- list()
+
+
+for(i in 1:200){
+
+  m.data <- filter(sims_25km_full_200, replicate == i)
+  
+  lm_25km <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m_n + lat + long, data = m.data)
+  
+  
+  param_est <- summ(lm_25km, scale = TRUE)$coeftable[2:8] #MAT_100Y through elev_m_n
+  est_se <- as.numeric(summ(lm_25km, scale = TRUE)$coeftable[2:8,2])
+  param_pval <- as.numeric(summ(lm_25km, scale = TRUE)$coeftable[2:8,4])
+  mod_adjR2 <- rep(summary(lm_25km)$adj.r.squared, times = 7) #Adj. R2 does not change with scaling
+  param_vifs <- as.numeric(summ(lm_25km, scale = TRUE, vifs = TRUE)$coeftable[2:8,5])
+  ci_low <- as.numeric(summ(lm_25km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,2])
+  ci_high <- as.numeric(summ(lm_25km, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,3])
+  
+  param_est_l[[i]] <-  param_est
+  est_se_l[[i]] <- est_se
+  param_pval_l[[i]] <- param_pval
+  mod_adjR2_l[[i]] <- mod_adjR2
+  param_vifs_l[[i]] <- param_vifs
+  ci_.025_l[[i]] <- ci_low
+  ci_.975_l[[i]] <- ci_high
+  
+}
+
+
+PCMs_25km_200$param_est <- unlist(param_est_l)
+PCMs_25km_200$param_se <- unlist(est_se_l)
+PCMs_25km_200$est_pval <- unlist(param_pval_l)
+PCMs_25km_200$adj.R2 <- unlist(mod_adjR2_l)
+PCMs_25km_200$param_vifs <- unlist(param_vifs_l)
+PCMs_25km_200$ci_.025 <- unlist(ci_.025_l)
+PCMs_25km_200$ci_.975 <- unlist(ci_.975_l)
+
+PCMs_25km_200$sim_dist <- factor(rep("25km", times = count(PCMs_25km_200)))
+
+
+```
+
+
+
+
+#### Visualizing Results  
+
+```{r}
+#Merge all model result data frames
+
+PCMs_all_200 <- rbind(PCMs_2km_200, PCMs_5km_200, PCMs_15km_200, PCMs_25km_200)
+#Note: identical replicate numbers are independent of one another across simulated distances
+
+#Cannot take mean of confidence intervals-- too much variation among replicated parameter estimates
+
+
+#Quick function to manually calculate confidence intervals
+#Two-tailed
+quickCI <- function(param_se, param_mean, df, alpha){
+  #defaults:
+  df = 199 #based on sample size of 200
+  alpha = 0.05 #95% CIs
+  
+  t_val = qt(p = alpha/2, df = df, lower.tail = F)
+  margin = t_val*param_se
+  
+  return(c(param_mean - margin, param_mean + margin))
+}
+
+
+
+#Merge in original 2km error PCM results
+PCM_MLA_lm1 <- summ(MLA_lm1, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable
+PCM_MLA_lm1_se <- summ(MLA_lm1, scale = TRUE, vifs = TRUE)$coeftable
+
+PCMs_highconf_recs <- tibble(replicate = NA, predictor = c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), param_est = PCM_MLA_lm1[2:8], param_se = PCM_MLA_lm1_se[2:8,2], ci_.025 = PCM_MLA_lm1[2:8,2], ci_.975 = PCM_MLA_lm1[2:8,3], est_pval = PCM_MLA_lm1[2:8,5], adj.R2 = 0.2922995, param_vifs = PCM_MLA_lm1[2:8,6], sim_dist = "original")
+
+
+PCMs_all_merged <- rbind(PCMs_all_200, PCMs_highconf_recs)
+
+
+
+#Mean estimates by deviation distance
+PCMs_avg_all <- PCMs_all_merged %>% group_by(predictor, sim_dist) %>% 
+  summarize(
+    mean_param_est = mean(param_est),
+    mean_param_se = mean(param_se), #absolute (unidirectional) se not subject to misrepresentation by averaging like CIs are?
+    mean_ci_low = mean(ci_.025),
+    mean_ci_high = mean(ci_.975)
+    
+ ) %>% 
+  filter(predictor %in% c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A")) %>% 
+  mutate(sim_dist = factor(sim_dist, levels = c("original", "2km", "5km", "15km", "25km")))
+  
+
+
+#Decpricated...? Not compatible with original rec results
+PCMs_avg_newCIs <- PCMs_all_merged %>% group_by(predictor, sim_dist) %>% 
+  summarize(    
+    
+    #new_param_se = (sd(param_est)/sqrt(200)), #very small....
+    
+    #Following CIs calculated using new mean SE and manually calcualted SE
+    #ci_low_meanse = quickCI(param_se = mean_param_se, param_mean = mean_param_est)[1],
+    #ci_high_meanse = quickCI(param_se = mean_param_se, param_mean = mean_param_est)[2],
+    #ci_low_newse = quickCI(param_se = new_param_se, param_mean = mean_param_est)[1], #these ones look wayyyy narrower
+    #ci_high_newse = quickCI(param_se = new_param_se, param_mean = mean_param_est)[2]
+    
+  ) %>% 
+  filter(predictor %in% c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"))
+
+
+
+##Alternative method for calculating confidence intervals???
+
+# Confint() [boot CIs] ?? but only works on boot objects
+
+
+
+
+##ggplot
+
+ggplot(data = PCMs_avg_all) +
+  geom_point(aes(x = mean_param_est, y = predictor, group = sim_dist, color = sim_dist), position = position_dodge(width = -.8), size = 2, pch = 0, stroke = 1.5) + 
+  geom_errorbarh(aes(y = predictor, xmin = mean_ci_low, xmax = mean_ci_high, group = sim_dist, color = sim_dist), position = position_dodge(width = -.8), size = 1, height = 0) +
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_color_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  theme_classic()
+
+
+##Custom ggplot function????
+
+
+
+```
+
+
+
+
+
+
+
+[[REMOVE CODE BELOW]]
+
+
+### Extract Climate Data  
+
+Option: Use same manual method - should be similar, will just take longer
+
+**Load Raster files from ClimateNA**  
+
+```{r eval = FALSE}
+library(raster)
+##Obtain DEM input raster file (.asc format) for California
+
+MAT_81 <- raster('filename.asc');mat
+
+
+```
+
+
+**ClimateNA in R**  
+
+Command line test
+
+```{r eval = FALSE}
+#Primary wd for this project: "C:/Users/Devin/Documents/R_files/Data/nemo_herb"
+
+#see 'system2' documentation for executing system commands
+
+setwd(C:/Users/Devin/Desktop)
+
+exe <- "Climatena_v7.21 - Shortcut.exe"
+
+inputFile = '/C:\\ClimateNA_data\\test.csv'
+outputFile = '/C:\\ ClimateNA_data \\test_normal.csv'
+yearPeriod = '/Normal_1961_1990.nrm'
+system2(exe,args= c('/Y', yearPeriod, inputFile, outputFile),wait=True)
+
+dat <- read.csv(' C:/ClimateNA_data/test_normal.csv'); head(dat)
+
+#for raster data ---
+inputFile = '/C:\\ClimateNA_data\\test.asc'
+outputDir = '/C:\\ ClimateNA_data \\test\' 
+yearPeriod = '/Normal_1961_1990.nrm'
+system2(exe,args= c('/Y', yearPeriod, inputFile, outputDir) ,wait=True)
+
+
+
+```
+
+
+
+
+**Bootstrap confidence intervals**  
+ - Likely the way to go
+ - Should incorporate individual estimates and estimate SEs!
+
+
+OR
+
+**Bootstrap simulated deviations used in estimating phen-sen**  
+
+??????
+
