@@ -359,6 +359,22 @@ corrplot(cor(nemo_df2ren %>% select(MAT_100Y, CAP_100Y, MAT_YoC, CAP_YoC, MAT_A,
 **Notes**: Lat & long are similarly correlated to 100Y MAT/MAP. Long is more correlated to elevation than Lat (0.51 vs -.41). This and the reduction in VIFs may be the only benefit of using lat over long. Additionally, MAT_100Y becomes *non-significant* when lat is used in the model instead of long.
 
 
+For different normal periods and seasonal conditions:
+
+```{r Corr-plot2, message = FALSE, warning = FALSE}
+png(filename = "corrplot_climvars.png", units = "in", width = 6, height = 6, res = 400)
+
+nemo_df2ren2 <- nemo_df2 %>% 
+  rename(CAP_100Y = MAP_100Y, CAP_A = MAP_A, CAP_YoC = MAP_Y, MAT_YoC = MAT_Y, CAP_N81 = MAP_N81, Tmin_wt_YoC = Tmin_wt_Y, Tmin_sp_YoC = Tmin_sp_Y, PPT_wt_YoC = PPT_wt_Y, PPT_sp_YoC = PPT_sp_Y)
+
+#Corrplot for supp mat 2
+corrplot(cor(nemo_df2ren2 %>% select(MAT_100Y, CAP_100Y, MAT_N81, CAP_N81, Tmin_wt_100Y, Tmin_sp_100Y, PPT_wt_100Y, PPT_sp_100Y, MAT_YoC, CAP_YoC, Tmin_wt_YoC, Tmin_sp_YoC, PPT_wt_YoC, PPT_sp_YoC, MAT_A, CAP_A,Tmin_wt_A, Tmin_sp_A, PPT_wt_A, PPT_sp_A)), method = "color", addCoef.col = "black", number.cex = .5, outline = TRUE)
+
+dev.off()
+
+```
+
+
 <br>  
 
 

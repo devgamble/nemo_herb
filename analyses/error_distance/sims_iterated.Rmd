@@ -31,6 +31,7 @@ library(jtools)
 library(stringr)
 library(geosphere)
 library(beepr)
+library(ggpubr)
 ```
 
 ```{r sessionInfo, echo = FALSE, eval = FALSE}
@@ -862,6 +863,35 @@ sims_elev_25km <- read_csv(here::here("analyses", "error_distance", "new_coords_
   filter(!is.na(elev_m_n), elev_m_n >= 0)
 ```
 
+```{r}
+#Get sample sizes for each replicate
+#Use cleaned data for each distance with non-negative elevation values
+
+
+no.obs <- list()
+
+for(x in 1:200){
+  
+  Nobs = nrow(sims_elev_25km %>% filter(replicate == x))
+    
+  no.obs[[x]] = Nobs
+  
+}
+
+obs_xkm <- unlist(no.obs)
+range(obs_xkm)
+
+#Values noted here after manual runs of the for loop
+#2km range: 737-743
+#5km range: 737-743
+#15km range: 725-739
+#25km range: 709-732
+
+```
+
+
+
+
 
 Append to main climate data:
 + Add in DOY
@@ -929,8 +959,6 @@ write_csv(sims_25km_full_200_b, here::here("analyses", "error_distance", "new_co
 
 
 
-
-
 #### Phenoclimatic Models  
 
 Run the previous code chunks (from 'Load Data')
@@ -940,7 +968,7 @@ Run the previous code chunks (from 'Load Data')
 ## Non-sim base model: 
 
 MLA_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long, data = nemo_e2)
-summ(MLA_lm1, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable[2:8,2]
+summ(MLA_lm1, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)
 
 ```
 
@@ -1208,6 +1236,7 @@ PCMs_25km_200$sim_dist <- factor(rep("25km", times = count(PCMs_25km_200)))
 
 
 ```
+###### OPTION: ANALYZE ALL SIMULATED DATA TOGETHER WITH AN EFFECT OF DISPLACEMENT DISTANCE???  
 
 
 
@@ -1220,8 +1249,54 @@ PCMs_25km_200$sim_dist <- factor(rep("25km", times = count(PCMs_25km_200)))
 PCMs_all_200 <- rbind(PCMs_2km_200, PCMs_5km_200, PCMs_15km_200, PCMs_25km_200)
 #Note: identical replicate numbers are independent of one another across simulated distances
 
-#Cannot take mean of confidence intervals-- too much variation among replicated parameter estimates
 
+#Merge in original 2km error PCM results
+MLA_lm1 <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A  + elev_m + lat + long, data = nemo_e2)
+PCM_MLA_lm1 <- summ(MLA_lm1, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable
+PCM_MLA_lm1_se <- summ(MLA_lm1, scale = TRUE, vifs = TRUE)$coeftable
+
+PCMs_highconf_recs <- tibble(replicate = NA, predictor = c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), param_est = PCM_MLA_lm1[2:8], param_se = PCM_MLA_lm1_se[2:8,2], ci_.025 = PCM_MLA_lm1[2:8,2], ci_.975 = PCM_MLA_lm1[2:8,3], est_pval = PCM_MLA_lm1[2:8,5], adj.R2 = 0.2922995, param_vifs = PCM_MLA_lm1[2:8,6], sim_dist = "original")
+
+
+PCMs_all_merged <- rbind(PCMs_all_200, PCMs_highconf_recs)
+#Save as csv -- add to data package instead of the ~12+ other csv files
+#write_csv(PCMs_all_merged, here::here("analyses", "error_distance", "new_coords_v2", "PCM_results_all.csv"))
+
+
+#Mean estimates by deviation distance
+PCMs_avg_all <- PCMs_all_merged %>% group_by(predictor, sim_dist) %>% 
+  summarize(
+    mean_param_est = mean(param_est),
+    mean_param_se = mean(param_se), #absolute (unidirectional) se not subject to misrepresentation by averaging like CIs are?
+    mean_ci_low = mean(ci_.025),
+    mean_ci_high = mean(ci_.975),
+    mean_adjr2 = mean(adj.R2)
+    
+ ) %>% 
+  filter(predictor %in% c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A")) %>% 
+  mutate(sim_dist = factor(sim_dist, levels = c("original", "2km", "5km", "15km", "25km")),
+         predictor = factor(predictor, levels = c("MAP_A", "MAT_A", "MAP_100Y", "MAT_100Y", "elev_m_n", "lat", "long")))
+
+
+##ggplot
+
+ggplot(data = PCMs_avg_all) +
+  geom_errorbarh(aes(y = predictor, xmin = mean_ci_low, xmax = mean_ci_high, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 1, height = 0) +
+  geom_point(aes(x = mean_param_est, y = predictor, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 2, pch = 21, fill = "white", stroke = 1.2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_color_manual(labels = c("Original", "2 km sim.", "5 km sim.", "15 km sim.", "25 km sim."), values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  theme_bw() +
+  labs(y = "Predictor", x = "Estimate", color = "Model Data") +
+  scale_y_discrete(labels = c("CAP (Anom.)", "MAT (Anom.)", "CAP (100Y)", "MAT (100Y)"))
+
+
+#Save plot
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full200.png"), width = 6, height = 4)
+```
+
+
+```{r}
+##Calculate NEW CIs based off coeff estimates for each simulation
 
 #Quick function to manually calculate confidence intervals
 #Two-tailed
@@ -1236,72 +1311,45 @@ quickCI <- function(param_se, param_mean, df, alpha){
   return(c(param_mean - margin, param_mean + margin))
 }
 
-
-
-#Merge in original 2km error PCM results
-PCM_MLA_lm1 <- summ(MLA_lm1, scale = TRUE, vifs = TRUE, confint = TRUE, ci.width = 0.95)$coeftable
-PCM_MLA_lm1_se <- summ(MLA_lm1, scale = TRUE, vifs = TRUE)$coeftable
-
-PCMs_highconf_recs <- tibble(replicate = NA, predictor = c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A", "elev_m_n", "lat", "long"), param_est = PCM_MLA_lm1[2:8], param_se = PCM_MLA_lm1_se[2:8,2], ci_.025 = PCM_MLA_lm1[2:8,2], ci_.975 = PCM_MLA_lm1[2:8,3], est_pval = PCM_MLA_lm1[2:8,5], adj.R2 = 0.2922995, param_vifs = PCM_MLA_lm1[2:8,6], sim_dist = "original")
-
-
-PCMs_all_merged <- rbind(PCMs_all_200, PCMs_highconf_recs)
-
-
-
-#Mean estimates by deviation distance
-PCMs_avg_all <- PCMs_all_merged %>% group_by(predictor, sim_dist) %>% 
-  summarize(
-    mean_param_est = mean(param_est),
-    mean_param_se = mean(param_se), #absolute (unidirectional) se not subject to misrepresentation by averaging like CIs are?
-    mean_ci_low = mean(ci_.025),
-    mean_ci_high = mean(ci_.975)
-    
- ) %>% 
-  filter(predictor %in% c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A")) %>% 
-  mutate(sim_dist = factor(sim_dist, levels = c("original", "2km", "5km", "15km", "25km")))
-  
-
-
-#Decpricated...? Not compatible with original rec results
 PCMs_avg_newCIs <- PCMs_all_merged %>% group_by(predictor, sim_dist) %>% 
+  filter(sim_dist != 'original') %>% 
   summarize(    
     
-    #new_param_se = (sd(param_est)/sqrt(200)), #very small....
+    mean_param_est = mean(param_est),
+    new_param_se = (sd(param_est)/sqrt(200)), #very small....
+    mean_param_se = mean(param_se),
     
     #Following CIs calculated using new mean SE and manually calcualted SE
-    #ci_low_meanse = quickCI(param_se = mean_param_se, param_mean = mean_param_est)[1],
-    #ci_high_meanse = quickCI(param_se = mean_param_se, param_mean = mean_param_est)[2],
-    #ci_low_newse = quickCI(param_se = new_param_se, param_mean = mean_param_est)[1], #these ones look wayyyy narrower
-    #ci_high_newse = quickCI(param_se = new_param_se, param_mean = mean_param_est)[2]
+    ci_low_meanse = quickCI(param_se = mean_param_se, param_mean = mean_param_est)[1],
+    ci_high_meanse = quickCI(param_se = mean_param_se, param_mean = mean_param_est)[2],
+    
+    ci_low_newse = quickCI(param_se = new_param_se, param_mean = mean_param_est)[1], #these ones look wayyyy narrower
+    ci_high_newse = quickCI(param_se = new_param_se, param_mean = mean_param_est)[2]
     
   ) %>% 
+  filter(predictor %in% c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A")) %>% 
+  rename(param_est = mean_param_est, param_se = new_param_se, ci_.025 = ci_low_newse, ci_.975 = ci_high_newse)
+
+
+#Merge in original record PCM results
+PCMs_highconf_recs_v2 <- PCMs_highconf_recs %>% 
+  select(-c(replicate, est_pval, param_vifs, adj.R2)) %>% 
   filter(predictor %in% c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"))
 
+PCMs_avg_newCIs_2 <- rbind(PCMs_avg_newCIs, PCMs_highconf_recs_v2) %>% 
+   mutate(sim_dist = factor(sim_dist, levels = c("original", "2km", "5km", "15km", "25km")),
+         predictor = factor(predictor, levels = c("MAP_A", "MAT_A", "MAP_100Y", "MAT_100Y")))
 
 
-##Alternative method for calculating confidence intervals???
-
-# Confint() [boot CIs] ?? but only works on boot objects
-
-
-
-
-##ggplot
-
-ggplot(data = PCMs_avg_all) +
-  geom_point(aes(x = mean_param_est, y = predictor, group = sim_dist, color = sim_dist), position = position_dodge(width = -.8), size = 2, pch = 0, stroke = 1.5) + 
-  geom_errorbarh(aes(y = predictor, xmin = mean_ci_low, xmax = mean_ci_high, group = sim_dist, color = sim_dist), position = position_dodge(width = -.8), size = 1, height = 0) +
+#ggplot
+ggplot(data = PCMs_avg_newCIs_2) +
+  geom_errorbarh(aes(y = predictor, xmin = ci_.025, xmax = ci_.975, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 1, height = 0) +
+  geom_point(aes(x = param_est, y = predictor, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 2, pch = 21, fill = "white", stroke = 1.2) + 
   geom_vline(xintercept = 0, lty = 2) +
-  scale_color_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
-  theme_classic()
-
-
-##Custom ggplot function????
-
-
-
-```
+  scale_color_manual(labels = c("Original", "2 km sim.", "5 km sim.", "15 km sim.", "25 km sim."), values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  theme_bw() +
+  labs(y = "Predictor", x = "Estimate", color = "Model Data") +
+  scale_y_discrete(labels = c("CAP (Anom.)", "MAT (Anom.)", "CAP (100Y)", "MAT (100Y)"))
 
 
 
@@ -1309,66 +1357,193 @@ ggplot(data = PCMs_avg_all) +
 
 
 
-[[REMOVE CODE BELOW]]
+#Calculating new CIs but using the MEAN of simulated parameter SEs
 
+PCMs_avg_newCIs_3 <- PCMs_avg_newCIs %>% 
+  mutate(param_se = mean_param_se, ci_.025 = ci_low_meanse, ci_.975 = ci_high_meanse)
 
-### Extract Climate Data  
+PCMs_avg_newCIs_4 <- rbind(PCMs_avg_newCIs_3, PCMs_highconf_recs_v2) %>% 
+   mutate(sim_dist = factor(sim_dist, levels = c("original", "2km", "5km", "15km", "25km")),
+         predictor = factor(predictor, levels = c("MAP_A", "MAT_A", "MAP_100Y", "MAT_100Y")))
 
-Option: Use same manual method - should be similar, will just take longer
-
-**Load Raster files from ClimateNA**  
-
-```{r eval = FALSE}
-library(raster)
-##Obtain DEM input raster file (.asc format) for California
-
-MAT_81 <- raster('filename.asc');mat
-
-
-```
-
-
-**ClimateNA in R**  
-
-Command line test
-
-```{r eval = FALSE}
-#Primary wd for this project: "C:/Users/Devin/Documents/R_files/Data/nemo_herb"
-
-#see 'system2' documentation for executing system commands
-
-setwd(C:/Users/Devin/Desktop)
-
-exe <- "Climatena_v7.21 - Shortcut.exe"
-
-inputFile = '/C:\\ClimateNA_data\\test.csv'
-outputFile = '/C:\\ ClimateNA_data \\test_normal.csv'
-yearPeriod = '/Normal_1961_1990.nrm'
-system2(exe,args= c('/Y', yearPeriod, inputFile, outputFile),wait=True)
-
-dat <- read.csv(' C:/ClimateNA_data/test_normal.csv'); head(dat)
-
-#for raster data ---
-inputFile = '/C:\\ClimateNA_data\\test.asc'
-outputDir = '/C:\\ ClimateNA_data \\test\' 
-yearPeriod = '/Normal_1961_1990.nrm'
-system2(exe,args= c('/Y', yearPeriod, inputFile, outputDir) ,wait=True)
-
+#ggplot
+ggplot(data = PCMs_avg_newCIs_4) +
+  geom_errorbarh(aes(y = predictor, xmin = ci_.025, xmax = ci_.975, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 1, height = 0) +
+  geom_point(aes(x = param_est, y = predictor, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 2, pch = 21, fill = "white", stroke = 1.2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_color_manual(labels = c("Original", "2 km sim.", "5 km sim.", "15 km sim.", "25 km sim."), values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  theme_bw() +
+  labs(y = "Predictor", x = "Estimate", color = "Model Data") +
+  scale_y_discrete(labels = c("CAP (Anom.)", "MAT (Anom.)", "CAP (100Y)", "MAT (100Y)"))
 
 
 ```
+The second method for calculating new CIs looks quite similar to using average confidence intervals, probably because it uses aveage standard errors (so nothing really changes).
+
+
+**Changes in Estiamte Standard errors and in R2 values**  
+```{r}
+#Create columns for original model parameters only
+par_est_change <- PCMs_avg_all %>% 
+  mutate(og_adjR2 = 0.2922995,
+         og_est_se = NA)
+
+par_est_change$og_est_se[1:5] = rep(1.4752699, 5)
+par_est_change$og_est_se[6:10] = rep(0.9383542, 5)
+par_est_change$og_est_se[11:15] = rep(1.5110372, 5)
+par_est_change$og_est_se[16:20] = rep(0.9384485, 5)
+
+#Calculate change in parameters
+par_est_change2 <- par_est_change %>% 
+  mutate(se_change = mean_param_se - og_est_se,
+         adjR2_change = mean_adjr2 - og_adjR2) %>% 
+  filter(sim_dist != "original") %>% #Filter out original model rows
+  mutate(sim_dist = factor(sim_dist, levels = c("2km", "5km", "15km", "25km")),
+         predictor = factor(predictor, levels = c("MAT_100Y", "MAP_100Y", "MAT_A", "MAP_A"))) #Order factors
+
+#Visualize changes
+
+## SE
+SEchange <- ggplot(data = par_est_change2) + 
+  geom_col(aes(x = predictor, y = se_change, fill = sim_dist), position = "dodge", col = "black", alpha = 0.9) + 
+  scale_x_discrete(labels = c("MAT (100Y)", "CAP (100Y)", "MAT (Anom.)", "CAP (Anom.)")) +
+  scale_y_continuous(expand = c(0.02,0)) +
+  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_hline(yintercept = 0, lty = 1) +
+  labs(fill = "Sim. Data", y = "Change in Estimate SE", x = "Predictor") +
+  theme_bw(base_size = 18) + theme(legend.position = c(0.88, 0.7), legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid', size = .5), legend.key.size = unit(.5, "cm")) #+
+  #geom_text(x = .8, y = .35, label = "(a)", size = 8)
+
+#ggsave(here::here("analyses", "figs1", "errorD", "sims_SE_change_200.png"), width = 6.5, height = 4)
+
+
+#Group summarize to avoid extra column bars
+par_est_change3 <- par_est_change2 %>% 
+  summarize(sim_dist = sim_dist,
+            adjR2_change = adjR2_change) %>% 
+  filter(predictor == "MAT_100Y")
+
+##Adj R2
+R2change <- ggplot(data = par_est_change3) + 
+  geom_col(aes(x = sim_dist, y = adjR2_change, fill = sim_dist), col = "black", alpha = 0.9, show.legend = FALSE) +
+  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_hline(yintercept = 0, lty = 2) +
+  labs(y = bquote("Adj."~R^2~ "Change"), x = "Simulated Displacement") +
+  scale_x_discrete(labels = c("2 km", "5 km", "15 km", "25 km")) +
+  theme_bw(base_size = 18) #+
+  #geom_text(x = -.3, y = -.005, label = "(b)", size = 8) +
+  #coord_cartesian(clip = "off")
+
+#ggsave(here::here("analyses", "figs1", "errorD", "sims_AdjR2_change_200.png"), width = 6, height = 4)
+
+
+
+##Combine Panels
+Figure3 <- ggarrange(SEchange, R2change, ncol = 2, labels = c("(a)", "(b)"), font.label = list(size = 18)) 
+Figure3
+
+ggsave(here::here("analyses", "figs1", "errorD", "FIG3_SE_adjR2_change_200.png"), width = 13, height = 4)
+
+```
+
+<br>  
 
 
 
 
-**Bootstrap confidence intervals**  
- - Likely the way to go
- - Should incorporate individual estimates and estimate SEs!
+#### Comparing Variance metrics among data sets
+For the change in elevation, MAT/MAP norms and anomalies
+
+**Create a Mega-data frame with all simulations in one table**:  
+```{r eval = FALSE, warning = FALSE, results = 'hide'}
+memory.limit(size=56000) #Increase memory limit, eval set to False
 
 
-OR
+nemo_combinedsims1 <- bind_rows("Original" = nemo_e2, "2km" = sims_2km_full_200, "5km" = sims_5km_full_200, "15km" = sims_15km_full_200, "25km" = sims_25km_full_200, .id = "data_origin")
 
-**Bootstrap simulated deviations used in estimating phen-sen**  
 
-??????
+nemo_combinedsims2 <- nemo_combinedsims1 %>% 
+  select(data_origin:DOY, replicate, MAT_100Y, MAP_100Y, MAT_A, MAP_A, replicate, elev_m_n, -c(date_new:day)) %>% #Select only variables to be analyzed
+  mutate(replicate = case_when(data_origin != "Original" ~ replicate,
+                               data_origin == "Original" ~ 1), #Make OG data rep 1
+         elev_m = case_when(!is.na(elev_m) ~ elev_m,
+                            is.na(elev_m) ~ elev_m_n)) %>% 
+  mutate(data_origin = factor(data_origin, ordered = TRUE, levels = c("Original", "2km", "5km", "15km", "25km"))) %>% #level order
+  select(-elev_m_n) #now redundant with `elev_m`
+  
+
+#Calculate the mean and standard deviation among specimens for each replicate
+#Only replicate 1 for 'OG' data
+
+combinedsims_sd1 <- nemo_combinedsims2 %>% group_by(replicate, data_origin) %>% 
+  summarize(
+    MAT_100Y = sd(MAT_100Y), #keep predictor names for new columns
+    MAP_100Y = sd(MAP_100Y),
+    MAT_A = sd(MAT_A),
+    MAP_A = sd(MAP_A),
+    elev_m = sd(elev_m)
+  ) %>% 
+  select(everything())
+
+
+#Calculate mean SD and SD error/var across replicates
+
+combinedsims_sd2 <- combinedsims_sd1 %>% 
+  pivot_longer(cols = c(MAT_100Y, MAP_100Y, MAT_A, MAP_A, elev_m), names_to = "Predictor", values_to =  "Predictor_SD") %>% 
+  group_by(Predictor, data_origin) %>% 
+  summarize(
+    Predictor_SD_mean = mean(Predictor_SD), #calculate mean Predictor SD across replicates
+    var_Predictor_SD = sd(Predictor_SD) #standard deviation among replicates...?
+    
+  )
+  #select(data_origin, Predictor, P_mean, var_sd)
+
+
+
+
+
+##Visualize differences in SD among displacement distances
+
+MAT100SD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAT_100Y")) +
+  geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  labs(title = "MAT (100Y)", y = "Standard Deviation", x = "Data") +
+  theme_bw(base_size = 18) + theme(legend.position = "none")
+
+CAP100SD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAP_100Y")) +
+  geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  labs(title = "CAP (100Y)", y = "Standard Deviation", x = "Data") +
+  theme_bw(base_size = 18) + theme(legend.position = "none")
+
+MATASD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAT_A")) +
+  geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  labs(title = "MAT (Anom.)", y = "Standard Deviation", x = "Data") +
+  theme_bw(base_size = 18) + theme(legend.position = "none")
+
+CAPASD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAP_A")) +
+  geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  labs(title = "CAP (Anom.)", y = "Standard Deviation", x = "Data") +
+  theme_bw(base_size = 18) + theme(legend.position = "none")
+
+ggplot(data = filter(combinedsims_sd2, Predictor == "elev_m")) +
+  geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
+  scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  labs(title = "Elevation", y = "Standard Deviation", x = "Data") +
+  theme_bw() + theme(legend.position = "none")
+
+
+#Combine climate predictor SD panels
+
+
+
+App_FigS4 <- ggarrange(MAT100SD, CAP100SD, MATASD, CAPASD, ncol = 2, nrow = 2, labels = c("(a)", "(b)", "(c)", "(d)"), font.label = list(size = 18)) 
+
+App_FigS4 
+
+ggsave(here::here("analyses", "figs1", "errorD", "FIGS4_predictorSD_avg_200.png"), width = 13, height = 8)
+
+```
 
