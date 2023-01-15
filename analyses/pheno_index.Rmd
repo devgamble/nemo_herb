@@ -27,13 +27,15 @@ library(jtools)
 
 First, download the PI scoring data sheets to `cch2_pi_scored` in `data_cleaning`. Save each as a .csv file. Be sure to clear empty space under main rows!!!!
 
-Note: These csvs last updated 8-24-2021 -- wille need to be REVIEWED AGAIN to clean up scores in google sheets prior to another download...
+Note: These csvs updated 1-12-2023 
 
 Load csv's:
 ```{r echo = FALSE, message = FALSE}
-cch2_AC_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_AC_pi.csv"), na = c("", "NA", "#DIV/0!")) #Keep div0 as NA??
+cch2_AC_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_AC_pi.csv"), na = c("", "NA", "#DIV/0!")) #Keep div0 as NA
 
-cch2_DL_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_DL_pi.csv"), na = c("", "NA", "#DIV/0!"))
+cch2_DL_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_DL_pi.csv"), na = c("", "NA", "#DIV/0!")) %>% filter(specimen_number != "DAV300398")
+#Remove one specimen (DAV300398) from main data set and all analyses -- very likely N. maculata
+
 cch2_OS_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_OS_pi.csv"), na = c("", "NA", "#DIV/0!"))
 cch2_SU_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_SU_pi.csv"), na = c("", "NA", "#DIV/0!"))
 cch2_UCR_pi <- read_csv(here::here("data_cleaning", "cch2_pi_scored", "nemo_cch2_UCR_pi.csv"), na = c("", "NA", "#DIV/0!"))
@@ -46,61 +48,99 @@ cch2_pi_full <- rbind(cch2_AC_pi, cch2_DL_pi, cch2_OS_pi, cch2_SU_pi, cch2_UCR_p
                                       flowers_2 == 0 | open_flr_present == "n" ~ "n")) %>% 
   mutate(frt_present = case_when(immature_4 > 0 | mature_5 > 0 | frt_present == "y" ~ "y",
                                       immature_4 == 0 & mature_5 == 0 | frt_present == "n" ~ "n")) %>%
-  select(specimen_number, date_new, DOY, scored_by, notes, open_flr_present:plant_PI) %>% 
-  filter(!is.na(open_flr_present)) #Optional filter -- refine later
+  select(specimen_number, date_new, DOY, scored_by, notes, plant, buds_1:mature_5, open_flr_present:plant_PI) 
 
+#3618 rows
 
-#3617 rows
-#Remove one specimen (DAV300327) from main data set -- likely N. maculata
 ```
+
+
+Summary stats & trends
 
 ```{r eval = FALSE}
 #Check for any NA values in open flowers
-sum(is.na(cch2_pi_full$open_flr_present)) #0
+sum(is.na(cch2_pi_full$open_flr_present))
 
 #For PI scores
-sum(is.na(cch2_pi_full$plant_PI)) #58
+sum(is.na(cch2_pi_full$plant_PI))
+# 150 sheets (not ind. plants) from cch2 that could not be scored
 
 
-## Calculate % individual plants (NOT specimens) with open flowers
+## Calculate % individual plants (NOT sheets) with open flowers
 
-100*count(filter(cch2_pi_full, open_flr_present == "y"))/count(cch2_pi_full)
+100*count(filter(cch2_pi_full, open_flr_present == "y"))/count(cch2_pi_full) #94.30625
 #Over 94%
 #Because of multiple plants on a sheet (some with and without flowers), the number of SPECIMENS with open flowers must be > 94%!
+
+
+## Ind. Plants with fruits (immature or mature)  
+100*count(filter(cch2_pi_full, frt_present == "y"))/count(cch2_pi_full) #58.70647%
+
+## Ind. Plants with open flowers and fruits
+100*count(filter(cch2_pi_full, frt_present == "y" & open_flr_present == "y"))/count(cch2_pi_full) #55.88723%	
+
+
+#Stats across individual whole plants
+summary(cch2_pi_full$buds_1)
+
+summary(cch2_pi_full$flowers_2)
+
+summary(cch2_pi_full$spent_3)
+
+summary(cch2_pi_full$immature_4)
+
+summary(cch2_pi_full$mature_5)
+
 ```
 
 
 Simplify Data set to unique specimens
 ```{r}
-#cch2_spec_pi <- cch2_pi_full %>% 
-#  filter/mutate
-#  group_by(specimen_number)
-
-#Total number of specimens in this data
-nemo_specimens <- cch2_pi_full %>% group_by(specimen_number) %>% 
-  summarize(specimen_number = unique(specimen_number))
-##1136 specimens
+#Recode flr/frt presence for easy summarization
+cch2_pi_full2 <- cch2_pi_full %>% 
+  mutate(open_flr_present = case_when(open_flr_present == "y" ~ 1,
+                                      open_flr_present == "n" ~ 0),
+         frt_present = case_when(frt_present == "y" ~ 1, 
+                                 frt_present == "n" ~ 0))
 
 
-#Individual Specimens with 0 open flowers (these SHOULD BE REMOVED from data set!)
-open_flr_check <- cch2_pi_full %>% group_by(specimen_number) %>% 
-  summarize(has_flowers = case_when(any(open_flr_present == "y") ~ "y"))# %>% 
-##1136 rows returned - all have open flowers!!!!
+cch2_spec_pi <- cch2_pi_full2 %>% group_by(specimen_number) %>% 
+  summarize(mean_PI = mean(plant_PI),
+            mean_buds = mean(buds_1),
+            mean_flowers = mean(flowers_2),
+            mean_spent = mean(spent_3), 
+            mean_immature = mean(immature_4),
+            mean_mature = mean(mature_5),
+            flowers_present = mean(open_flr_present), #set to any "y" present for yes
+            fruit_present = mean(frt_present)
+            ) %>% 
+  mutate(flowers_present = case_when(flowers_present > 0 ~ "y",
+                                      flowers_present <= 0 ~ "n"),
+         fruit_present = case_when(fruit_present > 0 ~ "y", 
+                                 fruit_present <= 0 ~ "n"))
+  
+
+
+
+#Sheets/observations with open flowers
+100*count(filter(cch2_spec_pi, flowers_present == "y"))/count(cch2_spec_pi) #1219/1235 = 98.70445% of sheets
+
+#Sheets/observations with fruits
+100*count(filter(cch2_spec_pi, fruit_present == "y"))/count(cch2_spec_pi) #1089/1235 = 88.17814% of sheets
+
+#Sheets with both flowers and fruits present
+100*count(filter(cch2_spec_pi, fruit_present == "y" & flowers_present == "y"))/count(cch2_spec_pi) #1074/1235 = 86.96356% of sheets
 
 ```
 
+**Save as a csv**  
 
-
-**Average PI values for multiple plants on a sheet**
-Have one value of PI for each unique specimen number:
 ```{r}
-#FIX THIS
 
-cch2_pi_unq <- cch2_pi_full %>% group_by(specimen_number, open_flr_present, frt_present) %>% summarize(mean_PI = mean(plant_PI), DOY = mean(DOY))
-#success
-#How does this treat differences among plants (within sheets) in flowers/fruit present?
-#Add column for number of whole (scored) plants on a sheet
+write_csv(cch2_spec_pi, here::here("data_cleaning", "nemo_meanPI.csv"))
 
 ```
+
+
 
 

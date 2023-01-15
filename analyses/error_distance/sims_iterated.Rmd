@@ -1292,6 +1292,22 @@ ggplot(data = PCMs_avg_all) +
 
 #Save plot
 ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full200.png"), width = 6, height = 4)
+
+
+#Alt version - add distinctive point shapes
+ggplot(data = PCMs_avg_all) +
+  geom_errorbarh(aes(y = predictor, xmin = mean_ci_low, xmax = mean_ci_high, group = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 1, height = 0) +
+  geom_point(aes(x = mean_param_est, y = predictor, group = sim_dist, shape = sim_dist, color = sim_dist), position = position_dodge(width = -.7), size = 2, fill = "white", stroke = 1.2) + 
+  geom_vline(xintercept = 0, lty = 2) +
+  scale_color_manual(labels = c("Original", "2 km sim.", "5 km sim.", "15 km sim.", "25 km sim."), values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  scale_shape_manual(labels = c("Original", "2 km sim.", "5 km sim.", "15 km sim.", "25 km sim."), values = c(21, 24, 22, 23, 25)) +
+  theme_bw() +
+  labs(y = "Predictor", x = "Estimate", color = "Model Data", shape = "Model Data") +
+  scale_y_discrete(labels = c("CAP (Anom.)", "MAT (Anom.)", "CAP (100Y)", "MAT (100Y)"))
+
+#Save plot
+ggsave(here::here("analyses", "figs1", "errorD", "sims_MATMAP_full200_vshapes.png"), width = 6, height = 4)
+
 ```
 
 
@@ -1408,11 +1424,10 @@ SEchange <- ggplot(data = par_est_change2) +
   geom_col(aes(x = predictor, y = se_change, fill = sim_dist), position = "dodge", col = "black", alpha = 0.9) + 
   scale_x_discrete(labels = c("MAT (100Y)", "CAP (100Y)", "MAT (Anom.)", "CAP (Anom.)")) +
   scale_y_continuous(expand = c(0.02,0)) +
-  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  scale_fill_manual(values = c("#447CBF", "#83BA6D", "#DBAB3B", "#D92120"), labels = c("2 km", "5 km", "15 km", "25 km")) +
   geom_hline(yintercept = 0, lty = 1) +
   labs(fill = "Sim. Data", y = "Change in Estimate SE", x = "Predictor") +
-  theme_bw(base_size = 18) + theme(legend.position = c(0.88, 0.7), legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid', size = .5), legend.key.size = unit(.5, "cm")) #+
-  #geom_text(x = .8, y = .35, label = "(a)", size = 8)
+  theme_bw(base_size = 17) + theme(legend.position = c(0.88, 0.7), legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid', size = .5), legend.key.size = unit(.5, "cm"))
 
 #ggsave(here::here("analyses", "figs1", "errorD", "sims_SE_change_200.png"), width = 6.5, height = 4)
 
@@ -1430,7 +1445,7 @@ R2change <- ggplot(data = par_est_change3) +
   geom_hline(yintercept = 0, lty = 2) +
   labs(y = bquote("Adj."~R^2~ "Change"), x = "Simulated Displacement") +
   scale_x_discrete(labels = c("2 km", "5 km", "15 km", "25 km")) +
-  theme_bw(base_size = 18) #+
+  theme_bw(base_size = 17) #+
   #geom_text(x = -.3, y = -.005, label = "(b)", size = 8) +
   #coord_cartesian(clip = "off")
 
@@ -1439,7 +1454,7 @@ R2change <- ggplot(data = par_est_change3) +
 
 
 ##Combine Panels
-Figure3 <- ggarrange(SEchange, R2change, ncol = 2, labels = c("(a)", "(b)"), font.label = list(size = 18)) 
+Figure3 <- ggarrange(SEchange, R2change, ncol = 2, labels = c("(a)", "(b)"), font.label = list(size = 18), hjust = -.6) 
 Figure3
 
 ggsave(here::here("analyses", "figs1", "errorD", "FIG3_SE_adjR2_change_200.png"), width = 13, height = 4)
@@ -1455,11 +1470,11 @@ ggsave(here::here("analyses", "figs1", "errorD", "FIG3_SE_adjR2_change_200.png")
 For the change in elevation, MAT/MAP norms and anomalies
 
 **Create a Mega-data frame with all simulations in one table**:  
-```{r eval = FALSE, warning = FALSE, results = 'hide'}
+```{r warning = FALSE, results = 'hide'}
 memory.limit(size=56000) #Increase memory limit, eval set to False
 
 
-nemo_combinedsims1 <- bind_rows("Original" = nemo_e2, "2km" = sims_2km_full_200, "5km" = sims_5km_full_200, "15km" = sims_15km_full_200, "25km" = sims_25km_full_200, .id = "data_origin")
+nemo_combinedsims1 <- bind_rows("Original" = nemo_e2, "2 km" = sims_2km_full_200, "5 km" = sims_5km_full_200, "15 km" = sims_15km_full_200, "25 km" = sims_25km_full_200, .id = "data_origin")
 
 
 nemo_combinedsims2 <- nemo_combinedsims1 %>% 
@@ -1468,7 +1483,7 @@ nemo_combinedsims2 <- nemo_combinedsims1 %>%
                                data_origin == "Original" ~ 1), #Make OG data rep 1
          elev_m = case_when(!is.na(elev_m) ~ elev_m,
                             is.na(elev_m) ~ elev_m_n)) %>% 
-  mutate(data_origin = factor(data_origin, ordered = TRUE, levels = c("Original", "2km", "5km", "15km", "25km"))) %>% #level order
+  mutate(data_origin = factor(data_origin, ordered = TRUE, levels = c("Original", "2 km", "5 km", "15 km", "25 km"))) %>% #level order
   select(-elev_m_n) #now redundant with `elev_m`
   
 
@@ -1493,7 +1508,9 @@ combinedsims_sd2 <- combinedsims_sd1 %>%
   group_by(Predictor, data_origin) %>% 
   summarize(
     Predictor_SD_mean = mean(Predictor_SD), #calculate mean Predictor SD across replicates
-    var_Predictor_SD = sd(Predictor_SD) #standard deviation among replicates...?
+    var_Predictor_SD = sd(Predictor_SD), #standard deviation among replicates
+    min_sd = min(Predictor_SD),
+    max_sd = max(Predictor_SD)
     
   )
   #select(data_origin, Predictor, P_mean, var_sd)
@@ -1507,24 +1524,28 @@ combinedsims_sd2 <- combinedsims_sd1 %>%
 MAT100SD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAT_100Y")) +
   geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_errorbar(aes(y = Predictor_SD_mean, ymin = min_sd, ymax = max_sd,x = data_origin), width = .4) +
   labs(title = "MAT (100Y)", y = "Standard Deviation", x = "Data") +
   theme_bw(base_size = 18) + theme(legend.position = "none")
 
 CAP100SD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAP_100Y")) +
   geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_errorbar(aes(y = Predictor_SD_mean, ymin = min_sd, ymax = max_sd,x = data_origin), width = .4) +
   labs(title = "CAP (100Y)", y = "Standard Deviation", x = "Data") +
   theme_bw(base_size = 18) + theme(legend.position = "none")
 
 MATASD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAT_A")) +
   geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_errorbar(aes(y = Predictor_SD_mean, ymin = min_sd, ymax = max_sd,x = data_origin), width = .4) +
   labs(title = "MAT (Anom.)", y = "Standard Deviation", x = "Data") +
   theme_bw(base_size = 18) + theme(legend.position = "none")
 
 CAPASD <- ggplot(data = filter(combinedsims_sd2, Predictor == "MAP_A")) +
   geom_col(aes(x = data_origin, y = Predictor_SD_mean, fill = data_origin), col = "black", alpha = 0.9) +
   scale_fill_manual(values = c("#781C81", "#447CBF", "#83BA6D", "#DBAB3B", "#D92120")) +
+  geom_errorbar(aes(y = Predictor_SD_mean, ymin = min_sd, ymax = max_sd,x = data_origin), width = .4) +
   labs(title = "CAP (Anom.)", y = "Standard Deviation", x = "Data") +
   theme_bw(base_size = 18) + theme(legend.position = "none")
 
@@ -1544,6 +1565,9 @@ App_FigS4 <- ggarrange(MAT100SD, CAP100SD, MATASD, CAPASD, ncol = 2, nrow = 2, l
 App_FigS4 
 
 ggsave(here::here("analyses", "figs1", "errorD", "FIGS4_predictorSD_avg_200.png"), width = 13, height = 8)
+
+```
+```{r}
 
 ```
 

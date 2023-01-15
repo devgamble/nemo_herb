@@ -297,7 +297,7 @@ erc_an1ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long
 erc_an2ALb <- lm(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_e2)
 
 #Just Climate
-plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All Records", "Records with Error", "Error < 5 km", "Error < 2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "CAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "CAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw() + scale_x_continuous(limits = c(-9, 10.5)) + labs(y = "Predictor")
+plot_summs(M100Y_lm2ALb, erc_an0ALb, erc_an1ALb, erc_an2ALb, model.names = c("All Records", "Records with Error", "Error < 5 km", "Error < 2 km"), coefs = c("MAT (100Y)" =  "MAT_100Y", "CAP (100Y)" = "MAP_100Y", "MAT (Anom.)" =  "MAT_A", "CAP (Anom.)" = "MAP_A"), legend.title = "Model Data", scale = TRUE) + theme_bw(base_size = 14) + scale_x_continuous(limits = c(-9, 10.5)) + labs(y = "Predictor")
 ggsave(here::here("analyses", "figs1", "errorD", "plotsumms_MATMAP_fullmodel1.png"), width = 7, height = 4)
 
 
@@ -333,6 +333,118 @@ vif(M100Y_lm2ALb)
 shapiro.test(M100Y_lm2ALb$residuals) #graphs suggest model meets assumption, significant (non-normal) results may be a factor of sample size
 durbinWatsonTest(M100Y_lm2ALb) #Address with more covariates or more complex models to improve fit
 ```
+
+**Spatial Autocorrelation**  
+
+
+```{r eval = FALSE}
+#Test correlation of model residuals
+
+nemo_autoc <- acf(M100Y_lm2ALb$residuals, type = "correlation", lag.max=20, plot = "TRUE") #object should be model residuals
+
+#ACF plot suggests little autocorrelation among residuals -- there's only a single spike in ACF for lag 0. Signbificance threshold (blue dotted lines) are centered around 0 ACF.
+
+
+
+#Durbin Watson
+durbinWatsonTest(M100Y_lm2ALb)
+# p = 0.014 --> some autocorrelation
+
+
+#Moran's I
+library(ape)
+library(geosphere)
+
+#Create inverse distance matrix
+nemo_latlong <- matrix(data = c(nemo_df2$long, nemo_df2$lat), ncol = 2)
+
+nemo_dist <- distm(x = nemo_latlong)
+
+nemo_dist_i <- 1/nemo_dist #inverse d matrix
+diag(nemo_dist_i) <- 0
+
+
+#Alternative inverse distance matrix - base R:
+nemo_dist_v2 <- nemo_df2 %>% select(lat, long) %>% bind_cols() %>% dist() %>% as.matrix()
+nemo_dist_v2_i <- 1/nemo_dist_v2
+diag(nemo_dist_v2_i) <- 0
+#Results in distances not as small as those computed with distm()
+
+
+#Moran's I
+Moran.I(nemo_df2$DOY, nemo_dist_v2_i)
+#Not working...seems to be an issue with the matrix or its values, not the x response vector
+
+
+
+
+##Attempt with spdep
+library(spdep)
+
+matlist_i <- mat2listw(nemo_dist_i, style = "W") #style = "W" should give same results as Moran.I()
+
+moran.test(nemo_df2$MAT_100Y, matlist_i)
+
+#Appears to work alright. Moran's I for different response variables (p << 0.001 in all scenarios except for MAP_A):
+
+#DOY: 0.28098
+#MAT_100Y: 0.68669
+#MAP_100Y: 0.83522
+#MAT_A: 0.14537
+#MAP_A: 0.01355 (Not statistically significant)
+
+
+#The value of the test statistic (Moran's I) suggests that there is some spatial autocorrelation in our data set. This autocorrelation is strongest with regards to long-term climate normals. There is some evidence of autocorrelation for DOY and MAT_A (though these correlations are relatively weak), and no evidence of statistically significant autocorrelation among locations for MAP_A.
+
+```
+
+
+```{r eval = FALSE}
+###
+# Account for spatial autocorrelation in PCMs
+###
+
+# 1 
+# Spatial Covariance structure in gls regression (Dormann et al. 2007)
+
+# Orginal model fit with gls
+library(nlme)
+
+gls_1 <- gls(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m + lat + long, data = nemo_df2)
+summary(gls_1)
+
+#Specify correlation structure
+#Test several structures and select model with lowest AIC
+gls_2 <- gls(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2, correlation = corExp(nugget = TRUE), method = "REML") #arg 'form = ~lat + long' not working withing corExp
+
+gls_3 <- gls(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2, correlation = corGaus(form = ~lat + long, nugget = TRUE), method = "REML")
+
+gls_4 <- gls(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2, correlation = corLin(nugget = TRUE), method = "REML")
+
+gls_5 <- gls(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2, correlation = corRatio(nugget = TRUE), method = "REML")
+
+gls_6 <- gls(DOY ~ MAT_100Y + MAP_100Y + MAT_A + MAP_A + elev_m, data = nemo_df2, correlation = corSpher(nugget = TRUE), method = "REML")
+
+
+AIC(gls_2, gls_3, gls_4, gls_5, gls_6)
+
+
+
+#update
+
+
+
+
+# 2
+# Spatial Autoregressive model estimation (CAR/SAR)
+
+
+
+
+
+```
+
+
 
 <br>  
 
@@ -443,7 +555,7 @@ nemo_ebins_df2 <- nemo_df2 %>%
                                error_dist_m > 5000 & error_dist_m <= 10000 ~ "5-10 km",
                                error_dist_m > 10000 & error_dist_m <= 15000 ~ "10-15 km", 
                                error_dist_m > 15000 ~ ">15 km",
-                               is.na(error_dist_m) ~ "missing")) %>% 
+                               is.na(error_dist_m) ~ "missing")) %>% #error = NA
   mutate(error_bin2 = factor(error_bin2, levels = c( "<2 km", "2-5 km", "5-10 km", "10-15 km", ">15 km", "missing")))
 
 
